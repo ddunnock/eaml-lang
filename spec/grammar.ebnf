@@ -241,13 +241,20 @@ lineComment ::= "//" ( AnyChar - NL )*
 
 /* [15] Block comment — may span multiple lines.
         Content is everything between delimiters. */
-blockComment ::= "/*" blockCommentContent "*/"
+blockComment ::= "/*" BLOCK_COMMENT_CONTENT "*/"
 
-/* [16] Block comment content — any characters except the closing sequence */
-blockCommentContent ::= ( AnyChar - "*/" )*
-                        /* [lex: block-comment-scan] — lexer scans for     */
-                        /* first occurrence of '*' followed by '/'. Nesting */
-                        /* of block comments is NOT supported.              */
+/* [16] Block comment content — lexer-scanned terminal.
+        [lex: block-comment-scan] — the lexer scans character-by-character
+        for the first occurrence of '*' followed by '/'. All content
+        before that two-character sequence is captured as the comment body.
+        Block comment nesting is NOT supported.
+
+        NOTE: The W3C EBNF exclusion operator A - B is defined for
+        single-character exclusions only. Multi-character sequences
+        like "*/" cannot be excluded via grammar notation. This
+        production is lexer-defined — the RHS is prose, not a formal
+        W3C EBNF expression. */
+BLOCK_COMMENT_CONTENT ::= /* lexer-scanned: any content up to but not including '*/' */
 
 /* [17] Doc comment — reserved for Post-MVP tooling.
         Parsed and silently discarded in v0.1. */
@@ -317,10 +324,15 @@ PYTHON_BLOCK ::= /* opaque token — AnyChar* captured by lexer mode */
 /* [19] Template string start delimiter */
 TMPL_START ::= /* '"' emitted by lexer entering template string mode */
 
-/* [20] Template string text segment — raw text with escape handling */
-TMPL_TEXT ::= ( AnyChar - ["{] | "{{" | "}}" )+
-              /* '{{' produces literal '{', '}}' produces literal '}'    */
-              /* [lex: ws-preserve-template] — whitespace preserved       */
+/* [20] Template string text segment — raw text with escape handling.
+        Decomposed into single-char matches for W3C EBNF correctness. */
+TMPL_TEXT ::= tmplTextChar+
+
+/* [20a] Template text character — one character or one escape sequence */
+tmplTextChar ::= AnyChar - [#x22#x7B]  /* any char except double-quote or open-brace */
+               | "{{"                  /* escaped literal '{' → emits '{' */
+               | "}}"                  /* escaped literal '}' → emits '}' */
+               /* [lex: ws-preserve-template] — whitespace preserved       */
 
 /* [21] Template interpolation start — single '{' opens expression slot */
 TMPL_INTERP_START ::= /* '{' emitted by lexer, not '{{' */
