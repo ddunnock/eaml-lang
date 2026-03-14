@@ -110,10 +110,22 @@
      override  interface  type  where  for  while  match  async  yield
 
    NOTE: 'python' is a FULL keyword (EG-01), not contextual.
-   NOTE: 'void' is reserved as a future predeclared type identifier.
 
    Total keywords: 7 active declaration + 3 Post-MVP declaration
                  + 8 statement/expression + 9 future-reserved = 27
+
+   PREDECLARED IDENTIFIERS (not keywords — can be shadowed with warning)
+   ─────────────────────────────────────────────────────────────────────
+   These are pre-populated in the type/name registry before user
+   declarations are processed. Shadowing emits a warning, not an error.
+
+   Active in v0.1:
+     string  float  int  bool  null          — primitive types (TYP001 on shadow)
+     Model                                    — model constructor (TYP001 on shadow)
+
+   NOTE: 'Model' is a predeclared identifier, not a keyword.
+         A schema named 'Model' emits TYP001 (shadowing warning) but is legal.
+         In modelDecl [27], "Model" is matched by string comparison after "=".
 
    ═══════════════════════════════════════════════════════════════════════════ */
 
@@ -334,6 +346,16 @@ importDecl ::= "import" ( STRING ( "as" IDENT )?
         Layer 5 §10.2 [GRAMMAR IMPACT].
         Fields: id (model identifier string), provider (SDK resolver string),
         caps (capability list).
+
+        Field order is FIXED: id, provider, caps — in that order.
+        Unlike schemaDecl (any field order) and promptBody (any field order),
+        modelDecl is a constructor-call syntax with positional structure.
+        Layer 5 §10.2 [CLOSED].
+
+        NOTE: "Model" is a predeclared identifier, not a keyword.
+        The parser matches it by string comparison in this specific position
+        (after "=" in modelDecl). It is not globally reserved — a schema
+        named 'Model' is valid (with TYP001 shadowing warning).
 
         SYNTAX:
           model Claude = Model(
