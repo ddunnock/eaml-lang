@@ -127,6 +127,11 @@
          A schema named 'Model' emits TYP001 (shadowing warning) but is legal.
          In modelDecl [27], "Model" is matched by string comparison after "=".
 
+   Future predeclared identifiers (Post-MVP — shadow emits TYP002):
+     void                                     — return type synonym for null
+                                                (TYP002: "void is reserved as a future
+                                                type name in EAML")
+
    ═══════════════════════════════════════════════════════════════════════════ */
 
 
