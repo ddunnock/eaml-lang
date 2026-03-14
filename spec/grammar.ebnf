@@ -132,6 +132,37 @@
                                                 (TYP002: "void is reserved as a future
                                                 type name in EAML")
 
+   CONTEXTUAL KEYWORDS
+   ────────────────────
+   The following identifiers are matched by string comparison within
+   specific productions. They are NOT globally reserved — users may
+   use them as schema field names, variable names, or identifiers
+   anywhere outside the productions that match them.
+
+   In importDecl [26]:
+     as
+
+   In modelDecl [27]:
+     id  provider  caps
+
+   In promptField [33]:
+     user  system  temperature  max_tokens  max_retries
+
+   In toolBodyInner [36]:
+     description
+
+   In agentField [39]:
+     model  tools  system  max_turns  on_error
+
+   In errorPolicy [40]:
+     fail  retry  then
+
+   NOTE: Some names appear in multiple contexts (e.g., "system" in
+   promptField and agentField, "model" as both a keyword and a
+   contextual keyword in agentField). The parser distinguishes by
+   production context — inside agentField, "model" is a field label;
+   at declaration level, "model" is the modelDecl keyword.
+
    ═══════════════════════════════════════════════════════════════════════════ */
 
 
@@ -186,8 +217,12 @@ STRING ::= '"' strChar* '"'
 strChar ::= AnyChar - ["\]
           | escapeSeq
 
-/* [10] Escape sequences recognized in string literals */
-escapeSeq ::= "\" ( '"' | "\" | "/" | "n" | "r" | "t" )
+/* [10] Escape sequences recognized in string literals.
+        Standard set: quote, backslash, newline, carriage return, tab.
+        NOTE: \/ (forward slash escape) removed — it was a JSON carry-over
+        with no practical use in EAML. If unicode escapes are needed
+        Post-MVP, add \uXXXX here. */
+escapeSeq ::= "\" ( '"' | "\" | "n" | "r" | "t" )
 
 /* [11] Boolean literals */
 BOOL_LIT ::= "true" | "false"
@@ -387,8 +422,12 @@ schemaDecl ::= "schema" IDENT "{" fieldDef* "}" ";"?
 
 /* [30] Schema field definition.
         [sem: field-type-must-resolve] — type name resolved in pass 2.
-        Separator: comma or NL, both optional on last field. */
-fieldDef ::= IDENT ":" typeExpr ( "," | NL )?
+        Separator: comma is the explicit separator; NL separation works
+        implicitly via WS skipping between tokens. No separator between
+        fields is also valid — the parser tries to match the next fieldDef
+        after any whitespace.
+        Layer 5 §7.1: "separated by EITHER newline OR comma". */
+fieldDef ::= IDENT ":" typeExpr ","?
 
 /* [31] Prompt declaration — typed LLM prompt with capabilities.
         Layer 5 §7.3 [GRAMMAR IMPACT].
@@ -445,6 +484,11 @@ toolBody ::= "{" toolBodyInner "}"
         [sem: v0.1-python-required] — in v0.1, if toolBodyInner matches
         the statement* branch and it is non-empty, emit SYN050:
         "Native tool bodies are not supported in EAML v0.1.
+        Use python %{ }% for tool implementations."
+
+        [sem: tool-body-must-have-implementation] — if toolBodyInner
+        matches via the ε path of statement* (empty body), semantic
+        analysis emits SEM040: "Tool body has no implementation.
         Use python %{ }% for tool implementations." */
 toolBodyInner ::= pythonImpl
                 | "description" ":" STRING pythonImpl
@@ -545,9 +589,17 @@ boundParams ::= boundParam ( "," boundParam )*
 boundParam ::= ( IDENT ":" )? ( FLOAT | INT )
 
 /* [48] Array suffix — single dimension only in v0.1.
-        [sem: single-dimension-only-v0.1] — '[][]' is SYN042:
-        "Multi-dimensional arrays are not supported in EAML v0.1." */
+        After parsing one '[]' in typeModifiers, the parser checks
+        whether the next token is '['. If so, it emits:
+        → SYN042: "Multi-dimensional arrays are not supported in EAML v0.1.
+        Hint: Use a schema with an array field: schema TagMatrix { rows: Tag[] }"
+        This is a PARSER CHECK, not a semantic check — the parser actively
+        looks for the second '[' after consuming arraySuffix to produce
+        a named error instead of a confusing generic parse error.
+        Layer 5 §3.4 [CLOSED]. */
 arraySuffix ::= "[" "]"
+                /* [parser: syn042-multi-dim-check] — after consuming this
+                   production, if next token is '[', emit SYN042 */
 
 /* [49] Optional suffix — marks type as nullable */
 optionalSuffix ::= "?"
@@ -738,7 +790,14 @@ param ::= IDENT ":" typeExpr ( "=" literal )?
         follow named arguments; enforced by semantic analysis. */
 argList ::= arg ( "," arg )*
 
-/* [75] Argument — either named (keyword) or positional */
+/* [75] Argument — either named (keyword) or positional.
+        LL(2) point: both alternatives can start with IDENT.
+        After IDENT, the parser checks the second token:
+          ":" → named argument (IDENT ":" expr)
+          other → positional argument (IDENT is start of expr)
+        [lex: arg-disambiguation]
+
+        This is structurally identical to importDecl [26] LL(2). */
 arg ::= IDENT ":" expr
       | expr
 
@@ -748,7 +807,11 @@ arg ::= IDENT ":" expr
           requires json_mode                — bare single capability
           requires [json_mode, tools]       — bracketed list
           requires []                       — empty (zero requirements)
-        [sem: cap-registry] — capability names validated against registry. */
+        [sem: cap-registry] — capability names validated against registry.
+
+        NOTE: 'requires []' (empty brackets) is syntactically valid and
+        semantically equivalent to omitting the requiresClause entirely.
+        This is intentional (Layer 5 §6.2) — no linter warning emitted. */
 requiresClause ::= "requires" ( IDENT
                                | "[" ( IDENT ( "," IDENT )* )? "]" )
 
