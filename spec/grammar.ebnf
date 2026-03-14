@@ -895,7 +895,7 @@ enumDecl ::= "enum" IDENT "{" AnyChar* "}"  /* Post-MVP — SYN082 */
               NULL_LIT[12], PYTHON_BLOCK[18], TMPL_START[19],
               TMPL_TEXT[20], TMPL_INTERP_START[21], TMPL_INTERP_END[22],
               TMPL_END[23], EOF[1], AnyChar[2], NL[3], WS[4],
-              COMMENT[13]. All defined.
+              COMMENT[13], BLOCK_COMMENT_CONTENT[16]. All defined.
 
      A3[PASS] Every [GRAMMAR IMPACT] from Layer 5 has a production:
               §2.1 IDENT → [5]
@@ -946,7 +946,7 @@ enumDecl ::= "enum" IDENT "{" AnyChar* "}"  /* Post-MVP — SYN082 */
      B1[PASS] V1 check (direct left recursion) — no production begins
               with itself. All expression productions use the iteration
               pattern ( op Next )* which is inherently non-left-recursive.
-              Checked all 82 productions individually.
+              Checked all 84 productions individually.
 
      B2[PASS] V2 check (indirect left recursion) — the chain
               postfixExpr → primaryExpr → "(" expr ")" → orExpr → ...
@@ -956,6 +956,13 @@ enumDecl ::= "enum" IDENT "{" AnyChar* "}"  /* Post-MVP — SYN082 */
      B3[PASS] V3 check on declaration dispatch [25]:
               FIRST sets shown in production comment. All 9 alternatives
               start with distinct keywords. Pairwise disjoint.
+
+     B3a[PASS] V3 check on typeExpr [42]:
+               Original form had common prefix (both alternatives started
+               with baseType). Resolved via left-factoring into
+               typeModifiers [42a]. After baseType, FIRST sets:
+                 arraySuffix → {"["}, optionalSuffix → {"?"}, ε → FOLLOW
+               All disjoint. LL(1) after factoring. ✓
 
      B4[PASS] V3 check on toolBodyInner [36]:
               After left-factoring, FIRST(pythonImpl) = {"python"},
@@ -980,8 +987,14 @@ enumDecl ::= "enum" IDENT "{" AnyChar* "}"  /* Post-MVP — SYN082 */
                 FIRST = {".", "(", "["}, FOLLOW = expr followers → disjoint ✓
               boundedSuffix? in namedType:
                 FIRST = {"<"}, FOLLOW = {"[", "?", ")", ",", NL, ";"} → disjoint ✓
+              typeModifiers in typeExpr:
+                FIRST(arraySuffix) = {"["}, FIRST(optionalSuffix) = {"?"},
+                FOLLOW(typeModifiers) = {")", ",", NL, ";", "]", "}", "="}
+                ("=" from letDecl: let x: Tag = ...)
+                All three alternatives ([], ?, ε) have disjoint FIRST sets
+                and ε-FOLLOW is disjoint from both. LL(1) ✓
 
-     B6[PASS] LL(1)/LL(2) inventory matches Layer 4 §2.2:
+     B6[PASS] LL(1)/LL(2) inventory:
               declaration dispatch: LL(1) ✓
               toolBody: LL(1) after factoring ✓
               typeExpr vs expr '<': context flag, not LL(k) ✓
@@ -990,6 +1003,8 @@ enumDecl ::= "enum" IDENT "{" AnyChar* "}"  /* Post-MVP — SYN082 */
               suffix*: LL(1) ✓
               NL vs "," separator: LL(1) ✓
               importDecl: LL(2) (second token: STRING vs "python") ✓
+              argList/arg: LL(2) (after IDENT, second token ":" → named;
+                otherwise → positional expr) ✓
 
      B7[PASS] No production requires LL(3) or greater lookahead.
               Maximum is LL(2) at importDecl, which is documented.
@@ -1033,8 +1048,8 @@ enumDecl ::= "enum" IDENT "{" AnyChar* "}"  /* Post-MVP — SYN082 */
               promptDecl[31], toolDecl[34], agentDecl[38], letDecl[41],
               returnStmt[70], exprStmt[71]. ✓
 
-     D2[PASS] Schema field separator: fieldDef [30] accepts ("," | NL)?
-              as trailing separator. ✓
+     D2[PASS] Schema field separator: fieldDef [30] accepts ","? as
+              explicit separator; NL separation works via WS policy. ✓
 
      D3[PASS] Python block: pythonImpl [37] uses "python" "%{" PYTHON_BLOCK "}%".
               PYTHON_BLOCK [18] capture algorithm uses '}%' two-char sequence.
@@ -1072,7 +1087,8 @@ enumDecl ::= "enum" IDENT "{" AnyChar* "}"  /* Post-MVP — SYN082 */
                on Program [24] and IDENT [5]. ✓
 
    GROUP E — Grammar Document Quality:
-     E1[PASS] Productions numbered sequentially [1] through [82].
+     E1[PASS] Productions numbered [1] through [82], with sub-productions
+              [42a] typeModifiers and [20a] tmplTextChar. Total: 84.
 
      E2[PASS] Productions with [sem:] annotations reference SEM/SYN codes:
               [sem: no-chained-comparison] → SEM060
@@ -1087,6 +1103,8 @@ enumDecl ::= "enum" IDENT "{" AnyChar* "}"  /* Post-MVP — SYN082 */
               [sem: forward-ref-allowed] → two-pass resolution
               [sem: bounded-param-validation] → SEM030
               [sem: v0.1-python-required] → SYN050
+              [sem: tool-body-must-have-implementation] → SEM040
+              [parser: syn042-multi-dim-check] → SYN042
 
      E3[PASS] Productions with [lex:] annotations have detailed comments:
               [lex: python-block-capture] → capture algorithm on [18]
@@ -1097,6 +1115,7 @@ enumDecl ::= "enum" IDENT "{" AnyChar* "}"  /* Post-MVP — SYN082 */
               [lex: angle-bracket-disambiguation] → on typeExpr [42]
               [lex: block-comment-scan] → on blockCommentContent [16]
               [lex: import-disambiguation] → on importDecl [26]
+              [lex: arg-disambiguation] → on arg [75]
 
      E4[PASS] All Post-MVP productions marked /* Post-MVP */ with SYN codes:
               pipelineDecl [77] — /* Post-MVP — SYN080 */
@@ -1119,7 +1138,8 @@ enumDecl ::= "enum" IDENT "{" AnyChar* "}"  /* Post-MVP — SYN082 */
               paramList, param, argList, arg, requiresClause, capList,
               fieldDef, agentField, errorPolicy, promptBody, promptField,
               toolBody, toolBodyInner, pythonImpl, strChar, escapeSeq,
-              lineComment, blockComment, blockCommentContent, docComment.
+              lineComment, blockComment, BLOCK_COMMENT_CONTENT, docComment,
+              typeModifiers, tmplTextChar.
               All defined. None undefined.
 
      E6[PASS] Grammar header declares: W3C EBNF notation standard,
@@ -1130,19 +1150,23 @@ enumDecl ::= "enum" IDENT "{" AnyChar* "}"  /* Post-MVP — SYN082 */
 
    ───────────────────────────────────────────────────────────────────
 
-   Total checks: 35
-   Passed: 35
+   Total checks: 36
+   Passed: 36
    Failed: 0
 
    Known LL(2) points (documented, intentional):
      - importDecl [26]: second token (STRING vs "python") disambiguates
+     - argList/arg [75]: after IDENT, second token ":" → named arg;
+       otherwise → positional expr
      - toolBody [35]: after left-factoring, resolved to LL(1)
      - angle bracket: context flag, not LL(k) — documented
 
-   Production count: 82 numbered productions
-   Terminal count:   17 named terminals (IDENT, INT, FLOAT, STRING,
+   Production count: 84 numbered productions
+                     (original 82 + [42a] typeModifiers + [20a] tmplTextChar)
+   Terminal count:   18 named terminals (IDENT, INT, FLOAT, STRING,
                      BOOL_LIT, NULL_LIT, PYTHON_BLOCK, TMPL_START,
                      TMPL_TEXT, TMPL_INTERP_START, TMPL_INTERP_END,
-                     TMPL_END, EOF, AnyChar, NL, WS, COMMENT)
+                     TMPL_END, EOF, AnyChar, NL, WS, COMMENT,
+                     BLOCK_COMMENT_CONTENT)
 
    ═══════════════════════════════════════════════════════════════════════ */
