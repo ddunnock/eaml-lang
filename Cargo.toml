@@ -1,0 +1,29 @@
+[workspace]
+members = [
+    "crates/eaml-errors",
+    "crates/eaml-lexer",
+    "crates/eaml-parser",
+    "crates/eaml-semantic",
+    "crates/eaml-codegen",
+    "crates/eaml-cli",
+]
+resolver = "2"
+
+[workspace.package]
+version    = "0.1.0"
+edition    = "2021"
+license    = "Apache-2.0"
+repository = "https://github.com/YOUR_ORG/eaml"
+rust-version = "1.75"
+
+[workspace.dependencies]
+# Shared across crates — pin versions here, reference with { workspace = true }
+clap             = { version = "4",    features = ["derive"] }
+logos            = "0.14"
+lasso            = "0.7"
+insta            = "1"
+codespan-reporting = "0.11"
+serde            = { version = "1", features = ["derive"] }
+serde_json       = "1"
+thiserror        = "1"
+tower-lsp        = "0.20"       # LSP server — Phase 7

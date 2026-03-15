@@ -29,11 +29,11 @@ be interpreted as described in [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119
 
 ### Related Documents
 
-| Document | Relationship |
-|----------|-------------|
-| `spec/grammar.ebnf` | Syntactic contract — this document cites grammar productions by number |
-| `spec/ERRORS.md` | Error code catalog — type errors documented here are registered there |
-| Layer 5 (`eaml-layer5-design-decisions.md`) | Authoritative design decisions — this document implements them |
+| Document                                    | Relationship                                                           |
+|---------------------------------------------|------------------------------------------------------------------------|
+| `spec/grammar.ebnf`                         | Syntactic contract — this document cites grammar productions by number |
+| `spec/ERRORS.md`                            | Error code catalog — type errors documented here are registered there  |
+| Layer 5 (`eaml-layer5-design-decisions.md`) | Authoritative design decisions — this document implements them         |
 
 ### How to Read This Document
 
@@ -178,43 +178,43 @@ before raising `LLMValidationError`.
 
 **IN SCOPE:**
 
-| Feature | Section |
-|---------|---------|
-| Primitive types: `string`, `int`, `float`, `bool`, `null` | §2 |
-| Array types: `T[]` | §3.1 |
-| Optional types: `T?` | §3.2 |
-| Composite ordering: `T[]?`, `T?[]`, `T?[]?` | §3.3 |
-| Bounded types: `float<0.0, 1.0>`, `string<max: 200>`, `int<min: 0>` | §4 |
-| Literal union types: `"yes" \| "no"` | §5 |
-| Schema-defined types | §6 |
+| Feature                                                             | Section  |
+|---------------------------------------------------------------------|----------|
+| Primitive types: `string`, `int`, `float`, `bool`, `null`           | §2       |
+| Array types: `T[]`                                                  | §3.1     |
+| Optional types: `T?`                                                | §3.2     |
+| Composite ordering: `T[]?`, `T?[]`, `T?[]?`                         | §3.3     |
+| Bounded types: `float<0.0, 1.0>`, `string<max: 200>`, `int<min: 0>` | §4       |
+| Literal union types: `"yes" \| "no"`                                | §5       |
+| Schema-defined types                                                | §6       |
 
 **OUT OF SCOPE (Post-MVP):**
 
-| Feature | Blocking Error | Reference |
-|---------|---------------|-----------|
-| `enum` declarations | SYN082 | Layer 5 §11, §9 below |
-| Schema inheritance (`extends`) | SYN083 | Layer 5 §11 |
-| Type inference on `let` bindings | SEM050 | Layer 5 §11 |
-| Union types beyond literal unions (`Tag \| OtherSchema`) | Not in grammar | §9 |
-| Generic types (`Schema<T>`) | Not in grammar | §9 |
-| Recursive schema types | See §9 OPEN QUESTION | §9 |
-| `void` keyword | TYP010 | Layer 5 §7.4 |
-| `@` field annotations | SYN090 | Layer 5 §11 |
-| String pattern bounds (`string<pattern: "...">`) | Not in grammar | §9 |
+| Feature                                                  | Blocking Error       | Reference             |
+|----------------------------------------------------------|----------------------|-----------------------|
+| `enum` declarations                                      | SYN082               | Layer 5 §11, §9 below |
+| Schema inheritance (`extends`)                           | SYN083               | Layer 5 §11           |
+| Type inference on `let` bindings                         | SEM050               | Layer 5 §11           |
+| Union types beyond literal unions (`Tag \| OtherSchema`) | Not in grammar       | §9                    |
+| Generic types (`Schema<T>`)                              | Not in grammar       | §9                    |
+| Recursive schema types                                   | See §9 OPEN QUESTION | §9                    |
+| `void` keyword                                           | TYP010               | Layer 5 §7.4          |
+| `@` field annotations                                    | SYN090               | Layer 5 §11           |
+| String pattern bounds (`string<pattern: "...">`)         | Not in grammar       | §9                    |
 
 ### 1.4 Design Decisions Summary
 
-| Decision | Value | Layer 5 Reference | Rationale |
-|----------|-------|-------------------|-----------|
-| Typing discipline | Nominal | §3.2 [CLOSED] | Schemas are domain concepts, not shapes |
-| Primitive names | Lowercase only | §3.1 [CLOSED] | Predeclared identifiers, not keywords |
-| `Tag[]?` vs `Tag?[]` | Both valid, different types | §3.3 [CLOSED] | Position determines meaning |
-| Array dimensions | Single only in v0.1 | §3.4 [CLOSED] | Simplicity; nested schemas cover use cases |
-| Literal union minimum | Two members | §3.6 [CLOSED] | One string is a type annotation, not a union |
-| Bounded types | Field constraints via Pydantic | §3.5 [CLOSED] | Runtime enforcement, not type identity |
-| `null` vs `?` | Distinct concepts | §3.1, §3.3 | `null` is a value; `?` is absence |
-| `void` return type | Use `-> null` | §7.4 [CLOSED] | `void` reserved for Post-MVP |
-| Let type annotation | Required in v0.1 | §11 | Type inference is Post-MVP |
+| Decision              | Value                          | Layer 5 Reference  | Rationale                                    |
+|-----------------------|--------------------------------|--------------------|----------------------------------------------|
+| Typing discipline     | Nominal                        | §3.2 [CLOSED]      | Schemas are domain concepts, not shapes      |
+| Primitive names       | Lowercase only                 | §3.1 [CLOSED]      | Predeclared identifiers, not keywords        |
+| `Tag[]?` vs `Tag?[]`  | Both valid, different types    | §3.3 [CLOSED]      | Position determines meaning                  |
+| Array dimensions      | Single only in v0.1            | §3.4 [CLOSED]      | Simplicity; nested schemas cover use cases   |
+| Literal union minimum | Two members                    | §3.6 [CLOSED]      | One string is a type annotation, not a union |
+| Bounded types         | Field constraints via Pydantic | §3.5 [CLOSED]      | Runtime enforcement, not type identity       |
+| `null` vs `?`         | Distinct concepts              | §3.1, §3.3         | `null` is a value; `?` is absence            |
+| `void` return type    | Use `-> null`                  | §7.4 [CLOSED]      | `void` reserved for Post-MVP                 |
+| Let type annotation   | Required in v0.1               | §11                | Type inference is Post-MVP                   |
 
 ---
 
@@ -401,13 +401,13 @@ before raising `LLMValidationError`.
 
 ### 2.6 Primitive Type Summary
 
-| EAML Type | Python Type | Pydantic v2 | JSON Wire Format | Literal Syntax (Production) |
-|-----------|-------------|-------------|------------------|----------------------------|
-| `string` | `str` | `str` | `"text"` | `STRING` [8] |
-| `int` | `int` | `int` | `42` | `INT` [6] |
-| `float` | `float` | `float` | `0.95` | `FLOAT` [7] |
-| `bool` | `bool` | `bool` | `true` / `false` | `BOOL_LIT` [11] |
-| `null` | `None` | `None` | `null` | `NULL_LIT` [12] |
+| EAML Type  | Python Type  | Pydantic v2  | JSON Wire Format   | Literal Syntax (Production)  |
+|------------|--------------|--------------|--------------------|------------------------------|
+| `string`   | `str`        | `str`        | `"text"`           | `STRING` [8]                 |
+| `int`      | `int`        | `int`        | `42`               | `INT` [6]                    |
+| `float`    | `float`      | `float`      | `0.95`             | `FLOAT` [7]                  |
+| `bool`     | `bool`       | `bool`       | `true` / `false`   | `BOOL_LIT` [11]              |
+| `null`     | `None`       | `None`       | `null`             | `NULL_LIT` [12]              |
 
 ### 2.7 Type Name Casing
 
@@ -521,11 +521,11 @@ before raising `LLMValidationError`.
 >
 > A field of type `string` cannot hold `null`. To accept absence, use `string?`.
 >
-> | Declaration | Accepts `"hello"` | Accepts `null` / absent | Pydantic v2 |
-> |-------------|-------------------|------------------------|-------------|
-> | `name: string` | Yes | No — ValidationError | `str` (required) |
-> | `name: string?` | Yes | Yes — defaults to None | `Optional[str] = None` |
-> | `name: null` | No | Yes — always null | `None` |
+> | Declaration     | Accepts `"hello"`   | Accepts `null` / absent   | Pydantic v2            |
+> |-----------------|---------------------|---------------------------|------------------------|
+> | `name: string`  | Yes                 | No — ValidationError      | `str` (required)       |
+> | `name: string?` | Yes                 | Yes — defaults to None    | `Optional[str] = None` |
+> | `name: null`    | No                  | Yes — always null         | `None`                 |
 >
 > **Usage note on `null` as a field type:** A field typed as `null` means the
 > JSON value MUST be explicitly `null` — the field cannot be absent. This is
@@ -643,12 +643,12 @@ Layer 5 §3.3 [CLOSED]: "POSITION DETERMINES MEANING."
 
 **Composite Ordering Summary:**
 
-| Form | Meaning | Array Required? | Elements Required? | Pydantic v2 |
-|------|---------|-----------------|-------------------|-------------|
-| `T[]` | Array of T | Yes | Yes | `List[T]` |
-| `T[]?` | Optional array of T | No | Yes (if present) | `Optional[List[T]] = None` |
-| `T?[]` | Array of optional T | Yes | No | `List[Optional[T]]` |
-| `T?[]?` | Optional array of optional T | No | No | `Optional[List[Optional[T]]] = None` |
+| Form    | Meaning                      | Array Required?   | Elements Required?   | Pydantic v2                          |
+|---------|------------------------------|-------------------|----------------------|--------------------------------------|
+| `T[]`   | Array of T                   | Yes               | Yes                  | `List[T]`                            |
+| `T[]?`  | Optional array of T          | No                | Yes (if present)     | `Optional[List[T]] = None`           |
+| `T?[]`  | Array of optional T          | Yes               | No                   | `List[Optional[T]]`                  |
+| `T?[]?` | Optional array of optional T | No                | No                   | `Optional[List[Optional[T]]] = None` |
 
 ### 3.4 Composite Type Restrictions
 
@@ -928,18 +928,18 @@ Applied to Production [44] `namedType` — `IDENT boundedSuffix?`.
 
 **Bounded Type Summary:**
 
-| EAML Bound Form | Base Type | Pydantic v2 `Field()` | Notes |
-|-----------------|-----------|----------------------|-------|
-| `float<a, b>` | `float` | `Field(ge=a, le=b)` | Positional: min, max |
-| `float<min: a>` | `float` | `Field(ge=a)` | Named, lower only |
-| `float<max: b>` | `float` | `Field(le=b)` | Named, upper only |
-| `float<min: a, max: b>` | `float` | `Field(ge=a, le=b)` | Named, both |
-| `string<max: n>` | `str` | `Field(max_length=n)` | Character count |
-| `string<min: n>` | `str` | `Field(min_length=n)` | Character count |
-| `string<min: a, max: b>` | `str` | `Field(min_length=a, max_length=b)` | Both |
-| `int<min: a>` | `int` | `Field(ge=a)` | Numeric value |
-| `int<max: b>` | `int` | `Field(le=b)` | Numeric value |
-| `int<min: a, max: b>` | `int` | `Field(ge=a, le=b)` | Numeric value |
+| EAML Bound Form          | Base Type  | Pydantic v2 `Field()`               | Notes                |
+|--------------------------|------------|-------------------------------------|----------------------|
+| `float<a, b>`            | `float`    | `Field(ge=a, le=b)`                 | Positional: min, max |
+| `float<min: a>`          | `float`    | `Field(ge=a)`                       | Named, lower only    |
+| `float<max: b>`          | `float`    | `Field(le=b)`                       | Named, upper only    |
+| `float<min: a, max: b>`  | `float`    | `Field(ge=a, le=b)`                 | Named, both          |
+| `string<max: n>`         | `str`      | `Field(max_length=n)`               | Character count      |
+| `string<min: n>`         | `str`      | `Field(min_length=n)`               | Character count      |
+| `string<min: a, max: b>` | `str`      | `Field(min_length=a, max_length=b)` | Both                 |
+| `int<min: a>`            | `int`      | `Field(ge=a)`                       | Numeric value        |
+| `int<max: b>`            | `int`      | `Field(le=b)`                       | Numeric value        |
+| `int<min: a, max: b>`    | `int`      | `Field(ge=a, le=b)`                 | Numeric value        |
 
 ---
 
@@ -1223,29 +1223,29 @@ Applied to Production [44] `namedType` — `IDENT boundedSuffix?`.
 
 The following table maps every EAML field type to its generated Python code:
 
-| EAML Field Type | Python Annotation | Pydantic Field | Default | Notes |
-|-----------------|------------------|---------------|---------|-------|
-| `string` | `str` | — | (required) | |
-| `int` | `int` | — | (required) | |
-| `float` | `float` | — | (required) | |
-| `bool` | `bool` | — | (required) | |
-| `null` | `None` | — | (required) | Rarely used as field type |
-| `string?` | `Optional[str]` | — | `= None` | See §10.4 |
-| `int?` | `Optional[int]` | — | `= None` | |
-| `float?` | `Optional[float]` | — | `= None` | |
-| `bool?` | `Optional[bool]` | — | `= None` | |
-| `SchemaName` | `SchemaName` | — | (required) | Nominal reference |
-| `SchemaName?` | `Optional[SchemaName]` | — | `= None` | |
-| `SchemaName[]` | `List[SchemaName]` | — | (required) | |
-| `SchemaName[]?` | `Optional[List[SchemaName]]` | — | `= None` | |
-| `SchemaName?[]` | `List[Optional[SchemaName]]` | — | (required) | |
-| `string[]` | `List[str]` | — | (required) | |
-| `string<max: 200>` | `str` | `Field(max_length=200)` | (required) | |
-| `float<0.0, 1.0>` | `float` | `Field(ge=0.0, le=1.0)` | (required) | |
-| `int<min: 0, max: 100>` | `int` | `Field(ge=0, le=100)` | (required) | |
-| `"yes" \| "no"` | `Literal["yes", "no"]` | — | (required) | `from typing import Literal` |
-| `("a" \| "b")?` | `Optional[Literal["a", "b"]]` | — | `= None` | |
-| `("a" \| "b")[]` | `List[Literal["a", "b"]]` | — | (required) | |
+| EAML Field Type         | Python Annotation             | Pydantic Field          | Default    | Notes                        |
+|-------------------------|-------------------------------|-------------------------|------------|------------------------------|
+| `string`                | `str`                         | —                       | (required) |                              |
+| `int`                   | `int`                         | —                       | (required) |                              |
+| `float`                 | `float`                       | —                       | (required) |                              |
+| `bool`                  | `bool`                        | —                       | (required) |                              |
+| `null`                  | `None`                        | —                       | (required) | Rarely used as field type    |
+| `string?`               | `Optional[str]`               | —                       | `= None`   | See §10.4                    |
+| `int?`                  | `Optional[int]`               | —                       | `= None`   |                              |
+| `float?`                | `Optional[float]`             | —                       | `= None`   |                              |
+| `bool?`                 | `Optional[bool]`              | —                       | `= None`   |                              |
+| `SchemaName`            | `SchemaName`                  | —                       | (required) | Nominal reference            |
+| `SchemaName?`           | `Optional[SchemaName]`        | —                       | `= None`   |                              |
+| `SchemaName[]`          | `List[SchemaName]`            | —                       | (required) |                              |
+| `SchemaName[]?`         | `Optional[List[SchemaName]]`  | —                       | `= None`   |                              |
+| `SchemaName?[]`         | `List[Optional[SchemaName]]`  | —                       | (required) |                              |
+| `string[]`              | `List[str]`                   | —                       | (required) |                              |
+| `string<max: 200>`      | `str`                         | `Field(max_length=200)` | (required) |                              |
+| `float<0.0, 1.0>`       | `float`                       | `Field(ge=0.0, le=1.0)` | (required) |                              |
+| `int<min: 0, max: 100>` | `int`                         | `Field(ge=0, le=100)`   | (required) |                              |
+| `"yes" \| "no"`         | `Literal["yes", "no"]`        | —                       | (required) | `from typing import Literal` |
+| `("a" \| "b")?`         | `Optional[Literal["a", "b"]]` | —                       | `= None`   |                              |
+| `("a" \| "b")[]`        | `List[Literal["a", "b"]]`     | —                       | (required) |                              |
 
 ---
 
@@ -1255,14 +1255,14 @@ The following table maps every EAML field type to its generated Python code:
 
 The following positions REQUIRE a type annotation in EAML v0.1:
 
-| Position | Grammar Production | Example |
-|----------|-------------------|---------|
-| Schema field | [30] `fieldDef` — `IDENT ":" typeExpr` | `name: string` |
-| Prompt parameter | [73] `param` — `IDENT ":" typeExpr` | `text: string` |
-| Tool parameter | [73] `param` — `IDENT ":" typeExpr` | `path: string` |
-| Prompt return type | [31] `promptDecl` — `"->" typeExpr` | `-> SentimentResult` |
-| Tool return type | [34] `toolDecl` — `"->" typeExpr` | `-> DataSummary` |
-| Let binding | [41] `letDecl` — `IDENT ":" typeExpr` | `let x: string = ...` |
+| Position           | Grammar Production                     | Example               |
+|--------------------|----------------------------------------|-----------------------|
+| Schema field       | [30] `fieldDef` — `IDENT ":" typeExpr` | `name: string`        |
+| Prompt parameter   | [73] `param` — `IDENT ":" typeExpr`    | `text: string`        |
+| Tool parameter     | [73] `param` — `IDENT ":" typeExpr`    | `path: string`        |
+| Prompt return type | [31] `promptDecl` — `"->" typeExpr`    | `-> SentimentResult`  |
+| Tool return type   | [34] `toolDecl` — `"->" typeExpr`      | `-> DataSummary`      |
+| Let binding        | [41] `letDecl` — `IDENT ":" typeExpr`  | `let x: string = ...` |
 
 All six positions use the same `typeExpr` grammar (Production [42]), so all type
 forms (primitives, composites, bounded, literal unions, schema references) are
@@ -1772,42 +1772,42 @@ This is the canonical reference. Every type form MUST be derivable from this pat
 
 ### 10.3 Complete Type Mapping Table
 
-| EAML `typeExpr` | Python Annotation | Pydantic `Field()` | Default Value | Notes |
-|-----------------|------------------|-------------------|---------------|-------|
-| `string` | `str` | — | (required) | |
-| `int` | `int` | — | (required) | |
-| `float` | `float` | — | (required) | |
-| `bool` | `bool` | — | (required) | |
-| `null` (field) | `None` | — | (required) | Rarely used; field must be explicitly `null` |
-| `null` (return) | `None` | — | n/a | `-> null` for void tools (§7.4 TS-RET-02) |
-| `string?` | `Optional[str]` | — | `= None` | |
-| `int?` | `Optional[int]` | — | `= None` | |
-| `float?` | `Optional[float]` | — | `= None` | |
-| `bool?` | `Optional[bool]` | — | `= None` | |
-| `string[]` | `List[str]` | — | (required) | |
-| `int[]` | `List[int]` | — | (required) | |
-| `float[]` | `List[float]` | — | (required) | |
-| `string[]?` | `Optional[List[str]]` | — | `= None` | Optional array |
-| `string?[]` | `List[Optional[str]]` | — | (required) | Array of optional |
-| `string?[]?` | `Optional[List[Optional[str]]]` | — | `= None` | Both optional |
-| `SchemaName` | `SchemaName` | — | (required) | Nominal type ref |
-| `SchemaName?` | `Optional[SchemaName]` | — | `= None` | |
-| `SchemaName[]` | `List[SchemaName]` | — | (required) | |
-| `SchemaName[]?` | `Optional[List[SchemaName]]` | — | `= None` | |
-| `SchemaName?[]` | `List[Optional[SchemaName]]` | — | (required) | |
-| `float<0.0, 1.0>` | `float` | `Field(ge=0.0, le=1.0)` | (required) | Inclusive bounds |
-| `float<min: 0.0>` | `float` | `Field(ge=0.0)` | (required) | Lower only |
-| `float<max: 1.0>` | `float` | `Field(le=1.0)` | (required) | Upper only |
-| `string<max: 200>` | `str` | `Field(max_length=200)` | (required) | Length constraint |
-| `string<min: 1>` | `str` | `Field(min_length=1)` | (required) | Non-empty |
-| `string<min: 1, max: 200>` | `str` | `Field(min_length=1, max_length=200)` | (required) | Both |
-| `int<min: 0>` | `int` | `Field(ge=0)` | (required) | Lower only |
-| `int<max: 100>` | `int` | `Field(le=100)` | (required) | Upper only |
-| `int<min: 0, max: 100>` | `int` | `Field(ge=0, le=100)` | (required) | Both |
-| `"yes" \| "no"` | `Literal["yes", "no"]` | — | (required) | 2-member |
-| `"a" \| "b" \| "c"` | `Literal["a", "b", "c"]` | — | (required) | 3-member |
-| `("yes" \| "no")?` | `Optional[Literal["yes", "no"]]` | — | `= None` | Optional union |
-| `("yes" \| "no")[]` | `List[Literal["yes", "no"]]` | — | (required) | Array of union |
+| EAML `typeExpr`            | Python Annotation                | Pydantic `Field()`                    | Default Value   | Notes                                        |
+|----------------------------|----------------------------------|---------------------------------------|-----------------|----------------------------------------------|
+| `string`                   | `str`                            | —                                     | (required)      |                                              |
+| `int`                      | `int`                            | —                                     | (required)      |                                              |
+| `float`                    | `float`                          | —                                     | (required)      |                                              |
+| `bool`                     | `bool`                           | —                                     | (required)      |                                              |
+| `null` (field)             | `None`                           | —                                     | (required)      | Rarely used; field must be explicitly `null` |
+| `null` (return)            | `None`                           | —                                     | n/a             | `-> null` for void tools (§7.4 TS-RET-02)    |
+| `string?`                  | `Optional[str]`                  | —                                     | `= None`        |                                              |
+| `int?`                     | `Optional[int]`                  | —                                     | `= None`        |                                              |
+| `float?`                   | `Optional[float]`                | —                                     | `= None`        |                                              |
+| `bool?`                    | `Optional[bool]`                 | —                                     | `= None`        |                                              |
+| `string[]`                 | `List[str]`                      | —                                     | (required)      |                                              |
+| `int[]`                    | `List[int]`                      | —                                     | (required)      |                                              |
+| `float[]`                  | `List[float]`                    | —                                     | (required)      |                                              |
+| `string[]?`                | `Optional[List[str]]`            | —                                     | `= None`        | Optional array                               |
+| `string?[]`                | `List[Optional[str]]`            | —                                     | (required)      | Array of optional                            |
+| `string?[]?`               | `Optional[List[Optional[str]]]`  | —                                     | `= None`        | Both optional                                |
+| `SchemaName`               | `SchemaName`                     | —                                     | (required)      | Nominal type ref                             |
+| `SchemaName?`              | `Optional[SchemaName]`           | —                                     | `= None`        |                                              |
+| `SchemaName[]`             | `List[SchemaName]`               | —                                     | (required)      |                                              |
+| `SchemaName[]?`            | `Optional[List[SchemaName]]`     | —                                     | `= None`        |                                              |
+| `SchemaName?[]`            | `List[Optional[SchemaName]]`     | —                                     | (required)      |                                              |
+| `float<0.0, 1.0>`          | `float`                          | `Field(ge=0.0, le=1.0)`               | (required)      | Inclusive bounds                             |
+| `float<min: 0.0>`          | `float`                          | `Field(ge=0.0)`                       | (required)      | Lower only                                   |
+| `float<max: 1.0>`          | `float`                          | `Field(le=1.0)`                       | (required)      | Upper only                                   |
+| `string<max: 200>`         | `str`                            | `Field(max_length=200)`               | (required)      | Length constraint                            |
+| `string<min: 1>`           | `str`                            | `Field(min_length=1)`                 | (required)      | Non-empty                                    |
+| `string<min: 1, max: 200>` | `str`                            | `Field(min_length=1, max_length=200)` | (required)      | Both                                         |
+| `int<min: 0>`              | `int`                            | `Field(ge=0)`                         | (required)      | Lower only                                   |
+| `int<max: 100>`            | `int`                            | `Field(le=100)`                       | (required)      | Upper only                                   |
+| `int<min: 0, max: 100>`    | `int`                            | `Field(ge=0, le=100)`                 | (required)      | Both                                         |
+| `"yes" \| "no"`            | `Literal["yes", "no"]`           | —                                     | (required)      | 2-member                                     |
+| `"a" \| "b" \| "c"`        | `Literal["a", "b", "c"]`         | —                                     | (required)      | 3-member                                     |
+| `("yes" \| "no")?`         | `Optional[Literal["yes", "no"]]` | —                                     | `= None`        | Optional union                               |
+| `("yes" \| "no")[]`        | `List[Literal["yes", "no"]]`     | —                                     | (required)      | Array of union                               |
 
 ### 10.4 Optional Field Default Value Rule
 
@@ -1859,14 +1859,14 @@ status: Literal["pass", "fail", "skip"]
 
 ## Verification Report — EAML TYPESYSTEM.md v0.1.0
 
-| Group | Checks | Passed | Failed | N/A |
-|-------|--------|--------|--------|-----|
-| A — Completeness | 8 | 8 | 0 | 0 |
-| B — Layer 5 | 10 | 10 | 0 | 0 |
-| C — Pydantic v2 | 6 | 6 | 0 | 0 |
-| D — Grammar Align | 5 | 5 | 0 | 0 |
-| E — Quality | 7 | 7 | 0 | 0 |
-| **Total** | **36** | **36** | **0** | **0** |
+| Group             | Checks   | Passed  | Failed  | N/A   |
+|-------------------|----------|---------|---------|-------|
+| A — Completeness  | 8        | 8       | 0       | 0     |
+| B — Layer 5       | 10       | 10      | 0       | 0     |
+| C — Pydantic v2   | 6        | 6       | 0       | 0     |
+| D — Grammar Align | 5        | 5       | 0       | 0     |
+| E — Quality       | 7        | 7       | 0       | 0     |
+| **Total**         | **36**   | **36**  | **0**   | **0** |
 
 Failed checks: 0
 Open Questions: 3 (OQ-01, OQ-02, OQ-03)

@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EAML — EBNF Grammar Checklist</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;1,400&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg:#f7f5f0;--paper:#ffffff;--ink:#1c1c1e;--muted:#6b6b70;
+            --ruled:#e8e5df;--border:#d0ccc4;--blue:#0a4fa6;--red:#c0281e;
+            --amber:#a0700a;--green:#1a6b3c;--teal:#0e5f72;--violet:#5a3ea0;
+            --hi:#fffbea;
+        }
+        *{box-sizing:border-box;margin:0;padding:0;}
+        body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.6;}
+        body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--ruled) 1px,transparent 1px),linear-gradient(90deg,var(--ruled) 1px,transparent 1px);background-size:24px 24px;opacity:.45;pointer-events:none;z-index:0;}
+        .wrap{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:2.5rem 1.5rem 5rem;}
+
+        .hdr{border:2px solid var(--ink);background:var(--paper);padding:1.75rem 2rem;margin-bottom:2rem;position:relative;}
+        .hdr::after{content:'';position:absolute;bottom:-5px;right:-5px;width:100%;height:100%;border:2px solid var(--ink);z-index:-1;background:var(--ink);}
+        .hdr-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.75rem;}
+        .hdr-label{font-family:'IBM Plex Mono',monospace;font-size:.63rem;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);}
+        .hdr-rev{font-family:'IBM Plex Mono',monospace;font-size:.63rem;color:var(--red);font-weight:600;border:1px solid var(--red);padding:.1rem .4rem;}
+        h1{font-family:'IBM Plex Mono',monospace;font-size:clamp(1.3rem,3vw,2rem);font-weight:600;letter-spacing:-.01em;color:var(--blue);margin-bottom:.35rem;}
+        .hdr-sub{font-size:.8rem;color:var(--muted);font-style:italic;}
+
+        .progress-bar{background:var(--paper);border:2px solid var(--ink);padding:.9rem 1.4rem;margin-bottom:2rem;display:flex;align-items:center;gap:1.25rem;}
+        .prog-label{font-family:'IBM Plex Mono',monospace;font-size:.62rem;text-transform:uppercase;letter-spacing:.15em;color:var(--muted);white-space:nowrap;}
+        .prog-track{flex:1;height:7px;background:var(--ruled);border:1px solid var(--border);overflow:hidden;}
+        .prog-fill{height:100%;background:var(--blue);width:0%;transition:width .3s ease;}
+        .prog-count{font-family:'IBM Plex Mono',monospace;font-size:.78rem;font-weight:600;color:var(--blue);white-space:nowrap;min-width:4.5rem;text-align:right;}
+
+        .section{margin-bottom:.6rem;}
+        .sec-head{display:flex;align-items:center;gap:.65rem;padding:.65rem 1rem;cursor:pointer;user-select:none;border:2px solid var(--ink);background:var(--paper);transition:background .15s;}
+        .sec-head:hover{background:var(--hi);}
+        .section.open .sec-head{border-bottom:1px solid var(--border);}
+        .sec-num{font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:600;color:var(--muted);width:2.2rem;flex-shrink:0;}
+        .sec-icon{font-size:.95rem;flex-shrink:0;}
+        .sec-title{font-family:'IBM Plex Mono',monospace;font-size:.82rem;font-weight:600;flex:1;letter-spacing:.02em;}
+        .sec-prog{font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--muted);white-space:nowrap;}
+        .sec-tog{font-size:.72rem;color:var(--muted);transition:transform .2s;flex-shrink:0;}
+        .section.open .sec-tog{transform:rotate(180deg);}
+
+        .s0 .sec-head{border-left:4px solid var(--blue);}
+        .s1 .sec-head{border-left:4px solid var(--red);}
+        .s2 .sec-head{border-left:4px solid var(--amber);}
+        .s3 .sec-head{border-left:4px solid var(--green);}
+        .s4 .sec-head{border-left:4px solid var(--teal);}
+        .s5 .sec-head{border-left:4px solid var(--violet);}
+        .s6 .sec-head{border-left:4px solid var(--red);}
+        .s7 .sec-head{border-left:4px solid var(--blue);}
+        .s8 .sec-head{border-left:4px solid var(--green);}
+        .s9 .sec-head{border-left:4px solid var(--amber);}
+
+        .sec-body{display:none;border:2px solid var(--ink);border-top:none;background:var(--paper);}
+        .section.open .sec-body{display:block;}
+
+        .grp{padding:.9rem 1.1rem;border-bottom:1px solid var(--ruled);}
+        .grp:last-child{border-bottom:none;}
+        .grp-label{font-family:'IBM Plex Mono',monospace;font-size:.58rem;text-transform:uppercase;letter-spacing:.15em;color:var(--muted);margin-bottom:.5rem;padding-bottom:.2rem;border-bottom:1px solid var(--ruled);}
+
+        .items{list-style:none;}
+        .item{display:flex;gap:.65rem;align-items:flex-start;padding:.32rem .25rem;border-bottom:1px dotted var(--ruled);cursor:pointer;transition:background .1s;}
+        .item:last-child{border-bottom:none;}
+        .item:hover{background:rgba(10,79,166,.04);}
+        .item.done .item-text{color:var(--muted);text-decoration:line-through;}
+        .item.done .chk{background:var(--blue);border-color:var(--blue);}
+        .item.done .chk::after{opacity:1;}
+
+        .chk{width:15px;height:15px;min-width:15px;border:2px solid var(--border);background:white;margin-top:2px;position:relative;transition:all .15s;flex-shrink:0;}
+        .chk::after{content:'✓';position:absolute;top:-2px;left:1px;font-size:.7rem;color:white;opacity:0;transition:opacity .15s;}
+
+        .item-body{flex:1;min-width:0;}
+        .item-text{font-size:.78rem;line-height:1.5;}
+        .item-text strong{color:var(--blue);font-weight:600;}
+        .item-text code{font-family:'IBM Plex Mono',monospace;font-size:.78em;background:var(--ruled);padding:.02rem .22rem;}
+        .item-note{font-size:.7rem;color:var(--muted);margin-top:.18rem;line-height:1.45;font-style:italic;}
+        .item-note code{font-family:'IBM Plex Mono',monospace;font-size:.85em;background:var(--ruled);padding:.02rem .18rem;font-style:normal;}
+
+        .badge{font-family:'IBM Plex Mono',monospace;font-size:.54rem;text-transform:uppercase;letter-spacing:.08em;padding:.12rem .35rem;border:1px solid;flex-shrink:0;margin-top:2px;font-weight:600;align-self:flex-start;}
+        .b-crit{border-color:var(--red);color:var(--red);}
+        .b-high{border-color:var(--amber);color:var(--amber);}
+        .b-med{border-color:var(--blue);color:var(--blue);}
+        .b-test{border-color:var(--green);color:var(--green);}
+
+        .cal{margin:.6rem 0 .2rem;padding:.55rem .8rem;border-left:3px solid var(--amber);background:rgba(160,112,10,.05);font-size:.73rem;line-height:1.5;}
+        .cal.blue{border-color:var(--blue);background:rgba(10,79,166,.04);}
+        .cal.red{border-color:var(--red);background:rgba(192,40,30,.04);}
+        .cal-lbl{font-family:'IBM Plex Mono',monospace;font-size:.57rem;text-transform:uppercase;letter-spacing:.12em;font-weight:600;margin-bottom:.18rem;color:var(--amber);}
+        .cal.blue .cal-lbl{color:var(--blue);}
+        .cal.red .cal-lbl{color:var(--red);}
+
+        footer{border-top:2px solid var(--border);padding-top:.9rem;margin-top:2.5rem;display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:var(--muted);}
+        ::-webkit-scrollbar{width:5px;height:5px;}
+        ::-webkit-scrollbar-track{background:var(--bg);}
+        ::-webkit-scrollbar-thumb{background:var(--border);}
+    </style>
+</head>
+<body>
+<div class="wrap">
+
+    <div class="hdr">
+        <div class="hdr-top">
+            <div class="hdr-label">EAML · Engineering AI Markup Language · Grammar Specification</div>
+            <div class="hdr-rev">LLML-GRAM-001 · REV 0.1</div>
+        </div>
+        <h1>EBNF Grammar Checklist</h1>
+        <div class="hdr-sub">Complete criteria for an unambiguous, compiler-ready formal grammar. Work through every section before writing a single parser function. Progress saves automatically in your browser.</div>
+    </div>
+
+    <div class="progress-bar">
+        <div class="prog-label">Completion</div>
+        <div class="prog-track"><div class="prog-fill" id="pf"></div></div>
+        <div class="prog-count" id="pc">0 / 0</div>
+    </div>
+
+    <div id="sections">
+
+        <!-- S0: FOUNDATION -->
+        <div class="section s0" id="s0">
+            <div class="sec-head" onclick="toggleSec('s0')">
+                <span class="sec-num">01</span><span class="sec-icon">⚙️</span>
+                <span class="sec-title">Foundational Grammar Design Decisions</span>
+                <span class="sec-prog" id="s0p">0/0</span><span class="sec-tog">▼</span>
+            </div>
+            <div class="sec-body">
+                <div class="grp">
+                    <div class="grp-label">Grammar Formalism</div>
+                    <ul class="items">
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Choose and document your EBNF notation variant.</strong> W3C EBNF, ISO 14977, or ANTLR notation. Pick one and use it consistently. Metacharacters like <code>::=</code>, <code>|</code>, <code>{ }</code>, <code>[ ]</code>, <code>( )</code> must be unambiguously defined.</div><div class="item-note">Recommended: W3C-style. Document the chosen notation at the top of <code>grammar.ebnf</code> with a legend of all metacharacters used.</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define exactly one root production rule.</strong> The grammar must have a single start symbol — name it <code>Program</code> or <code>SourceFile</code>. Everything in a valid EAML file is derivable from this single rule.</div><div class="item-note"><code>Program ::= Declaration* EOF</code> — this one rule determines what constitutes a valid EAML file. <code>EOF</code> must be a defined terminal.</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Decide and document LL(k) target.</strong> Hand-written recursive descent parsers are LL(1) or LL(2). If any rule requires more than 2 tokens of lookahead, redesign that rule. Document the maximum k at each conflict point.</div><div class="item-note">LL(3+) lookahead is a grammar design smell. If you find one, it means a rule is ambiguous and needs to be restructured — not that the parser should look ahead further.</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define terminal vs. non-terminal naming conventions.</strong> Terminals in <code>ALL_CAPS</code> or <code>'quoted'</code>. Non-terminals in <code>PascalCase</code>. Be consistent throughout — a violation is a bug hiding as a typo.</div></div><div class="badge b-high">High</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define all whitespace handling rules explicitly.</strong> Whitespace is insignificant between tokens EXCEPT inside template strings and Python blocks. Define a <code>WS</code> terminal and state explicitly that it is skipped by the lexer, with the two exceptions named.</div><div class="item-note"><code>WS ::= (' ' | '\t' | '\n' | '\r')+ — SKIPPED</code>. Exceptions: (1) inside <code>PYTHON_BLOCK</code> captures, (2) inside template string text segments. State this in the grammar header.</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define comment syntax and whether comments are preserved in the AST.</strong> Single-line <code>//</code>? Block <code>/* */</code>? Doc comments <code>///</code>? Are comments attached to declarations for tooling use?</div><div class="item-note">Recommendation: <code>//</code> single-line only for MVP. Comments are skipped by the lexer (not in the AST). Doc comments (<code>///</code>) are Post-MVP. Reserve the <code>///</code> syntax now so it doesn't conflict later.</div></div><div class="badge b-high">High</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define character encoding and identifier character sets.</strong> UTF-8 file encoding. Identifier characters: ASCII letters, digits, underscore only (recommended for MVP). String literals: any UTF-8 content.</div><div class="item-note">ASCII-only identifiers prevent subtle normalization bugs and keep the lexer simple. Unicode string content is needed for multi-language prompt text — allow it in string literals.</div></div><div class="badge b-high">High</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Confirm full case sensitivity.</strong> Keywords are lowercase. Type names are PascalCase. These are conventions, but confirm that the grammar is case-sensitive (it should be) and document it.</div></div><div class="badge b-high">High</div></li>
+                    </ul>
+                </div>
+                <div class="grp">
+                    <div class="grp-label">Structural Decisions</div>
+                    <ul class="items">
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define declaration ordering rules — are forward references permitted?</strong> Can a <code>prompt</code> reference a <code>schema</code> declared later in the file? Recommend: yes, via two-pass name resolution in semantic analysis.</div><div class="item-note">Add this as a grammar note: "Declarations may appear in any order within a Program. Name resolution is performed in a separate pass after parsing." This frees users from C-style ordering constraints.</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define whether duplicate declaration names are a grammar error or semantic error.</strong> <code>schema Foo</code> appearing twice — the grammar allows it, semantic analysis rejects it. Document this boundary explicitly.</div></div><div class="badge b-high">High</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define the import declaration grammar for MVP even if single-file only.</strong> Reserve the syntax so multi-file support doesn't break existing files. <code>ImportDecl ::= 'import' ModulePath ('{' NameList '}')? ';'?</code></div></div><div class="badge b-med">Medium</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Tag every grammar construct as MVP or Post-MVP in the grammar document.</strong> Use a comment convention: <code>// MVP</code> or <code>// Post-MVP</code>. This prevents scope creep and makes it clear what the parser needs to handle at first release.</div></div><div class="badge b-crit">Critical</div></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- S1: LEXICAL -->
+        <div class="section s1" id="s1">
+            <div class="sec-head" onclick="toggleSec('s1')">
+                <span class="sec-num">02</span><span class="sec-icon">🔤</span>
+                <span class="sec-title">Lexical Layer — Tokens &amp; Terminals</span>
+                <span class="sec-prog" id="s1p">0/0</span><span class="sec-tog">▼</span>
+            </div>
+            <div class="sec-body">
+                <div class="grp">
+                    <div class="grp-label">Keywords</div>
+                    <ul class="items">
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Enumerate every reserved keyword and verify none collide with common engineering identifier names.</strong> Every keyword is permanently reserved — a user cannot name a schema after it.</div><div class="item-note">EAML keyword candidates: <code>model</code>, <code>schema</code>, <code>prompt</code>, <code>tool</code>, <code>agent</code>, <code>pipeline</code>, <code>requires</code>, <code>import</code>, <code>let</code>, <code>await</code>, <code>if</code>, <code>else</code>, <code>return</code>, <code>true</code>, <code>false</code>, <code>null</code>, <code>python</code>. Risk: <code>model</code> is extremely common in engineering vocabulary. Consider whether it can be both a keyword and a valid identifier in non-declaration contexts.</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define keyword recognition via maximal munch — identifier first, keyword lookup second.</strong> The lexer scans the longest possible identifier token, then checks if it is a keyword. <code>model_id</code> is IDENT, not KW_MODEL + something.</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define contextual keywords — words valid as identifiers outside their specific grammar positions.</strong> <code>system</code>, <code>user</code>, <code>temperature</code>, <code>max_tokens</code>, <code>caps</code>, <code>description</code> appear as field names inside declaration bodies but should be valid schema field names too.</div><div class="item-note">Recommendation: these are contextual — the parser gives them special meaning in specific positions, but the lexer always emits them as <code>IDENT</code>. This means <code>schema Foo { system: String }</code> is valid even though <code>system</code> is a prompt body field name.</div></div><div class="badge b-crit">Critical</div></li>
+                    </ul>
+                </div>
+                <div class="grp">
+                    <div class="grp-label">Identifiers &amp; Literals</div>
+                    <ul class="items">
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define the identifier grammar precisely.</strong> Start character, continuation characters, length limit (or unlimited), leading underscore validity.</div><div class="item-note"><code>IDENT ::= [a-zA-Z_][a-zA-Z0-9_]*</code> (minus all keywords). Verify: does <code>__init__</code> need to be valid? If tools can have names that match Python conventions, yes.</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define string literal grammar including all supported escape sequences.</strong> Which are valid: <code>\n</code>, <code>\t</code>, <code>\\</code>, <code>\"</code>, <code>\uXXXX</code>? What is the behavior on unknown escape like <code>\q</code>?</div><div class="item-note"><code>STRING ::= '"' (ESC | ~["\\\n])* '"'</code> where <code>ESC ::= '\\' [ntr\\"'\{\}]</code>. Note: include <code>\{</code> and <code>\}</code> to allow literal braces in template strings. Unknown escapes = parse error (not silent pass-through).</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define integer and float literal grammar.</strong> Decimal only for MVP. No leading zeros (except <code>0</code> itself — to avoid octal ambiguity). Digits required on both sides of the decimal point for floats.</div><div class="item-note"><code>INT ::= '0' | [1-9][0-9]*</code><br><code>FLOAT ::= INT '.' [0-9]+</code><br>Note: <code>.5</code> is NOT a valid EAML float — require leading digit. This avoids the <code>.field</code> vs <code>.5</code> ambiguity.</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define the negative number ambiguity resolution.</strong> Is <code>-1.0</code> a unary minus applied to <code>1.0</code>, or a single negative float token? Define which and document it.</div><div class="item-note">Recommendation: negative numbers are unary minus + positive literal, resolved by the parser. Never emit negative number tokens from the lexer — this would require context in the lexer, violating the separation of concerns.</div></div><div class="badge b-crit">Critical</div></li>
+                    </ul>
+                </div>
+                <div class="grp">
+                    <div class="grp-label">Operators &amp; Punctuation</div>
+                    <ul class="items">
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Enumerate every multi-character operator and verify maximal munch produces the correct token.</strong> Every multi-char operator must be defined so the lexer doesn't split it.</div><div class="item-note">EAML multi-char operators: <code>-></code> (ARROW), <code>==</code> (EQEQ), <code>!=</code> (NEQ), <code>&lt;=</code> (LEQ), <code>&gt;=</code> (GEQ), <code>&amp;&amp;</code> (AND), <code>||</code> (OR), <code>??</code> (COALESCE), <code>>></code> (PIPELINE, reserve even if Post-MVP). List every one. Test: does the lexer on <code>-></code> emit ARROW, or MINUS + GT?</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Resolve the <code>|</code> pipe ambiguity in advance.</strong> <code>|</code> is used in literal union types AND potentially as a pipeline separator. A single <code>|</code> token is emitted by the lexer in both cases; the parser resolves meaning from context. Document this explicitly.</div><div class="item-note">Parser rule: in a TypeExpr position, <code>|</code> is a union separator. In an Expr position, <code>|</code> is bitwise OR (if supported) or a syntax error. Recommendation: do not support bitwise OR — <code>|</code> is type-union only, eliminating the ambiguity.</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Resolve the <code>&lt;</code> / <code>&gt;</code> angle bracket / comparison operator ambiguity.</strong> The lexer always emits LT and GT. The parser resolves type-param vs. comparison from context. Document the exact context rule.</div><div class="item-note">Rule: <code>&lt;</code> is a type parameter opener ONLY when the parser is in a "type expression expected" state following a type name. In all other positions, <code>&lt;</code> is the less-than comparison operator. No ambiguity exists IF type and value expressions are in mutually exclusive grammar positions — verify this for every occurrence.</div></div><div class="badge b-crit">Critical</div></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- S2: DECLARATIONS -->
+        <div class="section s2" id="s2">
+            <div class="sec-head" onclick="toggleSec('s2')">
+                <span class="sec-num">03</span><span class="sec-icon">📋</span>
+                <span class="sec-title">Declaration Grammar — model, schema, prompt, tool, agent, pipeline</span>
+                <span class="sec-prog" id="s2p">0/0</span><span class="sec-tog">▼</span>
+            </div>
+            <div class="sec-body">
+                <div class="grp">
+                    <div class="grp-label">model Declaration</div>
+                    <ul class="items">
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define the complete <code>model</code> declaration grammar.</strong> Name, API ID string, capability list. What is optional? What is required? Is a model without capabilities valid?</div><div class="item-note"><code>ModelDecl ::= 'model' IDENT '=' 'Model' '(' STRING ',' 'caps' ':' '[' CapList ']' ')' ';'?</code><br>Decision: <code>caps</code> is required — a model without declared capabilities cannot be checked against prompt requirements. Document this constraint.</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define capability name grammar — closed enum vs. open identifiers.</strong> Closed: the grammar lists all valid capability names as keyword alternatives. Open: any identifier, validated in semantic analysis against a known set.</div><div class="item-note">Recommendation: open identifiers in grammar, validated against a registry in semantic analysis. <code>CapList ::= IDENT (',' IDENT)*</code>. This allows future capabilities without grammar changes.</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define and reserve the model fallback chain syntax.</strong> Even if Post-MVP, define <code>??</code> as the fallback operator so existing code doesn't break when it's added.</div><div class="item-note">Reserve: <code>ModelExpr ::= ModelRef ('??' ModelRef)*</code>. Tag as Post-MVP in grammar comments.</div></div><div class="badge b-med">Medium</div></li>
+                    </ul>
+                </div>
+                <div class="grp">
+                    <div class="grp-label">schema Declaration</div>
+                    <ul class="items">
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define the schema body field separator rules.</strong> Comma-separated, newline-separated, or either? Is a trailing separator allowed after the last field? Define this precisely.</div><div class="item-note">Recommendation: newline-or-comma, trailing separator allowed. <code>FieldDef (',' | NEWLINE) FieldDef* (',' | NEWLINE)?</code>. This matches user intuition and avoids "missing comma" errors that plague JSON-style formats.</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define whether schemas can extend other schemas and reserve the keyword.</strong> Even if inheritance is Post-MVP, reserve <code>extends</code> as a keyword now to prevent it becoming a valid schema field name.</div></div><div class="badge b-high">High</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define field annotation syntax and reserve the <code>@</code> sigil.</strong> <code>@description("...")</code> annotations on schema fields. Even if Post-MVP, reserve <code>@</code> to prevent it becoming an operator.</div><div class="item-note"><code>FieldDef ::= Annotation* IDENT ':' TypeExpr</code> where <code>Annotation ::= '@' IDENT ('(' ArgList ')')?</code>. Mark annotations as Post-MVP in grammar but include the production.</div></div><div class="badge b-high">High</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define whether an empty schema is valid.</strong> <code>schema Empty { }</code> — is this a parse error or a semantic warning? What does it generate in the Python output?</div></div><div class="badge b-med">Medium</div></li>
+                    </ul>
+                </div>
+                <div class="grp">
+                    <div class="grp-label">prompt Declaration</div>
+                    <ul class="items">
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define the complete prompt declaration grammar with optionality of each part marked explicitly.</strong> Parameters, defaults, requires clause, return type, body.</div><div class="item-note"><code>PromptDecl ::= 'prompt' IDENT '(' ParamList? ')' RequiresClause? '->' TypeExpr PromptBody</code><br>Required: name, <code>()</code>, <code>-></code>, return type, body with at least <code>user:</code> field. Optional: params, requires clause, system field, temperature, max_tokens.</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define prompt body field validity, required vs. optional fields, and ordering constraints.</strong></div><div class="item-note">Required: <code>user: TemplateStr</code>. Optional: <code>system: TemplateStr</code>, <code>temperature: FLOAT</code>, <code>max_tokens: INT</code>. Ordering: document whether body fields must appear in a specific order or can be in any order (recommendation: any order — validated in semantic analysis).</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define the <code>requires</code> clause grammar for single and multiple capabilities.</strong> Single: <code>requires json_mode</code>. Multiple: <code>requires [json_mode, tools]</code>. Pick one syntax or support both.</div><div class="item-note">Recommendation: <code>RequiresClause ::= 'requires' (IDENT | '[' IDENT (',' IDENT)* ']')</code> — single without brackets (ergonomic common case), multiple with brackets. Both emit the same AST node.</div></div><div class="badge b-high">High</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define whether empty parameter list <code>()</code> is required or whether parens can be omitted for zero-argument prompts.</strong></div><div class="item-note">Recommendation: <code>()</code> always required. This makes every prompt declaration syntactically identical in structure, simplifying the parser and error messages.</div></div><div class="badge b-high">High</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define parameter default value grammar and which types can be defaults.</strong> <code>lang: String = "English"</code> — the default is a literal. Can it be an expression? A reference?</div><div class="item-note">Recommendation: literal defaults only for MVP. <code>ParamDefault ::= '=' Literal</code>. Expression defaults are Post-MVP — they require evaluation-order analysis.</div></div><div class="badge b-high">High</div></li>
+                    </ul>
+                </div>
+                <div class="grp">
+                    <div class="grp-label">tool Declaration</div>
+                    <ul class="items">
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define the tool body grammar — native EAML body vs. Python bridge body as mutually exclusive alternatives.</strong></div><div class="item-note"><code>ToolBody ::= NativeBody | PythonBody</code><br><code>NativeBody ::= '{' Statement* '}'</code><br><code>PythonBody ::= 'python' '{' PYTHON_BLOCK '}'</code><br>The parser must choose between these on the first token after <code>{</code> — if it sees the <code>python</code> keyword, enter python-block mode; otherwise parse statements.</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define whether tools can have a void return type and the grammar for it.</strong> Side-effect-only tools. Option A: omit <code>-></code> entirely. Option B: explicit <code>-> Void</code>.</div><div class="item-note">Recommendation: explicit <code>-> Void</code>. Omitting the arrow is ambiguous — looks like a forgotten return type. <code>-> Void</code> is intentional and self-documenting.</div></div><div class="badge b-high">High</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define the tool description field grammar.</strong> How does a developer specify the natural-language description the LLM sees for this tool?</div><div class="item-note">Recommendation: <code>description: STRING</code> as the first optional field in the tool body. Example: <code>tool Foo(...) -> Bar { description: "Analyzes..." ... }</code>. Visible in diffs, explicit in code.</div></div><div class="badge b-high">High</div></li>
+                    </ul>
+                </div>
+                <div class="grp">
+                    <div class="grp-label">agent and pipeline</div>
+                    <ul class="items">
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define the agent declaration grammar with all valid fields.</strong></div><div class="item-note"><code>AgentDecl ::= 'agent' IDENT '{' AgentField* '}'</code><br><code>AgentField ::= 'model' ':' ModelRef | 'tools' ':' '[' ToolRef (',' ToolRef)* ']' | 'system' ':' TemplateStr | 'max_turns' ':' INT | 'on_error' ':' ErrorPolicy</code></div></div><div class="badge b-high">High</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define and reserve the pipeline composition operator <code>>></code>.</strong> Even if Post-MVP, reserve the token so two consecutive <code>></code> comparisons don't accidentally parse as a pipeline.</div><div class="item-note">The lexer must emit <code>>></code> as PIPELINE token when it sees two adjacent <code>></code> characters, not as two GT tokens. This requires a maximal munch rule in the lexer.</div></div><div class="badge b-med">Medium</div></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- S3: TYPE SYSTEM -->
+        <div class="section s3" id="s3">
+            <div class="sec-head" onclick="toggleSec('s3')">
+                <span class="sec-num">04</span><span class="sec-icon">🔷</span>
+                <span class="sec-title">Type Expression Grammar</span>
+                <span class="sec-prog" id="s3p">0/0</span><span class="sec-tog">▼</span>
+            </div>
+            <div class="sec-body">
+                <div class="grp">
+                    <div class="grp-label">Primitive Types</div>
+                    <ul class="items">
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Enumerate all built-in primitive type names and decide: keywords or predeclared identifiers?</strong> Keywords prevent shadowing. Predeclared identifiers allow a schema named <code>StringResult</code> without conflict.</div><div class="item-note">Recommendation: predeclared type identifiers, not keywords. The symbol table initializes with <code>String</code>, <code>Float</code>, <code>Int</code>, <code>Bool</code>, <code>Void</code> pre-populated. A user can shadow them (with a warning). This is more ergonomic than reserving common English words.</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define bounded type grammar precisely for each base type.</strong> What parameters does each built-in type accept? Are they positional or named?</div><div class="item-note"><code>Float&lt;min, max&gt;</code> — positional, both floats<br><code>String&lt;max: INT&gt;</code> — named, integer only<br><code>Int&lt;min: INT, max: INT&gt;</code> — both named, both optional<br>Define the valid parameter names for each type explicitly. Semantic analysis enforces them.</div></div><div class="badge b-crit">Critical</div></li>
+                    </ul>
+                </div>
+                <div class="grp">
+                    <div class="grp-label">Composite Types &amp; Precedence</div>
+                    <ul class="items">
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define literal union type grammar — minimum members, associativity, nesting.</strong></div><div class="item-note"><code>LiteralUnion ::= STRING_LIT ('|' STRING_LIT)+</code><br>Minimum two members (one string is not a union). Left-associative by definition (it doesn't matter for unions, but document it). A single <code>STRING_LIT</code> in a type position is a string type constraint, not a union.</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define optional type postfix <code>?</code> and what it binds to.</strong> <code>Tag[]?</code> — optional array of Tag, or array of optional Tag? Define which and make the grammar unambiguous.</div><div class="item-note">Rule: postfix <code>?</code> applies to the entire preceding TypeExpr at the current nesting level. <code>Tag[]?</code> = optional array of Tag. <code>Tag?[]</code> = array of optional Tag. Both are valid but mean different things — verify your grammar produces distinct AST nodes for each.</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define a TypeExpr precedence hierarchy with explicit levels.</strong> This eliminates all type expression ambiguity by construction.</div><div class="item-note">Level 1 (base): NamedType | PrimitiveType | LiteralUnion | '(' TypeExpr ')'<br>Level 2 (bounded): Level1 '&lt;' BoundParams '&gt;'<br>Level 3 (array): Level2 '[]'<br>Level 4 (optional): Level3 '?'<br>Higher levels apply after lower levels. <code>String&lt;max:100&gt;[]?</code> parses as Optional(Array(Bounded(String, max:100))).</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define whether type expressions can be parenthesized for grouping.</strong> <code>("a" | "b")[]</code> — array of a literal union. Is this valid? If so, define <code>GroupedType ::= '(' TypeExpr ')'</code> as a Level 1 base type.</div></div><div class="badge b-high">High</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Enumerate every grammar position where a TypeExpr can appear and verify each is reachable.</strong></div><div class="item-note">Positions: (1) schema field type, (2) prompt return type after <code>-></code>, (3) tool return type after <code>-></code>, (4) param type annotation, (5) let binding annotation <code>let x: T</code>, (6) pipeline step constraint. Trace each to the TypeExpr production.</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define array dimensionality limit for MVP.</strong> Single-dimension arrays only? If a user attempts <code>Tag[][]</code>, emit a clear error rather than parsing it incorrectly.</div><div class="item-note">MVP: single-dimension only. The grammar production for ArrayType is <code>Level2 '[]'</code> — not recursive. A second <code>[]</code> immediately following should produce a parse error with message: "Multi-dimensional arrays are not supported in EAML v0.1."</div></div><div class="badge b-high">High</div></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- S4: TEMPLATE STRINGS -->
+        <div class="section s4" id="s4">
+            <div class="sec-head" onclick="toggleSec('s4')">
+                <span class="sec-num">05</span><span class="sec-icon">✏️</span>
+                <span class="sec-title">Template String Grammar</span>
+                <span class="sec-prog" id="s4p">0/0</span><span class="sec-tog">▼</span>
+            </div>
+            <div class="sec-body">
+                <div class="grp">
+                    <div class="grp-label">Structure &amp; Edge Cases</div>
+                    <ul class="items">
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define template strings as a distinct lexer mode producing a structured token sequence.</strong> Plain strings and template strings must be lexically distinguishable.</div><div class="item-note"><code>TemplateStr ::= '"' TmplPart* '"'</code><br><code>TmplPart ::= TmplText | TmplInterp</code><br><code>TmplText ::= (~["{] | '{{' | '}}')+</code> — raw text, double-brace = literal brace<br><code>TmplInterp ::= '{' IDENT '}'</code> — single braces = interpolation<br>The lexer emits: TMPL_START, (TMPL_TEXT | TMPL_INTERP)*, TMPL_END</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define the escaped brace convention and document it visibly.</strong> How does a user include a literal <code>{</code> or <code>}</code> in a template string?</div><div class="item-note">Recommendation: <code>{{</code> = literal <code>{</code>, <code>}}</code> = literal <code>}</code>. Matches Python f-strings and Jinja2 — familiar. Test: <code>"JSON: {{ \"key\": \"value\" }}"</code> should produce the literal string <code>JSON: { "key": "value" }</code>.</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define what is valid inside an interpolation slot — identifier only or expressions.</strong></div><div class="item-note">MVP: identifier only. <code>TmplInterp ::= '{' IDENT '}'</code>. Post-MVP: member access <code>{{result.field}}</code>. Keeping MVP identifier-only means interpolation resolution in semantic analysis is a simple name lookup — no expression evaluation needed.</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define whether template strings can span multiple lines.</strong> Long system prompts routinely span multiple lines. If allowed, define how indentation whitespace is handled.</div><div class="item-note">Recommendation: allow multi-line. Content includes all characters including newlines. Optional: define a dedent behavior (trim common leading whitespace) as a compiler pass. Document whether indentation in multi-line templates is stripped or preserved literally.</div></div><div class="badge b-high">High</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define which string fields in declaration bodies are template strings vs. plain strings.</strong> Is every string a template string, or only specific field positions?</div><div class="item-note">Recommendation: positional rule. <code>system:</code> and <code>user:</code> fields in prompt bodies are always template strings. <code>description:</code> in tool bodies is a plain string (no interpolation needed). The grammar production for each field uses the appropriate terminal type.</div></div><div class="badge b-high">High</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define the behavior of an unclosed interpolation <code>{ IDENT</code> (missing closing brace).</strong> Lexer error or parser error? What is the recovery strategy?</div><div class="item-note">Lexer error: emit TMPL_ERROR token with the offending position. The parser detects TMPL_ERROR and emits diagnostic "Unclosed interpolation in template string at line:col" and recovers to the next string boundary.</div></div><div class="badge b-high">High</div></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- S5: PYTHON BRIDGE -->
+        <div class="section s5" id="s5">
+            <div class="sec-head" onclick="toggleSec('s5')">
+                <span class="sec-num">06</span><span class="sec-icon">🐍</span>
+                <span class="sec-title">Python Bridge Grammar</span>
+                <span class="sec-prog" id="s5p">0/0</span><span class="sec-tog">▼</span>
+            </div>
+            <div class="sec-body">
+                <div class="grp">
+                    <div class="grp-label">Import Declarations</div>
+                    <ul class="items">
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define Python import declaration grammar precisely.</strong> File-level declarations. Module path as a STRING (not a dotted IDENT expression). Optional alias.</div><div class="item-note"><code>PythonImport ::= 'import' 'python' STRING ('as' IDENT)? ';'?</code><br>Example: <code>import python "pandas" as pd</code><br>The module path is always STRING — this sidesteps all dotted-name ambiguity. <code>import python "sklearn.linear_model" as skl</code> is unambiguous.</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define whether Python imports can appear anywhere in the file or only at the top.</strong> Document as a semantic constraint (warning, not error) if mixing positions should be permitted.</div></div><div class="badge b-med">Medium</div></li>
+                    </ul>
+                </div>
+                <div class="grp">
+                    <div class="grp-label">Python Block Lexer Specification</div>
+                    <ul class="items">
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define the Python block as a lexer-mode opaque capture region.</strong> The lexer enters a special mode on seeing <code>python {</code> and exits when the matching <code>}</code> is found at depth zero.</div><div class="item-note"><code>PYTHON_BLOCK</code> is emitted as a single token containing the raw Python source. Lexer algorithm: on <code>python</code> keyword + <code>{</code>, enter PYTHON_BLOCK mode. depth=1. For each <code>{</code> encountered: depth++. For each <code>}</code>: depth--. When depth==0: emit PYTHON_BLOCK(captured_text) and return to EAML mode.</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define the brace-inside-Python-string-literal problem and your chosen resolution.</strong> This is the single hardest edge case in the Python bridge lexer.</div><div class="item-note">Three options — choose one and document:<br>(A) <strong>Mini Python string scanner</strong>: when in PYTHON_BLOCK mode, track Python string literals (single/double/triple quoted) and don't count braces inside them. Correct but complex.<br>(B) <strong>Delimiter syntax</strong>: require Python blocks to use a custom delimiter like <code>python #{ ... }#</code> that Python code cannot accidentally close. Simple and foolproof.<br>(C) <strong>MVP limitation</strong>: document that Python code in <code>python { }</code> blocks must not contain unescaped literal <code>}</code> outside of braced constructs. Acceptable for MVP if documented clearly.</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define whether Python blocks are syntax-validated by the EAML compiler.</strong> Opaque capture (no Python parsing) or optional <code>py_compile</code> post-pass?</div><div class="item-note">Recommendation: opaque for core compiler. Add an optional <code>--check-python</code> CLI flag that runs <code>python -m py_compile</code> on extracted blocks if Python is in PATH. Document this as "best effort" — the EAML compiler does not guarantee Python block correctness.</div></div><div class="badge b-high">High</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define the return type bridge contract between Python block and EAML type system.</strong></div><div class="item-note">Grammar: the tool declaration's <code>-> ReturnType</code> creates the contract. Codegen: the emitted Python function wraps the python block's return value in <code>ReturnType.model_validate(result)</code>. The grammar itself cannot enforce this — it is a runtime contract documented as a semantic rule: "The return value of a python { } block must be compatible with the tool's declared return type."</div></div><div class="badge b-high">High</div></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- S6: EXPRESSIONS -->
+        <div class="section s6" id="s6">
+            <div class="sec-head" onclick="toggleSec('s6')">
+                <span class="sec-num">07</span><span class="sec-icon">🔣</span>
+                <span class="sec-title">Expression Grammar &amp; Operator Precedence</span>
+                <span class="sec-prog" id="s6p">0/0</span><span class="sec-tog">▼</span>
+            </div>
+            <div class="sec-body">
+                <div class="grp">
+                    <div class="grp-label">Operator Precedence Table — Define Before Writing Parser</div>
+                    <ul class="items">
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Write out the complete operator precedence table, lowest to highest, with associativity for every operator.</strong> This table IS the expression grammar. Write it before coding anything.</div><div class="item-note">Recommended EAML table:<br>1 <code>||</code> — left<br>2 <code>&amp;&amp;</code> — left<br>3 <code>==</code> <code>!=</code> — left, non-assoc<br>4 <code>&lt;</code> <code>&gt;</code> <code>&lt;=</code> <code>&gt;=</code> — left, non-assoc<br>5 <code>+</code> <code>-</code> — left<br>6 <code>*</code> <code>/</code> — left<br>7 Unary <code>!</code> <code>-</code> — right<br>8 <code>.</code> member access — left<br>9 <code>()</code> call, <code>[]</code> index — left (highest)<br>Document this verbatim in <code>grammar.ebnf</code> as a comment table.</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define chained comparison operator behavior.</strong> Is <code>0.0 &lt; x &lt; 1.0</code> valid? Most languages parse this as <code>(0.0 &lt; x) &lt; 1.0</code> (nonsensical). Define explicitly.</div><div class="item-note">Recommendation: non-associative comparisons. <code>0.0 &lt; x &lt; 1.0</code> is a parse error with hint: "Chained comparisons are not supported. Use: <code>x &gt; 0.0 &amp;&amp; x &lt; 1.0</code>". Better error than silent wrong behavior.</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define <code>await</code> as a prefix operator with explicit precedence.</strong></div><div class="item-note"><code>AwaitExpr ::= 'await' UnaryExpr</code> — binds tighter than binary operators but looser than postfix. <code>await a.call() + b</code> is <code>(await (a.call())) + b</code>, not <code>await ((a.call()) + b)</code>. Document this binding rule explicitly.</div></div><div class="badge b-high">High</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define member access chaining through call results.</strong> <code>Claude.call(prompt).field</code> — is postfix chaining valid after a call expression? Define how many levels can chain.</div><div class="item-note"><code>PostfixExpr ::= PrimaryExpr Suffix*</code> where <code>Suffix ::= '.' IDENT | '(' ArgList ')' | '[' Expr ']'</code>. Unlimited chaining, left-associative. This is standard and expected.</div></div><div class="badge b-high">High</div></li>
+                    </ul>
+                </div>
+                <div class="grp">
+                    <div class="grp-label">Statement Grammar</div>
+                    <ul class="items">
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define the let binding grammar — is the type annotation required for MVP?</strong></div><div class="item-note">Recommendation: required for MVP. <code>LetDecl ::= 'let' IDENT ':' TypeExpr '=' Expr ';'?</code>. Full type inference deferred to Post-MVP. Users must write <code>let result: SentimentResult = ...</code>.</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define semicolon policy — mandatory, optional, or automatic insertion.</strong></div><div class="item-note">Recommendation: optional. Accept semicolons if present; do not require them. This is NOT ASI (no complex rules) — just tolerance. The parser determines statement end from the next token's FIRST set. Document: "Semicolons are optional statement terminators in EAML."</div></div><div class="badge b-high">High</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define if/else grammar and else-if chaining.</strong></div><div class="item-note"><code>IfStmt ::= 'if' Expr Block ('else' (IfStmt | Block))?</code><br>The recursive <code>else (IfStmt | Block)</code> handles all chaining by natural recursion. Note: this is potentially ambiguous (the dangling-else problem). Resolve with: <code>else</code> always binds to the nearest preceding <code>if</code>. Document this rule.</div></div><div class="badge b-high">High</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define the dangling-else problem and its resolution for EAML.</strong></div><div class="item-note">The dangling-else: <code>if a if b X else Y</code> — does <code>else Y</code> belong to the inner or outer if? Resolution: <code>else</code> always binds to the nearest enclosing <code>if</code> (greedy/eager binding). This is standard across C, Java, Rust. Document it as a grammar note.</div></div><div class="badge b-crit">Critical</div></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- S7: AMBIGUITY RESOLUTION -->
+        <div class="section s7" id="s7">
+            <div class="sec-head" onclick="toggleSec('s7')">
+                <span class="sec-num">08</span><span class="sec-icon">⚠️</span>
+                <span class="sec-title">Explicit Ambiguity Resolution — Known Conflict Patterns</span>
+                <span class="sec-prog" id="s7p">0/0</span><span class="sec-tog">▼</span>
+            </div>
+            <div class="sec-body">
+                <div class="grp">
+                    <div class="grp-label">Structural Conflicts — Resolve Each One Explicitly</div>
+                    <ul class="items">
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>CONFLICT: <code>{ }</code> as block vs. object literal.</strong> Does EAML have object literal syntax? If not, all <code>{ }</code> are blocks and there is no conflict. Document this decision.</div><div class="item-note">Recommendation: no object literals. Schemas are the structured data construct. All <code>{ }</code> are block delimiters. This eliminates the ambiguity entirely — a design win.</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>CONFLICT: keyword <code>model</code> used as identifier in expression context.</strong> <code>Claude.call()</code> where <code>Claude</code> is a <code>model</code>-declared value, vs. starting a new declaration.</div><div class="item-note">Resolution: <code>model</code> keyword + IDENT token = ModelDecl. IDENT token (even if it names a model) in expression position = IdentExpr looked up in symbol table. The parser distinguishes by checking: am I at a declaration-start position?</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>CONFLICT: <code>-></code> in return type vs. potential function type syntax.</strong> Does EAML have function types like <code>(String) -> Int</code>? If not, <code>-></code> only appears in declarations. Document whether function types exist.</div><div class="item-note">Recommendation: no function types in MVP. <code>-></code> appears exclusively after parameter lists in declarations. Zero ambiguity in the grammar. Post-MVP: function types can be added as a TypeExpr production.</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>CONFLICT: <code>|</code> in union type vs. bitwise OR.</strong> Define whether bitwise OR exists in EAML. If not, <code>|</code> is exclusively a union separator in type contexts.</div><div class="item-note">Recommendation: no bitwise OR in EAML. <code>|</code> is valid ONLY in TypeExpr positions as a union separator. In Expr positions, <code>|</code> is a syntax error with hint: "Did you mean '||' for logical OR?" Eliminates the ambiguity entirely.</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>CONFLICT: <code>&lt;</code>/<code>&gt;</code> angle brackets vs. comparison operators.</strong> Resolved by grammar position — define the rule precisely.</div><div class="item-note">Rule: <code>&lt;</code> is a type parameter delimiter ONLY when the parser is evaluating a TypeExpr and has just parsed a TypeName. In all Expr contexts, <code>&lt;</code> is always less-than. Verify: TypeExpr and Expr contexts are ALWAYS mutually exclusive in the grammar. If any rule allows both in the same position, redesign it.</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>CONFLICT: built-in type name vs. user schema name (shadowing).</strong> <code>schema String { ... }</code> shadows the built-in. Document the resolution rule.</div><div class="item-note">Resolution: user declarations shadow built-in types in the symbol table. Emit a warning: "Declaration 'String' shadows built-in type. Use a different name to avoid confusion." The declaration is valid — the warning is advisory.</div></div><div class="badge b-high">High</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>CONFLICT: empty <code>requires</code> list vs. absent <code>requires</code> clause.</strong> <code>requires []</code> vs. no requires clause. Are these semantically equivalent? Define the grammar distinction.</div><div class="item-note">Recommendation: make them equivalent. <code>requires []</code> and absent <code>requires</code> both mean "no capability requirements." The AST uses a <code>requires: Vec&lt;Symbol&gt;</code> field that is empty in both cases. Document this so the emitted code handles both correctly.</div></div><div class="badge b-high">High</div></li>
+                    </ul>
+                </div>
+                <div class="grp">
+                    <div class="grp-label">Left-Recursion &amp; LL(k) Validity</div>
+                    <ul class="items">
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Verify the grammar has zero left-recursive productions.</strong> Left recursion causes infinite loops in recursive descent. Check every production.</div><div class="item-note">Check: for every rule <code>A ::= ...</code>, can <code>A</code> derive a string starting with <code>A</code>? If yes: left recursion. Fix: rewrite as right recursion or as an iterative rule with <code>{ ... }</code> (repetition). The expression grammar is the most common source — use Pratt parsing to avoid left recursion in expression rules.</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Compute FIRST and FOLLOW sets for every non-terminal production with multiple alternatives.</strong></div><div class="item-note">A grammar is LL(1) if the FIRST sets of all alternatives for every rule are disjoint. Compute these for: TypeExpr alternatives, Declaration alternatives, PromptBody field alternatives, Expr alternatives. Use a grammar analysis tool or compute manually and verify on paper.</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Document every rule that requires LL(2) lookahead and verify no rule requires LL(3+).</strong></div><div class="item-note">Expected LL(2) points: BoundedType vs. TypeName followed by comparison operator. Every LL(2) point must be documented with: the two alternatives, the distinguishing token sequence, and the rule for the parser to follow.</div></div><div class="badge b-crit">Critical</div></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- S8: ERROR RECOVERY -->
+        <div class="section s8" id="s8">
+            <div class="sec-head" onclick="toggleSec('s8')">
+                <span class="sec-num">09</span><span class="sec-icon">🚑</span>
+                <span class="sec-title">Error Recovery Grammar</span>
+                <span class="sec-prog" id="s8p">0/0</span><span class="sec-tog">▼</span>
+            </div>
+            <div class="sec-body">
+                <div class="grp">
+                    <div class="grp-label">Recovery Strategy</div>
+                    <ul class="items">
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define primary synchronization tokens for declaration-level error recovery.</strong> When the parser encounters an unexpected token inside a declaration, these tokens are the "safe points" to skip to.</div><div class="item-note">Primary sync set: <code>model</code>, <code>schema</code>, <code>prompt</code>, <code>tool</code>, <code>agent</code>, <code>pipeline</code>, <code>import</code>, <code>EOF</code>. Strategy: on declaration-level error, consume tokens until one of these is seen, then resume parsing the next declaration. At most one declaration is lost per error.</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define secondary synchronization for schema field-level recovery.</strong> When a field definition is malformed, recover to the next field rather than the next declaration.</div><div class="item-note">Field-level sync: on field parse error, skip to the next <code>,</code> (field separator) or <code>}</code> (schema close). This allows other fields in the same schema to parse correctly.</div></div><div class="badge b-high">High</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define whether ErrorNode appears in the AST or errors are silent.</strong></div><div class="item-note">Recommendation: include <code>ErrorNode { span: Span, message: String }</code> in the AST. Downstream compiler phases check for ErrorNode and suppress cascading errors on subtrees that contain one. Without ErrorNode, malformed subtrees produce phantom errors in semantic analysis.</div></div><div class="badge b-high">High</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define a maximum error count threshold before the compiler aborts.</strong></div><div class="item-note">Default: 20 errors. Configurable via <code>--max-errors N</code>. After N errors, emit "Too many errors. Fix the above and recompile." — continuing to generate hundreds of cascading errors degrades UX significantly.</div></div><div class="badge b-med">Medium</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Define panic mode vs. phrase-level recovery strategy.</strong> Panic mode: discard tokens until sync token. Phrase-level: insert or delete a single token to fix the error. Document which strategy EAML uses and where each applies.</div><div class="item-note">Recommendation: panic mode at declaration level (simple, predictable), phrase-level for common mistakes at expression level (e.g., missing <code>)</code> at end of parameter list). The latter gives better error messages for the most common typos.</div></div><div class="badge b-med">Medium</div></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- S9: TEST COVERAGE -->
+        <div class="section s9" id="s9">
+            <div class="sec-head" onclick="toggleSec('s9')">
+                <span class="sec-num">10</span><span class="sec-icon">✅</span>
+                <span class="sec-title">Grammar Verification — Example Program Suite</span>
+                <span class="sec-prog" id="s9p">0/0</span><span class="sec-tog">▼</span>
+            </div>
+            <div class="sec-body">
+                <div class="grp">
+                    <div class="grp-label">Required Positive Tests — Must Parse Successfully</div>
+                    <ul class="items">
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Minimal valid program.</strong> One schema with one field, one prompt using it, one let binding. If this doesn't parse, nothing will.</div></div><div class="badge b-test">Test</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>All schema field type variants.</strong> One schema covering: named type, bounded Float, bounded String, bounded Int, literal union (2 members), literal union (4 members), array, optional, optional array, array of optional, parenthesized grouped union array.</div></div><div class="badge b-test">Test</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Prompt with all body fields present.</strong> <code>system</code>, <code>user</code>, <code>temperature</code>, <code>max_tokens</code> all specified. Multiple parameters, one with default value, one without.</div></div><div class="badge b-test">Test</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Template string edge cases.</strong> Empty string (no interpolations), one interpolation, multiple interpolations, adjacent interpolations with no text between, escaped double-braces, multi-line template.</div></div><div class="badge b-test">Test</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Python bridge tool.</strong> Tool with Python import declarations, a <code>python { }</code> block containing dict literals (braces within braces), string literals with braces, and an explicit return statement.</div></div><div class="badge b-test">Test</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>All capability syntax variants.</strong> Single capability without brackets, multiple capabilities with brackets, empty brackets, no requires clause.</div></div><div class="badge b-test">Test</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Complex expression program.</strong> Let binding with type annotation, member access chain, <code>==</code> comparison, <code>&amp;&amp;</code> logical expression, <code>&gt;</code> comparison, await expression, if/else with else-if chain.</div></div><div class="badge b-test">Test</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Full agent declaration.</strong> All fields: model, tools list (3 tools), system template, max_turns, on_error policy.</div></div><div class="badge b-test">Test</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Forward reference program.</strong> Prompt declared before the schema it references. Verifies forward references are grammatically permitted and the parser doesn't reject them at parse time.</div></div><div class="badge b-test">Test</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Declarations with optional semicolons.</strong> Same program written twice — once with semicolons after every statement, once with none. Both must produce identical ASTs.</div></div><div class="badge b-test">Test</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Contextual keywords as identifiers.</strong> A schema with fields named <code>system</code>, <code>user</code>, <code>temperature</code>. A tool named <code>model_analyzer</code>. Verifies contextual keywords don't interfere with valid identifiers.</div></div><div class="badge b-test">Test</div></li>
+                    </ul>
+                </div>
+                <div class="grp">
+                    <div class="grp-label">Required Negative Tests — Must Fail With Specific Errors</div>
+                    <ul class="items">
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Keyword as declaration name.</strong> <code>schema prompt { ... }</code> → error: "Expected identifier after 'schema', got keyword 'prompt'."</div></div><div class="badge b-test">Test</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Missing <code>-></code> on prompt.</strong> <code>prompt Foo() { ... }</code> without return type → error: "Expected '->' after parameter list."</div></div><div class="badge b-test">Test</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Unclosed template string interpolation.</strong> <code>"Hello {name"</code> (missing closing brace) → lexer error with exact position.</div></div><div class="badge b-test">Test</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Single-member literal union.</strong> <code>field: "only_one"</code> — this should parse as a string type annotation, NOT fail. Verify it does NOT produce a union AST node. (This is a positive test disguised as a potential ambiguity.)</div></div><div class="badge b-test">Test</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Multi-dimensional array.</strong> <code>field: Tag[][]</code> → parse error: "Multi-dimensional arrays are not supported in EAML v0.1."</div></div><div class="badge b-test">Test</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Chained comparison (if non-associative).</strong> <code>if 0.0 &lt; x &lt; 1.0</code> → parse error with hint: "Use: <code>x &gt; 0.0 &amp;&amp; x &lt; 1.0</code>"</div></div><div class="badge b-test">Test</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Error recovery test.</strong> A file with a deliberate syntax error in declaration #2 of 5. Verify: declaration #1 parsed correctly, #2 emits one error and produces ErrorNode, #3-5 parsed correctly. The error count is exactly 1.</div></div><div class="badge b-test">Test</div></li>
+                    </ul>
+                </div>
+                <div class="grp">
+                    <div class="grp-label">Grammar Document Completeness Checklist</div>
+                    <ul class="items">
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Every non-terminal is reachable from the root <code>Program</code> production.</strong> Run a reachability analysis — any unreachable non-terminal is dead grammar and should be removed or connected.</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Every terminal referenced in a production is defined in the lexical rules section.</strong> No undefined terminals. Every <code>ALL_CAPS</code> token name has a corresponding lexer production.</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Every example program in <code>examples/</code> has been traced through the grammar rules manually.</strong> If any example cannot be derived from the grammar, fix either the example or the grammar before writing code.</div></div><div class="badge b-crit">Critical</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Railroad diagrams generated for every non-trivial production rule.</strong> Visual grammar diagrams reveal structural issues invisible in text. Generate one for every declaration type and every TypeExpr production.</div><div class="item-note">Tool: railroad.xstate.dev — paste EBNF, get SVG. Generate diagrams for: Program, TypeExpr, PromptDecl, SchemaDecl, ToolDecl, TemplateStr, Expression, IfStmt. Review each visually before finalizing.</div></div><div class="badge b-high">High</div></li>
+                        <li class="item" onclick="toggle(this)"><div class="chk"></div><div class="item-body"><div class="item-text"><strong>Every grammar decision documented with a rationale comment in <code>grammar.ebnf</code>.</strong> Future maintainers (including yourself in 6 months) need to know WHY a rule is shaped the way it is, not just what it is.</div></div><div class="badge b-high">High</div></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- #sections -->
+
+    <footer>
+        <span>EAML Grammar Checklist · LLML-GRAM-001 · Rev 0.1 · 2026-03-14</span>
+        <span id="ft-count">0 / 0 complete</span>
+    </footer>
+</div>
+
+<script>
+    const KEY = 'eaml-grammar-v1';
+    let state = {};
+    try { state = JSON.parse(localStorage.getItem(KEY)||'{}'); } catch(e){}
+
+    function toggle(el){
+        el.classList.toggle('done');
+        state[getItemId(el)] = el.classList.contains('done');
+        try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}
+        updateProgress();
+    }
+
+    function getItemId(el){
+        const secId = el.closest('.section').id;
+        const grps = Array.from(el.closest('.sec-body').querySelectorAll('.grp'));
+        const gi = grps.indexOf(el.closest('.grp'));
+        const items = Array.from(el.closest('.items').querySelectorAll('.item'));
+        return `${secId}-${gi}-${items.indexOf(el)}`;
+    }
+
+    function toggleSec(id){
+        document.getElementById(id).classList.toggle('open');
+    }
+
+    function restore(){
+        document.querySelectorAll('.section').forEach(sec=>{
+            Array.from(sec.querySelectorAll('.grp')).forEach((grp,gi)=>{
+                Array.from(grp.querySelectorAll('.item')).forEach((item,ii)=>{
+                    if(state[`${sec.id}-${gi}-${ii}`]) item.classList.add('done');
+                });
+            });
+        });
+    }
+
+    function updateProgress(){
+        const all = document.querySelectorAll('.item');
+        const done = document.querySelectorAll('.item.done');
+        const total = all.length, count = done.length;
+        document.getElementById('pf').style.width = (total?(count/total*100):0)+'%';
+        document.getElementById('pc').textContent = `${count} / ${total}`;
+        document.getElementById('ft-count').textContent = `${count} / ${total} complete`;
+        document.querySelectorAll('.section').forEach(sec=>{
+            const sp = sec.querySelector('[id$="p"]');
+            if(sp){
+                const a=sec.querySelectorAll('.item').length;
+                const d=sec.querySelectorAll('.item.done').length;
+                sp.textContent=`${d}/${a}`;
+            }
+        });
+    }
+
+    restore();
+    updateProgress();
+    document.getElementById('s0').classList.add('open');
+</script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# EAML pre-commit hook
+# Runs Rust and Python linting, typechecks, and tests.
+# Install: git config core.hooksPath .githooks
+
+BOLD='\033[1m'
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+CYAN='\033[0;36m'
+RESET='\033[0m'
+
+step() {
+    echo -e "${CYAN}${BOLD}[$1/$TOTAL] $2${RESET}"
+}
+
+fail() {
+    echo -e "${RED}${BOLD}FAILED:${RESET} $1"
+    exit 1
+}
+
+TOTAL=7
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+# --- Rust ---
+
+step 1 "Rust format check"
+cargo fmt --all -- --check || fail "cargo fmt (run 'make fmt' to fix)"
+
+step 2 "Rust compile check"
+cargo check --workspace || fail "cargo check"
+
+step 3 "Rust clippy"
+cargo clippy --workspace -- -D warnings || fail "cargo clippy"
+
+step 4 "Rust tests"
+cargo test --workspace || fail "cargo test"
+
+# --- Python ---
+
+step 5 "Python lint (ruff)"
+(cd python && uv run ruff check .) || fail "ruff check (run 'cd python && uv run ruff check --fix .' to fix)"
+
+step 6 "Python typecheck (mypy)"
+(cd python && uv run mypy src/) || fail "mypy"
+
+step 7 "Python tests"
+(cd python && uv run pytest) || test $? -eq 5  # exit 5 = no tests collected, OK
+
+echo -e "${GREEN}${BOLD}All checks passed.${RESET}"

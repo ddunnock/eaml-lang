@@ -1,0 +1,11 @@
+[package]
+name    = "eaml-semantic"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+eaml-errors = { path = "../eaml-errors" }
+eaml-lexer = { path = "../eaml-lexer" }
+eaml-parser = { path = "../eaml-parser" }
+
+[dev-dependencies]

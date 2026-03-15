@@ -1,0 +1,10 @@
+[package]
+name    = "eaml-errors"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+thiserror        = { workspace = true }
+codespan-reporting = { workspace = true }
+
+[dev-dependencies]
