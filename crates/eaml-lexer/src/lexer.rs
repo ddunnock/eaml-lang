@@ -63,6 +63,20 @@ impl<'src> Lexer<'src> {
         }
     }
 
+    /// Emits a SYN001 diagnostic for an unexpected character at the given span.
+    fn emit_unexpected_char(&mut self, span: Span) {
+        self.diagnostics.push(Diagnostic::new(
+            ErrorCode::Syn001,
+            format!(
+                "unexpected character `{}`",
+                self.source[span.clone()].escape_debug()
+            ),
+            span,
+            Severity::Error,
+            "unexpected character".to_string(),
+        ));
+    }
+
     /// Runs the lexer to completion, populating `self.tokens` and `self.diagnostics`.
     fn tokenize(&mut self) {
         loop {
@@ -162,17 +176,7 @@ impl<'src> Lexer<'src> {
                     }
                 }
                 Err(()) => {
-                    // Unexpected character: emit SYN001 and skip
-                    self.diagnostics.push(Diagnostic::new(
-                        ErrorCode::Syn001,
-                        format!(
-                            "unexpected character `{}`",
-                            self.source[abs_start..abs_end].escape_debug()
-                        ),
-                        abs_span.clone(),
-                        Severity::Error,
-                        "unexpected character".to_string(),
-                    ));
+                    self.emit_unexpected_char(abs_span);
                     self.pos = abs_end;
                 }
             }
@@ -305,8 +309,10 @@ impl<'src> Lexer<'src> {
                             }
                             _ => {
                                 // Invalid escape: emit SYN004
-                                let escape_char =
-                                    self.source[self.pos + 1..].chars().next().unwrap();
+                                let escape_char = self.source[self.pos + 1..]
+                                    .chars()
+                                    .next()
+                                    .expect("pos+1 is within bounds");
                                 let char_len = escape_char.len_utf8();
                                 self.diagnostics.push(Diagnostic::new(
                                     ErrorCode::Syn004,
@@ -363,7 +369,10 @@ impl<'src> Lexer<'src> {
                     // Regular character
                     text_has_content = true;
                     // Advance by one UTF-8 character
-                    let ch = self.source[self.pos..].chars().next().unwrap();
+                    let ch = self.source[self.pos..]
+                        .chars()
+                        .next()
+                        .expect("pos is within bounds");
                     self.pos += ch.len_utf8();
                 }
             }
@@ -465,16 +474,7 @@ impl<'src> Lexer<'src> {
                     }
                 }
                 Err(()) => {
-                    self.diagnostics.push(Diagnostic::new(
-                        ErrorCode::Syn001,
-                        format!(
-                            "unexpected character `{}`",
-                            self.source[abs_start..abs_end].escape_debug()
-                        ),
-                        abs_span.clone(),
-                        Severity::Error,
-                        "unexpected character".to_string(),
-                    ));
+                    self.emit_unexpected_char(abs_span);
                     self.pos = abs_end;
                 }
             }

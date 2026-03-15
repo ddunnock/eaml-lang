@@ -1,12 +1,9 @@
 //! Tests for keyword tokenization via the public lex() API.
 
-use eaml_lexer::{lex, TokenKind};
+mod common;
 
-/// Helper to extract token kinds from source.
-fn kinds(source: &str) -> Vec<TokenKind> {
-    let output = lex(source);
-    output.tokens.iter().map(|t| t.kind.clone()).collect()
-}
+use common::kinds;
+use eaml_lexer::{lex, TokenKind};
 
 #[test]
 fn lex_model_keyword() {
@@ -88,7 +85,7 @@ fn lex_all_27_keywords_in_one_string() {
 #[test]
 fn lex_schema_foo_braces() {
     let output = lex("schema Foo { }");
-    let kinds: Vec<_> = output.tokens.iter().map(|t| t.kind.clone()).collect();
+    let kinds: Vec<_> = output.tokens.iter().map(|t| t.kind).collect();
     assert_eq!(kinds[0], TokenKind::KwSchema);
     // Foo is an identifier
     match &kinds[1] {

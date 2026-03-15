@@ -2,25 +2,10 @@
 //!
 //! Tests opaque content capture, }% line-start detection, and error recovery.
 
-use eaml_lexer::{lex, LexOutput, TokenKind};
+mod common;
 
-/// Formats diagnostics from a LexOutput for snapshot comparison.
-fn format_diagnostics(output: &LexOutput) -> String {
-    if output.diagnostics.is_empty() {
-        return "no diagnostics".to_string();
-    }
-    output
-        .diagnostics
-        .iter()
-        .map(|d| {
-            format!(
-                "[{}] {}..{}: {}",
-                d.code, d.span.start, d.span.end, d.message
-            )
-        })
-        .collect::<Vec<_>>()
-        .join("\n")
-}
+use common::format_diagnostics;
+use eaml_lexer::{lex, LexOutput, TokenKind};
 
 /// Formats both tokens and the source content of PythonBlock tokens.
 fn format_tokens_with_content<'a>(output: &'a LexOutput, source: &'a str) -> String {

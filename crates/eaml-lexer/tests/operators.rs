@@ -1,11 +1,9 @@
 //! Tests for operator and delimiter tokenization.
 
-use eaml_lexer::{lex, TokenKind};
+mod common;
 
-fn kinds(source: &str) -> Vec<TokenKind> {
-    let output = lex(source);
-    output.tokens.iter().map(|t| t.kind.clone()).collect()
-}
+use common::kinds;
+use eaml_lexer::TokenKind;
 
 #[test]
 fn lex_single_char_operators() {

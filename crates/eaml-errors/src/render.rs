@@ -44,7 +44,8 @@ pub fn render_diagnostics(files: &SimpleFiles<&str, &str>, diagnostics: &[Diagno
     let config = term::Config::default();
     for diag in diagnostics {
         let cs_diag = to_codespan(diag, 0);
-        term::emit(&mut writer.lock(), &config, files, &cs_diag).unwrap();
+        term::emit(&mut writer.lock(), &config, files, &cs_diag)
+            .expect("writing to stderr should not fail");
     }
 }
 
@@ -54,7 +55,8 @@ pub fn render_to_string(files: &SimpleFiles<&str, &str>, diagnostics: &[Diagnost
     let config = term::Config::default();
     for diag in diagnostics {
         let cs_diag = to_codespan(diag, 0);
-        term::emit(&mut buffer, &config, files, &cs_diag).unwrap();
+        term::emit(&mut buffer, &config, files, &cs_diag)
+            .expect("writing to buffer should not fail");
     }
     String::from_utf8(buffer.into_inner()).expect("codespan-reporting should produce valid UTF-8")
 }

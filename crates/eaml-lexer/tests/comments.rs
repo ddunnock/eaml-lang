@@ -1,11 +1,9 @@
 //! Tests for comment skipping and span accuracy.
 
-use eaml_lexer::{lex, TokenKind};
+mod common;
 
-fn kinds(source: &str) -> Vec<TokenKind> {
-    let output = lex(source);
-    output.tokens.iter().map(|t| t.kind.clone()).collect()
-}
+use common::kinds;
+use eaml_lexer::{lex, TokenKind};
 
 #[test]
 fn lex_line_comment_skipped() {
@@ -65,7 +63,7 @@ fn lex_multiple_comments_mixed() {
 #[test]
 fn lex_comment_does_not_appear_in_tokens() {
     let output = lex("model // this is a comment\nschema");
-    let ks: Vec<_> = output.tokens.iter().map(|t| t.kind.clone()).collect();
+    let ks: Vec<_> = output.tokens.iter().map(|t| t.kind).collect();
     // Should only have KwModel, KwSchema, Eof -- no comment tokens
     assert_eq!(
         ks,
@@ -76,7 +74,7 @@ fn lex_comment_does_not_appear_in_tokens() {
 #[test]
 fn lex_unexpected_char_produces_error_and_continues() {
     let output = lex("model\x01schema");
-    let ks: Vec<_> = output.tokens.iter().map(|t| t.kind.clone()).collect();
+    let ks: Vec<_> = output.tokens.iter().map(|t| t.kind).collect();
     // Should have model, schema, eof (the \x01 is skipped with error)
     assert!(ks.contains(&TokenKind::KwModel));
     assert!(ks.contains(&TokenKind::KwSchema));

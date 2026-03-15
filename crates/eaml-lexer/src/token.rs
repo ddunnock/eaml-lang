@@ -25,7 +25,7 @@ impl Token {
 }
 
 /// All token kinds produced by the EAML lexer.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TokenKind {
     // === Keywords (active v0.1, 15) ===
     /// `model`

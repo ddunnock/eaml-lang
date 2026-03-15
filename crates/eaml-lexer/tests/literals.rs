@@ -1,11 +1,9 @@
 //! Tests for literal tokenization (integers, floats, strings).
 
-use eaml_lexer::{lex, TokenKind};
+mod common;
 
-fn kinds(source: &str) -> Vec<TokenKind> {
-    let output = lex(source);
-    output.tokens.iter().map(|t| t.kind.clone()).collect()
-}
+use common::kinds;
+use eaml_lexer::{lex, TokenKind};
 
 // === Integer literals ===
 
@@ -87,7 +85,7 @@ fn lex_empty_string() {
 #[test]
 fn lex_string_with_newline_escape() {
     let output = lex(r#""he\nllo""#);
-    let ks: Vec<_> = output.tokens.iter().map(|t| t.kind.clone()).collect();
+    let ks: Vec<_> = output.tokens.iter().map(|t| t.kind).collect();
     assert_eq!(
         ks,
         vec![
@@ -116,7 +114,7 @@ fn lex_string_with_all_valid_escapes() {
 #[test]
 fn lex_unterminated_string() {
     let output = lex(r#""hello"#);
-    let ks: Vec<_> = output.tokens.iter().map(|t| t.kind.clone()).collect();
+    let ks: Vec<_> = output.tokens.iter().map(|t| t.kind).collect();
     // Should still produce TmplStart, TmplText, TmplEnd (recovery), Eof
     assert_eq!(ks[0], TokenKind::TmplStart);
     assert!(ks.contains(&TokenKind::TmplEnd));
