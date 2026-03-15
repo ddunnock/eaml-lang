@@ -50,8 +50,6 @@ pub struct Lexer<'src> {
 
 impl<'src> Lexer<'src> {
     /// Creates a new lexer for the given source text.
-    ///
-    /// The source is normalized to LF line endings before tokenization.
     fn new(source: &'src str) -> Self {
         Self {
             source,
@@ -457,13 +455,12 @@ impl<'src> Lexer<'src> {
                             // Nested string inside interpolation: start template
                             self.tokens.push(Token::new(TokenKind::TmplStart, abs_span));
                             self.pos = abs_end;
-                            // We need to save the current interpolation state and
-                            // scan the nested string. For simplicity, we hand-scan
-                            // the nested string inline (recursive template strings
-                            // are not expected in v0.1, but we handle the basic case).
+                            // Save interpolation state before scanning nested string,
+                            // since scan_template_string() resets mode to Normal.
+                            let saved_mode = self.mode;
                             self.scan_template_string();
-                            // After the nested string closes, we're back to scanning
-                            // the interpolation. Return true to re-enter the loop.
+                            // Restore interpolation state so the outer } is handled correctly
+                            self.mode = saved_mode;
                             return true;
                         }
                         _ => {

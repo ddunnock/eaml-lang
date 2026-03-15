@@ -166,3 +166,25 @@ fn template_in_context() {
     Eof @ 34..34
     "#);
 }
+
+#[test]
+fn template_nested_string_in_interpolation() {
+    // Nested string inside interpolation: the outer } should close the interpolation
+    let output = lex(r#""outer {fn("inner")} end""#);
+    insta::assert_snapshot!(format_tokens(&output), @r#"
+    TmplStart @ 0..1
+    TmplText @ 1..7
+    TmplInterpStart @ 7..8
+    Ident(fn) @ 8..10
+    LParen @ 10..11
+    TmplStart @ 11..12
+    TmplText @ 12..17
+    TmplEnd @ 17..18
+    RParen @ 18..19
+    TmplInterpEnd @ 19..20
+    TmplText @ 20..24
+    TmplEnd @ 24..25
+    Eof @ 25..25
+    "#);
+    insta::assert_snapshot!(format_diagnostics(&output), @"no diagnostics");
+}
