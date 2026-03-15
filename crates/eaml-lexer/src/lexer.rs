@@ -539,11 +539,39 @@ impl<'src> Lexer<'src> {
         self.mode = LexerMode::Normal;
     }
 
+    /// Collapses adjacent SYN001 diagnostics into a single diagnostic spanning the range.
+    ///
+    /// Per CONTEXT.md: "Consecutive identical errors at adjacent positions: collapse into
+    /// one diagnostic spanning the range."
+    fn collapse_adjacent_errors(diagnostics: Vec<Diagnostic>) -> Vec<Diagnostic> {
+        if diagnostics.is_empty() {
+            return diagnostics;
+        }
+
+        let mut result: Vec<Diagnostic> = Vec::with_capacity(diagnostics.len());
+
+        for diag in diagnostics {
+            if diag.code == ErrorCode::Syn001 {
+                if let Some(last) = result.last_mut() {
+                    if last.code == ErrorCode::Syn001 && last.span.end == diag.span.start {
+                        // Extend the previous diagnostic to cover this one
+                        last.span.end = diag.span.end;
+                        last.message = "unexpected characters".to_string();
+                        continue;
+                    }
+                }
+            }
+            result.push(diag);
+        }
+
+        result
+    }
+
     /// Consumes the lexer and returns the output.
     fn into_output(self) -> LexOutput {
         LexOutput {
             tokens: self.tokens,
-            diagnostics: self.diagnostics,
+            diagnostics: Self::collapse_adjacent_errors(self.diagnostics),
             interner: self.interner,
         }
     }
