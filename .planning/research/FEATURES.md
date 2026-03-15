@@ -1,137 +1,86 @@
-# Feature Research
+# Feature Landscape
 
-**Domain:** DSL compiler for LLM integrations
+**Domain:** Compiled DSL for LLM integrations (Rust compiler -> Python/Pydantic)
 **Researched:** 2026-03-15
-**Confidence:** HIGH
 
-## Feature Landscape
+## Table Stakes
 
-### Table Stakes (Users Expect These)
-
-Features users assume exist. Missing these = product feels incomplete.
+Features users expect. Missing = product feels incomplete.
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| Correct compilation | Programs that parse must produce valid Python | HIGH | End-to-end correctness across 84 productions |
-| Meaningful error messages | Span-accurate errors with hints and suggestions | MEDIUM | codespan-reporting handles display; quality is in message content |
-| Type checking | Catch type mismatches before runtime | MEDIUM | Bounded types, literal unions, nullable types per TYPESYSTEM.md |
-| Capability validation | Detect model/prompt capability mismatches at compile time | MEDIUM | CAP010 is fatal; prevents runtime API errors |
-| CLI with compile/check commands | Basic compiler invocation | LOW | clap derive, straightforward wiring |
-| Valid Python output | Generated code must import cleanly, type-check with mypy, and run | HIGH | Python indentation, import ordering, Pydantic v2 patterns |
-| Multi-provider support | Anthropic, OpenAI, Ollama at minimum | MEDIUM | Provider adapter pattern in runtime; each has SDK quirks |
-| Template string interpolation | `{expr}` in prompts must resolve correctly | MEDIUM | Brace-depth counting in lexer, validation in semantic analysis |
+| Compile .eaml to valid Python | Core value proposition | High | 84 grammar productions, all declaration types |
+| Colored error messages with source snippets | Standard in modern compilers (rustc, ruff) | Medium | codespan-reporting handles display |
+| All 38 error codes emitted correctly | Spec compliance | Medium | Each code maps to specific condition |
+| Schema -> Pydantic BaseModel | Core type system feature | Medium | Includes bounded types, literal unions, optionals |
+| Prompt -> async Python function | Core execution feature | Medium | Template string interpolation, system/user messages |
+| Model declaration validation | Prevents runtime errors | Low | id, provider, caps fields |
+| Tool -> Python function with bridge block | Python bridge is a key differentiator | High | Opaque code passthrough, marshaling rules |
+| Agent -> orchestration function | Multi-tool coordination | High | Tool dispatch, error policies, max_turns |
+| Type checking (all TYP errors) | Compile-time safety is the value prop | High | Nominal typing, bounded types, composites |
+| Capability checking (CAP010) | Prevents "model doesn't support X" at runtime | Medium | Subset check: prompt requires <= model caps |
+| CLI with compile/check commands | Standard compiler interface | Low | clap-derived, file I/O |
 
-### Differentiators (Competitive Advantage)
+## Differentiators
+
+Features that set product apart. Not expected, but valued.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| Compile-time capability checking | Catch "model doesn't support json_mode" before any API call | LOW | Unique to EAML — BAML/Instructor don't do this |
-| Python bridge blocks | Inline Python for data preprocessing in tools | MEDIUM | `python %{ }%` — no other LLM DSL has this |
-| Declarative agent composition | `agent` blocks wire prompts + tools declaratively | HIGH | More structured than raw SDK code |
-| Structured output guarantee | Pydantic validation + retry loop built into generated code | MEDIUM | validate_or_retry pattern in runtime |
-| Provider-agnostic declarations | Switch providers by changing one `model` block | LOW | Runtime adapters abstract provider differences |
+| Compile-time capability checking | No other LLM DSL does this statically | Medium | CAP010 catches json_mode/streaming mismatches before runtime |
+| Bounded types (float<0,1>, int<1,10>) | Express constraints in the type system, validated by Pydantic at runtime | Medium | Unique to EAML among LLM DSLs |
+| Literal union types ("a" | "b" | "c") | Constrained string outputs without external enums | Low | Maps to Pydantic Literal |
+| Python bridge blocks | Escape hatch for custom logic without leaving the language | Medium | python %{ }% with type-safe marshaling |
+| validate_or_retry runtime loop | Automatic retry when LLM output fails Pydantic validation | Medium | Runtime feature, configurable max_retries |
+| Provider-agnostic code | Switch providers by changing model declaration only | Medium | Runtime adapter pattern |
 
-### Anti-Features (Commonly Requested, Often Problematic)
+## Anti-Features
 
-| Feature | Why Requested | Why Problematic | Alternative |
-|---------|---------------|-----------------|-------------|
-| Runtime type inference | "Don't make me write types" | Ambiguous types make errors cryptic; compile-time guarantees lost | Explicit types with good editor support |
-| Auto-retry without limits | "Just keep trying until it works" | Infinite loops, runaway API costs | Configurable retry with exponential backoff and max attempts |
-| Implicit provider selection | "Just pick the best model" | Provider choice has cost/latency/quality tradeoffs user must own | Explicit model declarations |
-| Hot-reload compilation | "Watch mode like webpack" | Compiler is fast enough; file watchers add complexity | CLI rerun is sub-second for typical files |
+Features to explicitly NOT build.
+
+| Anti-Feature | Why Avoid | What to Do Instead |
+|--------------|-----------|-------------------|
+| Multi-file imports (v0.1) | Spec marks as post-MVP. Adds module resolution complexity | Single-file compilation only |
+| Schema inheritance / extends | Post-MVP per TYPESYSTEM.md. Complicates type checking significantly | Use composition (schema fields of schema type) |
+| Enum types | Post-MVP per TYPESYSTEM.md. Literal unions cover the common case | Use literal union types |
+| Pipeline operators | Post-MVP per grammar.ebnf. Complex data flow semantics | Chain prompts in Python code |
+| Async python bridge blocks | Closed as unsupported in v0.1 (OQ-01). Adds runtime complexity | Use sync code in bridge blocks |
+| LSP server | Needs stable compiler first. tower-lsp reserved for Phase 7 | Focus on CLI compiler |
+| Type inference | Post-MVP. All type annotations are explicit in v0.1 | Require explicit annotations |
 
 ## Feature Dependencies
 
 ```
-[Error types (eaml-errors)]
-    └──requires──> nothing (leaf crate)
-
-[Lexer (eaml-lexer)]
-    └──requires──> [Error types]
-
-[Parser (eaml-parser)]
-    └──requires──> [Lexer] + [Error types]
-
-[Semantic analysis (eaml-semantic)]
-    └──requires──> [Parser] + [Lexer] + [Error types]
-
-[Codegen (eaml-codegen)]
-    └──requires──> [Semantic] + [Parser] + [Error types]
-
-[Runtime (eaml-runtime)]
-    └──independent of──> Rust crates (consumed by generated Python)
-
-[CLI (eaml-cli)]
-    └──requires──> all Rust crates
-    └──enhances──> [Runtime] (compile + run workflow)
+eaml-errors (Diagnostic, Span) -> ALL other features
+Token types (lexer) -> Parser (needs tokens to parse)
+AST types (parser) -> Semantic analysis (walks AST)
+Symbol table (semantic pass 1) -> Type checking (semantic pass 2)
+Type checking (semantic pass 2) -> Capability checking (semantic pass 3)
+AnalyzedProgram (semantic) -> Code generation (needs type info)
+CodeWriter (codegen) -> Python emission (indentation tracking)
+Provider adapters (runtime) -> Generated code execution
+Pydantic validation (runtime) -> validate_or_retry loop
 ```
 
-### Dependency Notes
+## MVP Recommendation
 
-- **Codegen requires Semantic:** Can't emit correct Python without type/capability info
-- **Runtime is independent:** Can be developed in parallel with Rust crates
-- **CLI requires all crates:** Last Rust piece to implement; wires pipeline together
+Prioritize:
+1. Error types and diagnostics (eaml-errors) -- foundation for all error reporting
+2. Lexer with all token types -- unblocks parser work
+3. Parser with AST for model + schema + prompt -- the three most common declarations
+4. Semantic analysis (name resolution + type checking) -- core value proposition
+5. Codegen for schema (BaseModel) and prompt (async function) -- minimum runnable output
+6. Python runtime with one provider (Anthropic) -- proves end-to-end compilation works
 
-## MVP Definition
-
-### Launch With (v1)
-
-- [ ] All 7 example programs compile to valid Python — proves end-to-end pipeline
-- [ ] Generated Python runs and calls LLM APIs — proves runtime works
-- [ ] Error messages include source spans and hints — proves developer experience
-- [ ] All 38 error codes from spec/ERRORS.md are implemented — proves spec compliance
-- [ ] Three providers work (Anthropic, OpenAI, Ollama) — proves provider abstraction
-
-### Add After Validation (v1.x)
-
-- [ ] `eamlc fmt` command — code formatting
-- [ ] `eamlc run` command — compile + execute in one step
-- [ ] Better error recovery (continue parsing after first error)
-- [ ] Python bridge type validation (`--check-python` flag)
-
-### Future Consideration (v2+)
-
-- [ ] LSP server for IDE support — needs stable compiler first
-- [ ] Import/module system — cross-file references
-- [ ] Schema inheritance — extends keyword
-- [ ] Enum types — tagged unions
-- [ ] Pipeline operators — data flow syntax
-
-## Feature Prioritization Matrix
-
-| Feature | User Value | Implementation Cost | Priority |
-|---------|------------|---------------------|----------|
-| Correct compilation (all productions) | HIGH | HIGH | P1 |
-| Error messages with spans | HIGH | MEDIUM | P1 |
-| Capability checking (CAP010) | HIGH | LOW | P1 |
-| Multi-provider runtime | HIGH | MEDIUM | P1 |
-| Template string interpolation | HIGH | MEDIUM | P1 |
-| Python bridge blocks | MEDIUM | MEDIUM | P1 |
-| Agent declarations | MEDIUM | HIGH | P1 |
-| CLI compile/check | HIGH | LOW | P1 |
-| validate_or_retry | HIGH | MEDIUM | P1 |
-| `eamlc run` command | MEDIUM | LOW | P2 |
-| Error recovery | MEDIUM | HIGH | P2 |
-| `eamlc fmt` | LOW | MEDIUM | P3 |
-
-## Competitor Feature Analysis
-
-| Feature | BAML | Instructor | Marvin | EAML Approach |
-|---------|------|------------|--------|---------------|
-| Structured output | Pydantic-like types | Pydantic models | Pydantic models | Pydantic v2 via codegen |
-| Type safety | Custom type system | Python types | Python types | Nominal types with compile-time checking |
-| Multi-provider | Yes (10+ providers) | OpenAI-focused | OpenAI-focused | 3 providers (extensible) |
-| Compile-time checks | Limited | None (runtime) | None (runtime) | Full: types, capabilities, names |
-| Inline code | No | Python functions | Python functions | Python bridge `%{ }%` blocks |
-| Agent composition | No native support | No | No | Declarative `agent` blocks |
+Defer: Tool/Agent declarations to second pass (more complex, depend on Python bridge)
+Defer: Ollama provider (httpx adapter is simpler but lower priority than Anthropic/OpenAI)
 
 ## Sources
 
-- BAML documentation (docs.boundaryml.com)
-- Instructor library (github.com/jxnl/instructor)
-- Marvin AI (github.com/prefecthq/marvin)
-- EAML spec documents (spec/)
-
----
-*Feature research for: DSL compiler for LLM integrations*
-*Researched: 2026-03-15*
+- spec/grammar.ebnf (84 productions)
+- spec/ERRORS.md (38 error codes)
+- spec/TYPESYSTEM.md (type checking rules)
+- spec/CAPABILITIES.md (capability checking rules)
+- spec/PYTHON_BRIDGE.md (python bridge rules)
+- Layer 5 design decisions (post-MVP deferrals)
+- [BAML](https://github.com/BoundaryML/baml) -- closest prior art for feature comparison

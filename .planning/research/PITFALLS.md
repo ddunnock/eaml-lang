@@ -1,190 +1,136 @@
-# Pitfalls Research
+# Domain Pitfalls
 
-**Domain:** Rust compiler for LLM DSL targeting Python
+**Domain:** Rust compiler for LLM integration DSL targeting Python/Pydantic
 **Researched:** 2026-03-15
-**Confidence:** HIGH
 
 ## Critical Pitfalls
 
-### Pitfall 1: Python Indentation Bugs in Codegen
+Mistakes that cause rewrites or major issues.
 
-**What goes wrong:**
-Generated Python has incorrect indentation — off by one level, mixed tabs/spaces, or inconsistent indent inside nested structures (class method inside class inside module).
+### Pitfall 1: Lexer Mode Switching for Template Strings
 
-**Why it happens:**
-String concatenation for code generation makes indentation invisible until runtime. Nested structures (schema fields inside class inside module) compound the problem.
+**What goes wrong:** Template strings with {expr} interpolation require the lexer to switch between "string content" mode and "expression" mode. If the brace-depth counter is wrong, the lexer misparses nested braces, object literals inside interpolations, or literal {{ / }} escapes.
 
-**How to avoid:**
-Use a CodeWriter with explicit `indent()`/`dedent()` calls. Never hard-code spaces in output strings. Test every codegen path with snapshot tests that capture exact whitespace.
+**Why it happens:** logos is a stateless lexer generator -- it does not natively support mode switching. The lexer must manually track brace depth outside of logos's derive system.
 
-**Warning signs:**
-- `IndentationError` or `SyntaxError` when importing generated Python
-- Snapshot tests with inconsistent leading whitespace
+**Consequences:** Template strings silently consume too much or too little input. Parser receives wrong tokens. Generated Python f-strings have incorrect interpolation.
 
-**Phase to address:** Phase 5 (Codegen) — CodeWriter must be the first thing built
+**Prevention:** Implement brace-depth counting as a separate layer wrapping logos. Test with nested braces, escaped braces, and empty interpolation. Use snapshot tests for every template string variant from examples/07-all-type-variants.
 
----
+**Detection:** Template string tests fail. Generated Python f-strings produce syntax errors.
 
-### Pitfall 2: Template String Brace Depth Tracking
+### Pitfall 2: Python Bridge }% Delimiter False Positive
 
-**What goes wrong:**
-Lexer misidentifies `}` as end-of-interpolation when it's actually a closing brace inside a nested expression like `{items[0]}` or `{dict["key"]}`.
+**What goes wrong:** The }% closing delimiter for python bridge blocks can appear in Python f-strings: f"{value}% done" produces literal }% that prematurely closes the block.
 
-**Why it happens:**
-Template string interpolation `{expr}` requires tracking brace depth. The lexer must count `{` and `}` to know when interpolation ends. Off-by-one errors are common.
+**Why it happens:** The lexer scans for }% as a simple byte sequence without understanding Python string context.
 
-**How to avoid:**
-Maintain an explicit `brace_depth: usize` counter in the lexer. Increment on `{`, decrement on `}`. Only exit interpolation mode when depth reaches 0. Test with deeply nested expressions.
+**Consequences:** Python code is silently truncated. SYN046 (unclosed block) fires on valid code. Generated output contains partial Python.
 
-**Warning signs:**
-- Truncated interpolation expressions in AST
-- Lexer errors on valid template strings with nested braces
+**Prevention:** This is a documented known limitation (Layer 5 errata EG-02). The spec recommends str.format() instead of f-strings when the result contains }%. Document this in compiler warnings. Consider adding a SYN-level hint when }% appears inside what looks like a Python f-string.
 
-**Phase to address:** Phase 2 (Lexer) — template string mode implementation
+**Detection:** Bridge block tests with f-strings containing }%.
 
----
+### Pitfall 3: Mutable AST Coupling Parser to Semantic Phase
 
-### Pitfall 3: Python Bridge `}%` Delimiter Collision
+**What goes wrong:** Adding Option<ResolvedType> fields to AST nodes so the semantic phase can "fill them in" during analysis.
 
-**What goes wrong:**
-Python code inside `%{ }%` contains the literal string `}%` (e.g., in f-strings like `f"{value}% done"`), causing premature block termination.
+**Why it happens:** Seems simpler than side tables at first. Avoids NodeId indirection.
 
-**Why it happens:**
-The `}%` delimiter was chosen because it's rare in Python, but f-strings with `}` followed by `%` can produce it. This is documented as a known edge case (EG-02).
+**Consequences:** Parser crate gains dependency on semantic types (circular or coupling). Interior mutability (RefCell) needed for shared references during tree walks. AST types become bloated with Option fields. Breaking the strict crate boundary.
 
-**How to avoid:**
-Document the workaround: use `str.format()` instead of f-strings when the string contains `}%`. The lexer scans for literal `}%` — no escape mechanism exists in v0.1.
+**Prevention:** Use NodeId + side tables (TypeEnvironment, SymbolTable) in eaml-semantic. AST is immutable after parsing. See Architecture Pattern 3.
 
-**Warning signs:**
-- Truncated python bridge blocks
-- Unexpected tokens after a python block
+**Detection:** Cargo dependency graph shows parser depending on semantic types.
 
-**Phase to address:** Phase 2 (Lexer) — python block mode; Phase 5 (Codegen) — document in generated comments
+### Pitfall 4: Codegen Indentation Bugs in Python Output
 
----
+**What goes wrong:** Generated Python has incorrect indentation, causing IndentationError at runtime or semantically wrong nesting.
 
-### Pitfall 4: Capability Subset Check False Positives
+**Why it happens:** Using raw format!() or string concatenation for Python emission. Indentation context is implicit and easy to lose across conditionals.
 
-**What goes wrong:**
-Compiler reports CAP010 (capability mismatch) for valid programs because the capability registry doesn't recognize a capability name, or the subset logic is wrong.
+**Consequences:** Generated code does not run. Bugs are hard to trace because they appear in output, not in the compiler source.
 
-**Why it happens:**
-Open identifier system means any string can be a capability name. The registry must distinguish between known capabilities (json_mode, tools, vision) and unknown-but-valid custom capabilities.
+**Prevention:** Use a CodeWriter struct that tracks indentation level explicitly. Every line is emitted through write_line() which prepends the current indent. Use write_block() for automatic indent/dedent scoping. Snapshot test every generated output against golden files.
 
-**How to avoid:**
-CAP010 only fires when a prompt `requires` a capability the model doesn't `provide`. Unknown capabilities should trigger CAP002 (warning for duplicate/unknown), not CAP010.
+**Detection:** Python syntax check (python -c "compile(...)") on generated output.
 
-**Warning signs:**
-- Valid example programs fail capability checking
-- Users can't use custom capability names
+### Pitfall 5: Forward Reference Resolution
 
-**Phase to address:** Phase 4 (Semantic) — capability checking pass
+**What goes wrong:** A prompt references a schema that is declared later in the file. If the name resolution pass walks top-to-bottom and resolves immediately, the schema is not yet in the symbol table.
 
----
+**Why it happens:** Single-pass name resolution that resolves references during the same pass that collects declarations.
 
-### Pitfall 5: Span Offset Drift Across Lexer Modes
+**Consequences:** RES010 (undefined name) false positives on valid code. Users forced into declaration-order dependency.
 
-**What goes wrong:**
-Error messages point to wrong source locations because byte offsets get corrupted when switching between lexer modes (normal → template string → interpolation → normal).
+**Prevention:** Two-sub-pass name resolution: (a) collect all declaration names into symbol table, (b) resolve all references against the now-complete table. This is standard in languages without forward-declaration requirements.
 
-**Why it happens:**
-Each lexer mode may track its own cursor position. When switching modes, the starting offset must be carried over correctly. Off-by-one on mode entry/exit is common.
+**Detection:** Test with prompt-before-schema ordering.
 
-**How to avoid:**
-Single source of truth for byte offset. The cursor position must be authoritative regardless of mode. Test span accuracy by verifying that `source[span.start..span.end]` matches the expected token text.
+## Moderate Pitfalls
 
-**Warning signs:**
-- Error underlines point to wrong text
-- Span lengths don't match token text lengths
+### Pitfall 6: Bool Subclasses Int in Python
 
-**Phase to address:** Phase 2 (Lexer) — span tracking must be tested from day one
+**What goes wrong:** Python bridge blocks with -> int return type accept True/False because Python bool is a subclass of int.
 
----
+**Prevention:** Generated validation code must use isinstance(v, int) and not isinstance(v, bool) check. Already documented in PYTHON_BRIDGE.md.
 
-### Pitfall 6: Pydantic v2 API Surface Differences
+### Pitfall 7: Lasso Interner Lifetime Management
 
-**What goes wrong:**
-Generated Python uses Pydantic v1 API (e.g., `schema()`, `.dict()`, `validator`) instead of v2 API (`model_json_schema()`, `.model_dump()`, `field_validator`).
+**What goes wrong:** The ThreadedRodeo (string interner) is created in the lexer but its Spur keys are used throughout the parser and semantic phases. If the interner is dropped or not passed through, Spur lookups panic.
 
-**Why it happens:**
-Training data and examples online still heavily reference Pydantic v1. Generated code must use v2 exclusively.
+**Prevention:** The interner must be owned by the top-level compilation context (in eaml-cli) and passed by reference to each phase. Never clone the interner -- pass it by reference.
 
-**How to avoid:**
-Codegen templates must be verified against Pydantic v2 docs. Key mappings: `BaseModel.schema()` → `BaseModel.model_json_schema()`, `.dict()` → `.model_dump()`, `@validator` → `@field_validator`.
+### Pitfall 8: Snapshot Test Fragility
 
-**Warning signs:**
-- `DeprecationWarning` in generated Python
-- `AttributeError` when generated code calls v1 methods
+**What goes wrong:** insta snapshot tests break on every formatting change, creating noisy diffs.
 
-**Phase to address:** Phase 5 (Codegen) — schema generation; Phase 6 (Runtime) — validation calls
+**Prevention:** Use insta::assert_yaml_snapshot!() for AST snapshots (structured). Use insta::assert_snapshot!() for codegen output (exact string match desired). Run cargo insta review after intentional changes.
 
----
+### Pitfall 9: Provider API Version Drift
 
-### Pitfall 7: Bool Subclasses Int in Python
+**What goes wrong:** The anthropic/openai Python SDKs release breaking changes. Generated code that worked last month stops working.
 
-**What goes wrong:**
-Python bridge return type validation for `-> int` accepts `True`/`False` because `isinstance(True, int)` is `True` in Python.
+**Prevention:** The runtime adapter layer abstracts provider APIs. Pin minimum SDK versions in pyproject.toml. Keep generated code calling eaml_runtime.call_prompt(), never provider SDKs directly.
 
-**Why it happens:**
-Python's `bool` subclasses `int`. This is a known edge case documented in PYTHON_BRIDGE.md.
+### Pitfall 10: Error Code Duplication or Gaps
 
-**How to avoid:**
-Generated validation code must check `isinstance(x, bool)` before `isinstance(x, int)` and reject booleans when int is expected. This is already specified in PYB-MAR rules.
+**What goes wrong:** Two compiler phases emit the same error code for different conditions, or a spec-defined error code is never emitted.
 
-**Warning signs:**
-- Bridge functions accepting `True`/`False` as valid integers
+**Prevention:** Error codes defined in eaml-errors as an enum. Each variant maps to exactly one condition. Exhaustive tests verifying every error code in spec/ERRORS.md has at least one triggering test.
 
-**Phase to address:** Phase 6 (Runtime) — return type validation
+## Minor Pitfalls
 
-## Technical Debt Patterns
+### Pitfall 11: Optional Semicolons and Newline Ambiguity
 
-| Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
-|----------|-------------------|----------------|-----------------|
-| Skip error recovery in parser | Simpler parser, faster to implement | Only first error reported per file | Acceptable for v0.1; improve in v1.x |
-| Single-file compilation only | No module/import resolution needed | Can't split large EAML projects | Acceptable — imports are post-MVP |
-| Sync-only runtime | Simpler provider adapters | Blocks on API calls | Acceptable for v0.1; async is future |
-| No incremental compilation | Don't need to cache intermediate results | Recompiles entire file on every change | Acceptable — EAML files are small |
+**What goes wrong:** Since semicolons are optional, the parser may have trouble distinguishing statement boundaries.
 
-## Integration Gotchas
+**Prevention:** EAML declarations start with keywords (model, schema, etc.), so the parser can always determine boundaries by peeking. Non-issue if parser is structured correctly.
 
-| Integration | Common Mistake | Correct Approach |
-|-------------|----------------|------------------|
-| Anthropic API | Using `messages` without `max_tokens` | Always set `max_tokens` — Anthropic requires it |
-| OpenAI API | Using `response_format: {"type": "json_object"}` without JSON instruction in prompt | Include "respond in JSON" in system message when json_mode enabled |
-| Ollama API | Assuming OpenAI-compatible endpoint | Use Ollama's native `/api/generate` or `/api/chat` endpoint |
-| Pydantic v2 | Calling `model_rebuild()` on non-recursive schemas | Only call `model_rebuild()` when schema has self-references (SEM070 warning) |
+### Pitfall 12: Contextual Keywords Conflicting with User Identifiers
 
-## "Looks Done But Isn't" Checklist
+**What goes wrong:** A user names a schema field "temperature" or "system", which are contextual keywords in prompt bodies.
 
-- [ ] **Lexer:** Template strings with nested `{dict[key]}` expressions — verify brace depth
-- [ ] **Lexer:** Python blocks containing string literals with `}%` — verify edge case EG-02
-- [ ] **Parser:** Error recovery after first syntax error — does it continue or crash?
-- [ ] **Semantic:** Recursive schema detection — does `model_rebuild()` get emitted?
-- [ ] **Codegen:** Generated imports are deduplicated and sorted — Python style
-- [ ] **Codegen:** Nullable types emit `Optional[T]` not `T | None` (Pydantic v2 compat)
-- [ ] **Runtime:** Provider API keys from environment variables — not hardcoded
-- [ ] **Runtime:** Retry loop has max attempts — not infinite
-- [ ] **CLI:** Non-zero exit code on compilation errors — scripts depend on this
+**Prevention:** Contextual keywords are matched by string comparison only within their specific productions. Outside those productions, they are valid identifiers. Grammar already handles this per Layer 5.
 
-## Pitfall-to-Phase Mapping
+## Phase-Specific Warnings
 
-| Pitfall | Prevention Phase | Verification |
-|---------|------------------|--------------|
-| Python indentation bugs | Phase 5 (Codegen) | Snapshot tests of generated Python; mypy type-check of output |
-| Brace depth tracking | Phase 2 (Lexer) | Test nested `{dict[key]}` in template strings |
-| `}%` delimiter collision | Phase 2 (Lexer) | Test python block containing `f"{x}% done"` |
-| Capability false positives | Phase 4 (Semantic) | Test all example programs pass capability check |
-| Span offset drift | Phase 2 (Lexer) | Assert `source[span]` matches token text |
-| Pydantic v2 API | Phase 5 (Codegen) | Generated Python passes mypy + imports without deprecation warnings |
-| Bool subclasses int | Phase 6 (Runtime) | Test bridge return type validation rejects `True` for int |
+| Phase Topic | Likely Pitfall | Mitigation |
+|-------------|---------------|------------|
+| Lexer implementation | Template string mode switching (#1) | Wrap logos with brace-depth counter, extensive snapshot tests |
+| Lexer implementation | Python bridge delimiter (#2) | Document limitation, add hint diagnostic |
+| Parser AST design | Mutable AST coupling (#3) | Use NodeId + side tables from the start |
+| Parser error recovery | Infinite loop on bad input | Track parser position; if no progress after synchronize(), advance one token |
+| Semantic name resolution | Forward references (#5) | Two-sub-pass: collect declarations, then resolve references |
+| Codegen Python emission | Indentation bugs (#4) | CodeWriter struct, snapshot tests on all output |
+| Codegen type mapping | Bool/int confusion (#6) | isinstance check excluding bool |
+| Runtime provider adapters | SDK version drift (#9) | Adapter abstraction, pinned versions |
+| Testing | Snapshot fragility (#8) | YAML for AST, string for codegen, cargo insta review workflow |
 
 ## Sources
 
-- EAML spec documents (spec/PYTHON_BRIDGE.md — EG-02 edge case, PYB-MAR rules)
-- Pydantic v2 migration guide
-- Python data model (bool subclass of int)
-- Compiler construction best practices (Crafting Interpreters)
-
----
-*Pitfalls research for: Rust compiler for LLM DSL*
-*Researched: 2026-03-15*
+- spec/PYTHON_BRIDGE.md -- }% delimiter edge case (EG-02), bool subclass issue
+- spec/ERRORS.md -- error code architecture and ranges
+- Layer 5 design decisions -- contextual keywords, optional semicolons
+- [Resilient LL Parsing Tutorial (matklad)](https://matklad.github.io/2023/05/21/resilient-ll-parsing-tutorial.html)
+- [Logos Handbook](https://logos.maciej.codes/)

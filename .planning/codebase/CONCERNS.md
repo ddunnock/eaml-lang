@@ -53,16 +53,16 @@ Uses naming heuristics (field names like "image", "photo") rather than formal ru
 
 ## 5. Test Coverage Gaps
 
-| Area | Status |
-|------|--------|
-| Lexer unit tests | `.gitkeep` placeholder only |
-| Parser unit tests | `.gitkeep` placeholder only |
-| Semantic analysis tests | `.gitkeep` placeholder only |
-| Codegen snapshot tests | Directory scaffolded |
-| CLI integration tests | None |
-| Python runtime tests | Empty |
+| Area                        | Status                       |
+|-----------------------------|------------------------------|
+| Lexer unit tests            | `.gitkeep` placeholder only  |
+| Parser unit tests           | `.gitkeep` placeholder only  |
+| Semantic analysis tests     | `.gitkeep` placeholder only  |
+| Codegen snapshot tests      | Directory scaffolded         |
+| CLI integration tests       | None                         |
+| Python runtime tests        | Empty                        |
 | Bridge edge case regression | Missing (f-string, bool/int) |
-| Stress tests | None |
+| Stress tests                | None                         |
 
 ## 6. Dependency Concerns
 
