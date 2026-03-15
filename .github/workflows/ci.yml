@@ -43,7 +43,7 @@ jobs:
     needs: rust-check
     strategy:
       matrix:
-        rust: [stable, "1.78"]  # stable + MSRV
+        rust: [stable, "1.85"]  # stable + MSRV
     steps:
       - uses: actions/checkout@v4
 
