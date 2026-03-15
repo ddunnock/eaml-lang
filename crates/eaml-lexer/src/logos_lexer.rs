@@ -15,7 +15,6 @@ use logos::Logos;
 #[logos(skip r"///[^\n]*")]
 #[logos(skip r"//[^\n]*")]
 #[logos(skip r"/\*[^*]*\*+(?:[^/*][^*]*\*+)*/")]
-#[allow(dead_code)] // Used by Lexer wrapper in Task 2
 pub(crate) enum RawToken {
     // === Keywords (active v0.1) ===
     #[token("model")]

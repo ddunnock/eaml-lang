@@ -8,4 +8,5 @@ pub(crate) mod logos_lexer;
 pub mod token;
 
 pub use intern::Interner;
+pub use lexer::{lex, LexOutput};
 pub use token::{Span, Token, TokenKind};
