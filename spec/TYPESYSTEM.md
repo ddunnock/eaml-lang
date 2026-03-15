@@ -1589,6 +1589,19 @@ Referenced by: TS-ANN-01.
 
 ---
 
+#### SEM070: Recursive schema reference (WARNING)
+
+**Condition:** A schema field references its own schema type, either directly or
+through a chain of schema references.
+
+**Message:** `SEM070: Schema '{name}' contains a recursive type reference. This is
+allowed but may cause issues with deeply nested data.`
+
+**Notes:** The generated Pydantic model uses `model_rebuild()` to handle forward
+references. Referenced by: TS-SCH-05, OQ-03.
+
+---
+
 ## 9. Post-MVP Type Features
 
 ### 9.1 Enum Declarations

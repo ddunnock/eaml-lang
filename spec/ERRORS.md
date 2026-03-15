@@ -196,9 +196,9 @@ schema Grid {
 
 **Example:**
 ```eaml
-prompt Check {
-  model my_model
+prompt Check(a: bool, b: bool) -> bool {
   let result: bool = a | b
+  user: "Check {result}"
 }
 ```
 
@@ -218,9 +218,9 @@ prompt Check {
 
 **Example:**
 ```eaml
-prompt Check {
-  model my_model
+prompt Check(a: bool, b: bool) -> bool {
   let result: bool = a & b
+  user: "Check {result}"
 }
 ```
 
@@ -240,9 +240,8 @@ prompt Check {
 
 **Example:**
 ```eaml
-prompt Greet {
-  model my_model
-  "Hello, {name"
+prompt Greet(name: string) -> string {
+  user: "Hello, {name"
 }
 ```
 
@@ -347,9 +346,9 @@ pipeline MyPipeline {
 
 **Example:**
 ```eaml
-prompt Chain {
-  model my_model
+prompt Chain(input: string) -> string {
   let result: string = step1 >> step2
+  user: "Process {result}"
 }
 ```
 
@@ -507,8 +506,7 @@ schema Config {
 **Example:**
 ```eaml
 prompt Score(value: int(min: 0, max: 100)) -> string {
-  model my_model
-  "Rate {value}"
+  user: "Rate {value}"
 }
 ```
 
@@ -548,9 +546,9 @@ tool lookup(query: string) -> string {
 
 **Example:**
 ```eaml
-prompt Greet {
-  model my_model
+prompt Greet() -> string {
   let greeting = "hello"
+  user: "Say {greeting}"
 }
 ```
 
@@ -570,9 +568,9 @@ prompt Greet {
 
 **Example:**
 ```eaml
-prompt Check {
-  model my_model
+prompt Check(x: int, y: int, z: int) -> bool {
   let result: bool = x == y == z
+  user: "Check {result}"
 }
 ```
 
@@ -664,9 +662,9 @@ schema Config {
   count: int
 }
 
-prompt Setup {
-  model my_model
+prompt Setup() -> Config {
   let x: int = "hello"
+  user: "Set up config with {x}"
 }
 ```
 
@@ -776,7 +774,7 @@ schema Feedback {
 ```
 
 **Resolution:** Remove the duplicate member from the literal union.
-**Spec refs:**  TYPESYSTEM.md TS-LIT-07, OQ-02
+**Spec refs:**  TYPESYSTEM.md TS-LIT-07, TYPESYSTEM.md OQ-02
 **Notes:**      The duplicate is silently deduplicated in the generated Pydantic model. The warning alerts the developer to likely copy-paste errors.
 
 ---
@@ -868,11 +866,11 @@ prompt ToolUser(text: string) requires [tools] -> string {
 
 **Example:**
 ```eaml
-prompt Extract {
-  model my_model
-  requires [json_mode]
-  "Extract data" -> string
+prompt Extract(text: string) requires json_mode -> string {
+  user: "Extract JSON from: {text}"
 }
+// -> CAP020: Prompt 'Extract' requires json_mode but returns 'string'.
+//    Consider using a schema type to get Pydantic validation.
 ```
 
 **Resolution:** Consider changing the return type to a schema type to benefit from Pydantic validation of the JSON response.
@@ -970,9 +968,8 @@ Resolution errors are emitted during name resolution when identifiers cannot be 
 
 **Example:**
 ```eaml
-prompt Greet {
-  model my_model
-  "Hello, {unknown_var}"
+prompt Greet() -> string {
+  user: "Hello, {unknown_var}"
 }
 ```
 
@@ -1062,9 +1059,25 @@ Layer 5 Section 10.2 assigns PYB010 for unknown provider validation, but the che
 **OQ-1: Unclosed python %{ delimiter.**
 If `python %{` appears without a matching `}%`, this is a lexer error (EOF while scanning for `}%`). No specific error code has been assigned. The lexer currently produces a generic SYN error for unterminated tokens. Recommendation: assign a dedicated code (e.g., SYN046) or document as covered by generic lexer EOF handling.
 
+**OQ-2: Missing user: field in prompt body.**
+Grammar annotation [sem: prompt-requires-user-field] on Production [32] has no
+assigned error code. The semantic rule fires when a promptBody has no 'user:'
+promptField. Recommendation: assign SEM025 (SEM021-029 range, schema/declaration
+semantic errors).
+
+**OQ-3: Positional argument after named argument.**
+Grammar annotation [sem: no-positional-after-named] on Production [74] has no
+assigned error code. Recommendation: assign SEM061 (SEM061-069 range, expression
+semantic errors).
+
 ### 9.3 TYP500/SEM050 Overlap
 
-TYPESYSTEM.md Section 8 uses the heading "TYP5xx -- Annotation and position errors" but the only entry is SEM050. TYP500 does NOT exist as a separate error code. The TYP5xx heading in TYPESYSTEM.md is organizational only. SEM050 is the canonical code.
+SEM050 appears in TYPESYSTEM.md §8 under the "SEM0xx — Semantic Errors
+(Type-Related)" heading. TYPESYSTEM.md categorizes it alongside SEM020 and
+SEM030 because it is a type-annotation rule. Despite this placement,
+SEM050 is detected at PARSE phase (Production [41] requires `: typeExpr`),
+which is documented in §9.1 CONFLICT-1. There is no TYP500 error code;
+SEM050 is the canonical identifier.
 
 ### 9.4 Reserved Code Ranges
 
