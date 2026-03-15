@@ -197,7 +197,7 @@ before raising `LLMValidationError`.
 | Type inference on `let` bindings                         | SEM050               | Layer 5 §11           |
 | Union types beyond literal unions (`Tag \| OtherSchema`) | Not in grammar       | §9                    |
 | Generic types (`Schema<T>`)                              | Not in grammar       | §9                    |
-| Recursive schema types                                   | See §9 OPEN QUESTION | §9                    |
+| Recursive schema types                                   | SEM070 warning       | §6.2, §9.6 [CLOSED]  |
 | `void` keyword                                           | TYP010               | Layer 5 §7.4          |
 | `@` field annotations                                    | SYN090               | Layer 5 §11           |
 | String pattern bounds (`string<pattern: "...">`)         | Not in grammar       | §9                    |
@@ -810,10 +810,11 @@ Applied to Production [44] `namedType` — `IDENT boundedSuffix?`.
 >
 > Pydantic v2: `float = Field(ge=0.0, le=1.0)` — codegen converts int to float.
 >
-> ⚠️ **OPEN QUESTION OQ-01:** Layer 5 §3.5 shows float bounds with float values
-> only. The grammar (Production [47]) accepts both FLOAT and INT. **Recommended
-> resolution:** Allow int literals in float bounds with implicit coercion — this
-> is ergonomic and unambiguous.
+> Notes: **[CLOSED in v0.1.0 remediation]** Integer literals in float bound
+> positions are implicitly coerced to float by the code generator. The grammar
+> (Production [47]) accepts both FLOAT and INT. This is ergonomic and unambiguous —
+> `float<0, 1>` and `float<0.0, 1.0>` produce identical Pydantic output.
+> No additional error code is needed.
 
 ### 4.3 string Bounds
 
@@ -1065,21 +1066,26 @@ Applied to Production [44] `namedType` — `IDENT boundedSuffix?`.
 
 **RULE TS-LIT-07: Duplicate members in literal union**
 
-> ⚠️ **OPEN QUESTION OQ-02:** Layer 5 does not address duplicate members in
-> literal unions. For example: `"yes" | "yes" | "no"`.
+> Plain English: Duplicate string members within a single literal union produce a
+> TYP040 warning. The duplicate is silently deduplicated in the generated Pydantic
+> `Literal[...]` — no incorrect runtime behavior results. The warning flags likely
+> copy-paste mistakes.
 >
-> **Recommended resolution:** Emit TYP040 **warning** (not error) for duplicate
-> members. Rationale: Pydantic's `Literal` handles duplicates without error
-> (they are deduplicated), so this does not cause incorrect runtime behavior.
-> However, it is likely a copy-paste mistake and should be flagged.
+> **[CLOSED in v0.1.0 remediation]** Pydantic's `Literal` deduplicates silently.
+> Warning, not error.
 >
-> Invalid:
+> Grammar: Production [50] `literalUnion` — grammar allows repeated STRING tokens.
+> Semantic analysis detects duplicates.
+>
+> Valid (with warning):
 > ```eaml
-> schema Bad {
+> schema Feedback {
 >   status: "yes" | "yes" | "no"
 > }
 > // → TYP040 warning: Duplicate member "yes" in literal union
 > ```
+>
+> Pydantic v2: `Literal["yes", "no"]` — deduplicated.
 
 ---
 
@@ -1174,22 +1180,38 @@ Applied to Production [44] `namedType` — `IDENT boundedSuffix?`.
 
 **RULE TS-SCH-05: Recursive schemas**
 
-> ⚠️ **OPEN QUESTION OQ-03:** Can a schema field reference the same schema type?
+> Plain English: A schema field MAY reference its own schema type, either directly
+> or through a chain of schema references. This is allowed in v0.1 with a SEM070
+> warning. The generated Pydantic code uses `model_rebuild()` after the class
+> definition to resolve the forward reference.
 >
+> **[CLOSED in v0.1.0 remediation]** Recursive schemas are allowed with SEM070
+> warning. Depth limits are deferred to v0.2.
+>
+> Grammar: Production [29] `schemaDecl`, Production [30] `fieldDef` — the grammar
+> structurally permits self-referencing field types. `[sem: forward-ref-allowed]`
+> applies.
+>
+> Valid (with warning):
 > ```eaml
 > schema TreeNode {
 >   value: string
->   children: TreeNode[]   // recursive reference
+>   children: TreeNode[]   // recursive reference — SEM070 warning
 > }
 > ```
 >
-> Layer 5 does not address recursive schema types. This creates a potential issue:
-> Pydantic v2 requires `model_rebuild()` for self-referencing models, and deeply
-> recursive LLM outputs may cause validation stack overflows.
+> Pydantic v2:
+> ```python
+> class TreeNode(BaseModel):
+>     value: str
+>     children: List['TreeNode']
 >
-> **Recommended resolution:** Allow recursive schemas in v0.1 with a semantic warning
-> (SEM070). The generated Pydantic code would use `model_rebuild()` after class
-> definition. Full recursive type support with depth limits is deferred to v0.2.
+> TreeNode.model_rebuild()  # Required for self-referencing models
+> ```
+>
+> Notes: Deeply recursive LLM outputs may cause validation stack overflows at
+> runtime. Runtime depth limits are a v0.2 concern. Cross-reference: ERRORS.md
+> SEM070.
 
 ### 6.3 Schema as Return Type
 
@@ -1680,12 +1702,9 @@ is not a recognized production.
 
 ### 9.6 Recursive Schema Types
 
-> ⚠️ **OPEN QUESTION OQ-03** (repeated from §6.2):
-> Recursive schemas (a schema field referencing its own type) are not explicitly
-> addressed in Layer 5.
->
-> **Recommended resolution for v0.1:** Allow with SEM070 warning. Generate Pydantic
-> code with `model_rebuild()`. Full support with depth limits in v0.2.
+> **[CLOSED in v0.1.0 remediation]** (see §6.2 TS-SCH-05):
+> Recursive schemas are allowed in v0.1 with SEM070 warning. The generated Pydantic
+> code uses `model_rebuild()`. Runtime depth limits are deferred to v0.2.
 
 ### 9.7 String Pattern Bounds
 
@@ -1882,8 +1901,10 @@ status: Literal["pass", "fail", "skip"]
 | **Total**         | **36**   | **36**  | **0**   | **0** |
 
 Failed checks: 0
-Open Questions: 3 (OQ-01, OQ-02, OQ-03)
-Closed decisions added in v0.1.0 remediation: TS-BND-08 (SEM035), TS-RET-03
+Open Questions: 0 (all closed in v0.1.0 remediation)
+Closed decisions added in v0.1.0 remediation: TS-BND-08 (SEM035), TS-RET-03,
+  OQ-01 (int coercion in float bounds — allowed), OQ-02 (duplicate literal union
+  members — TYP040 warning), OQ-03 (recursive schemas — SEM070 warning)
 
 ### Verification Details
 
@@ -2015,11 +2036,10 @@ E1[PASS] Spot-checked 5 rule blocks: TS-PRM-01, TS-ARR-01, TS-BND-01,
 TS-LIT-01, TS-SCH-02. All follow declared format with Plain English,
 Grammar citation, Valid/Invalid, Pydantic v2.
 
-E2[PASS] 3 OPEN QUESTIONs clearly marked with ⚠️:
-OQ-01 (int literal coercion in float bounds) — §4.2
-OQ-02 (duplicate literal union members) — §5.3
-OQ-03 (recursive schemas) — §6.2, §9.6
-All include recommended resolutions.
+E2[PASS] 3 OPEN QUESTIONs from initial draft, all CLOSED in v0.1.0 remediation:
+OQ-01 (int literal coercion in float bounds) — §4.2 → CLOSED: allow with coercion
+OQ-02 (duplicate literal union members) — §5.3 → CLOSED: TYP040 warning
+OQ-03 (recursive schemas) — §6.2, §9.6 → CLOSED: SEM070 warning + model_rebuild()
 2 design decisions closed during remediation:
 TS-BND-08 (SEM035: bounds forbidden in parameter positions) — §4.1
 TS-RET-03 (literal union return types permitted) — §7.4
@@ -2046,11 +2066,9 @@ Pydantic v2 docs can implement the type checker and codegen crate.
 
 ### Known Limitations (v0.1.0)
 
-1. **Recursive schemas** (OQ-03) — behavior undefined, recommended to allow with warning
-2. **Int literal coercion in float bounds** (OQ-01) — grammar allows, semantics to be confirmed
-3. **Duplicate literal union members** (OQ-02) — warning recommended
-4. **No type inference** — all `let` bindings require explicit annotation
-5. **No enum, extends, generics, or general union types**
+1. **Recursive schemas** — allowed with SEM070 warning; runtime depth limits deferred to v0.2
+2. **No type inference** — all `let` bindings require explicit annotation
+3. **No enum, extends, generics, or general union types**
 
 ### Grammar.ebnf Production Citations
 

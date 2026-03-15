@@ -648,16 +648,13 @@ custom capability names.
 > Runtime: The adapter resolves the model's provider and capability set independently
 > for each call site at runtime.
 >
-> Notes: **OPEN QUESTION OQ-01:** Layer 5 does not specify call site syntax
-> (`Model.call(Prompt(...))` appears in examples but is not formally defined in the
-> grammar). The capability check requires knowing which model is used at each prompt
-> call site. **Recommended resolution:** Define call site syntax as
-> `IDENT "." "call" "(" expr ")"` in the grammar for v0.2, or infer model binding
-> from agent declarations in v0.1. In v0.1, the compiler checks capability
-> compatibility between models and prompts that are co-located in the same agent
-> declaration (Production [38] `agentDecl` binds a model to tools/prompts). Standalone
-> prompt calls outside agents are checked at the let-binding call site where the model
-> is explicitly referenced.
+> Notes: **[CLOSED in v0.1.0 remediation]** Call site syntax
+> (`Model.call(Prompt(...))`) is not formally defined as a grammar production in v0.1.
+> The capability checker resolves model-prompt bindings through two mechanisms:
+> (1) agent `model:` field bindings (Production [38] `agentDecl`), and
+> (2) dot-call expressions in let bindings where the model is explicitly named.
+> This covers the two documented usage patterns. A formal call-site grammar production
+> (`IDENT "." "call" "(" expr ")"`) is planned for v0.2.
 
 ### 3.4 Provider-Agnostic Architecture
 
@@ -865,10 +862,10 @@ custom capability names.
 > Runtime: Duplicates are deduplicated before passing to the adapter. The capability
 > is activated once regardless of how many times it appears.
 >
-> Notes: **OPEN QUESTION OQ-02:** Layer 5 does not explicitly address duplicate
-> capability names. **Recommended resolution:** CAP002 warning (adopted in this spec).
-> Rationale: duplicates are harmless redundancy, not a semantic error. A warning helps
-> the developer clean up without blocking compilation.
+> Notes: **[CLOSED in v0.1.0 remediation]** CAP002 warning adopted. Layer 5 does not
+> explicitly address duplicates; this decision is an EAML spec-level choice. Rationale:
+> duplicates are harmless redundancy, not a semantic error. A warning helps the
+> developer clean up without blocking compilation.
 
 ---
 
@@ -953,13 +950,9 @@ custom capability names.
 > Runtime: The runtime receives the compiled binding and uses the correct model for
 > each call.
 >
-> Notes: **OPEN QUESTION OQ-01** (continued from §3.3): The call site syntax
-> `Model.call(Prompt(...))` is used in Layer 5 §6.3 examples but not formally
-> specified in the grammar. The capability checker must resolve model references at
-> call sites. **Recommended resolution:** For v0.1, the compiler resolves model
-> bindings from (1) agent `model:` fields and (2) dot-call expressions in let
-> bindings. This covers the two documented usage patterns without requiring a formal
-> call-site grammar extension.
+> Notes: **[CLOSED in v0.1.0 remediation]** (see §3.3 CAP-MDL-03). For v0.1, the
+> compiler resolves model bindings from (1) agent `model:` fields and (2) dot-call
+> expressions in let bindings. Formal call-site grammar extension is planned for v0.2.
 
 ### 5.3 CAP010: Capability Mismatch Error
 
@@ -1092,10 +1085,10 @@ custom capability names.
 > accepts `-> string` regardless of capabilities. The capability system adds a
 > recommendation on top.
 >
-> **OPEN QUESTION OQ-03:** Layer 5 does not explicitly specify the interaction between
-> `json_mode` and return type. **Recommended resolution:** CAP020 WARNING (adopted
-> in this spec). This is a quality-of-life warning, not a correctness error — there
-> are legitimate cases where an engineer wants raw JSON as a string.
+> **[CLOSED in v0.1.0 remediation]** CAP020 WARNING adopted. Layer 5 does not
+> explicitly specify the json_mode/return type interaction. This is a quality-of-life
+> warning, not a correctness error — there are legitimate cases where an engineer
+> wants raw JSON as a string.
 
 ### 6.2 vision and Input Types
 
@@ -1125,12 +1118,11 @@ custom capability names.
 > them as image content blocks in the API message. The exact detection heuristic is
 > adapter-specific.
 >
-> Notes: **OPEN QUESTION OQ-04:** Layer 5 does not specify how the runtime
-> distinguishes image parameters from text parameters. **Recommended resolution:**
-> In v0.1, the adapter uses naming convention heuristics (parameters named
-> `image`, `image_url`, `photo`, etc.) or explicit type annotations (Post-MVP:
-> a dedicated `Image` type). For v0.1, this is a runtime adapter concern, not a
-> compile-time concern.
+> Notes: **[CLOSED in v0.1.0 remediation]** In v0.1, the adapter uses naming
+> convention heuristics (parameters named `image`, `image_url`, `photo`, etc.) to
+> detect image parameters. This is a runtime adapter concern, not a compile-time
+> concern. A dedicated `Image` type is planned for Post-MVP, which would make
+> detection compile-time.
 
 ### 6.3 tools Capability and Tool Declarations
 
@@ -1610,7 +1602,7 @@ registers custom capability names with their adapter activation logic.
 | **Total**         | **26**  | **26**  | **0**   | **0** |
 
 Failed checks: 0
-Open Questions: 4 (OQ-01, OQ-02, OQ-03, OQ-04)
+Open Questions: 0 (all closed in v0.1.0 remediation)
 
 ### A — Completeness Checks
 
@@ -1629,12 +1621,11 @@ Open Questions: 4 (OQ-01, OQ-02, OQ-03, OQ-04)
 **A3[PASS]** Capability check algorithm in §5.1 (CAP-CHK-01) formally specified as
 R ⊄ C → CAP010. Timing documented: after type checking (step 5), before codegen (step 7).
 
-**A4[PASS]** Four OPEN QUESTIONs documented, all with recommended resolutions:
-- OQ-01: Call site syntax (§3.3, §5.2)
-- OQ-02: Duplicate capability names (§4.4)
-- OQ-03: json_mode / return type interaction (§6.1)
-- OQ-04: vision / image parameter detection (§6.2)
-None are hidden inside rule text — all are clearly marked.
+**A4[PASS]** Four OPEN QUESTIONs from initial draft, all CLOSED in v0.1.0 remediation:
+- OQ-01: Call site syntax (§3.3, §5.2) → CLOSED: two-mechanism binding for v0.1
+- OQ-02: Duplicate capability names (§4.4) → CLOSED: CAP002 warning
+- OQ-03: json_mode / return type interaction (§6.1) → CLOSED: CAP020 warning
+- OQ-04: vision / image parameter detection (§6.2) → CLOSED: runtime heuristic
 
 **A5[PASS]** Post-MVP capability features documented in §10:
 - §10.1: Tool capability requirements
@@ -1766,21 +1757,14 @@ without consulting Layer 1–4 documents.
 
 ### Known Limitations (v0.1.0)
 
-1. **OQ-01: Call site syntax undefined.** The grammar does not formally define
-   `Model.call(Prompt(...))` syntax. Capability checking at standalone call sites
-   depends on resolution of this open question. Agent-level binding (Production [38])
-   is fully specified.
+1. **Call site syntax** — `Model.call(Prompt(...))` is not a formal grammar production
+   in v0.1. Resolved via agent binding and let-binding dot-call. Grammar production
+   planned for v0.2.
 
-2. **OQ-02: Duplicate handling unspecified in Layer 5.** CAP002 warning adopted as
-   recommended resolution. Harmless — duplicates are deduplicated.
+2. **Vision image parameter detection** — runtime adapter heuristic in v0.1. Formal
+   `Image` type planned for Post-MVP.
 
-3. **OQ-03: json_mode/string interaction unspecified in Layer 5.** CAP020 warning
-   adopted as recommended resolution. Non-blocking quality-of-life warning.
-
-4. **OQ-04: Vision image parameter detection unspecified.** Runtime adapter heuristic
-   for v0.1. Formal image type is Post-MVP.
-
-5. **Post-MVP features deferred:** Tool requirements, agent requirements, capability
+3. **Post-MVP features deferred:** Tool requirements, agent requirements, capability
    inheritance, conditional capabilities, strict custom registration.
 
 ### Grammar.ebnf Production Citations

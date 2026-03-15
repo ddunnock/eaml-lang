@@ -8,7 +8,7 @@
 
 This document is the canonical reference for all diagnostic codes emitted by the EAML compiler (`eamlc`) and the EAML Python runtime. Every compiler diagnostic carries a prefixed numeric code (e.g., `SYN042`, `TYP010`) that uniquely identifies the error condition, its triggering rule, and its resolution. Runtime exceptions are documented separately in Section 5.
 
-This catalog covers **35 compiler diagnostic codes** and **1 runtime exception** across six prefixes.
+This catalog covers **38 compiler diagnostic codes** and **1 runtime exception** across six prefixes.
 
 ---
 
@@ -251,6 +251,29 @@ prompt Greet(name: string) -> string {
 
 ---
 
+### SYN046: Unclosed Python bridge block
+
+**Phase:**      LEX
+**Severity:**   ERROR
+**Emitted by:** eaml-lexer
+**Condition:**  The lexer encounters `python %{` but reaches end-of-file without finding the closing `}%` sequence.
+**Message:**    `SYN046: Unclosed Python bridge block. Expected '}%' to close block started at line {line}:{col}.`
+
+**Example:**
+```eaml
+tool broken(x: string) -> string {
+  python %{
+    return x.upper()
+
+// → SYN046: Unclosed Python bridge block. Expected '}%' to close block started at line 2:10.
+```
+
+**Resolution:** Add the closing `}%` delimiter to terminate the Python bridge block.
+**Spec refs:**  grammar.ebnf Production [18] [lex: python-block-capture], PYTHON_BRIDGE.md PYB-SYN-01
+**Notes:**      The lexer scans for the two-character sequence `}%` to close the block. If EOF is reached during scanning, this error fires. This is distinct from SYN045 (unclosed template string interpolation).
+
+---
+
 ### SYN050: Native tool body (Post-MVP)
 
 **Phase:**      PARSE
@@ -474,6 +497,29 @@ schema User {
 
 ---
 
+### SEM025: Missing user: field in prompt body
+
+**Phase:**      TYPE
+**Severity:**   ERROR
+**Emitted by:** eaml-semantic
+**Condition:**  A prompt body does not contain a `user:` promptField.
+**Message:**    `SEM025: Prompt '{name}' is missing the required 'user:' field. Every prompt body must contain a user: field with the user message template.`
+
+**Example:**
+```eaml
+prompt Greet() -> string {
+  system: "You are a greeter."
+  temperature: 0.5
+}
+// → SEM025: Prompt 'Greet' is missing the required 'user:' field.
+```
+
+**Resolution:** Add a `user:` field containing the user message template string.
+**Spec refs:**  grammar.ebnf Production [32] [sem: prompt-requires-user-field], Layer 5 Section 7.3
+**Notes:**      The `user:` field is the only required prompt field. All others (`system:`, `temperature:`, `max_tokens:`, `max_retries:`) are optional.
+
+---
+
 ### SEM030: Unknown bounded parameter
 
 **Phase:**      TYPE
@@ -577,6 +623,30 @@ prompt Check(x: int, y: int, z: int) -> bool {
 **Resolution:** Break the chain into separate comparisons joined with `&&` or `||`.
 **Spec refs:**  grammar.ebnf Production [57] [sem: no-chained-comparison], Layer 5 Section 14 EG-06
 **Notes:**      Chained comparisons are ambiguous in most C-family languages (they compare the boolean result to the next operand). EAML rejects them outright with a clear hint.
+
+---
+
+### SEM061: Positional argument after named argument
+
+**Phase:**      TYPE
+**Severity:**   ERROR
+**Emitted by:** eaml-semantic
+**Condition:**  A positional argument appears after a named (keyword) argument in a function call.
+**Message:**    `SEM061: Positional arguments must not follow named arguments in call to '{name}'.`
+
+**Example:**
+```eaml
+prompt Classify(text: string, lang: string) -> string {
+  user: "Classify {text} in {lang}"
+}
+
+let r: string = Classify(text: "hello", "en")
+// → SEM061: Positional arguments must not follow named arguments in call to 'Classify'.
+```
+
+**Resolution:** Either make all arguments positional, or place all positional arguments before any named arguments.
+**Spec refs:**  grammar.ebnf Production [74] [sem: no-positional-after-named]
+**Notes:**      This follows standard convention from Python. The grammar allows mixed positional and named arguments; this restriction is enforced by semantic analysis.
 
 ---
 
@@ -989,6 +1059,7 @@ prompt Greet() -> string {
 | SYN043 | Pipe operator in expression        | PARSE   | ERROR    | eaml-parser   |
 | SYN044 | Ampersand in expression            | PARSE   | ERROR    | eaml-parser   |
 | SYN045 | Unclosed template interpolation    | LEX     | ERROR    | eaml-lexer    |
+| SYN046 | Unclosed Python bridge block       | LEX     | ERROR    | eaml-lexer    |
 | SYN050 | Native tool body (Post-MVP)        | PARSE   | ERROR    | eaml-parser   |
 | SYN060 | Circular import                    | PARSE   | ERROR    | eaml-parser   |
 | SYN061 | Absolute or URL import path        | PARSE   | ERROR    | eaml-parser   |
@@ -999,11 +1070,13 @@ prompt Greet() -> string {
 | SYN090 | Field annotation (Post-MVP)        | PARSE   | ERROR    | eaml-parser   |
 | SEM010 | Import after declaration           | RESOLVE | ERROR    | eaml-semantic |
 | SEM020 | Duplicate field name               | TYPE    | ERROR    | eaml-semantic |
+| SEM025 | Missing user: field in prompt      | TYPE    | ERROR    | eaml-semantic |
 | SEM030 | Unknown bounded parameter          | TYPE    | ERROR    | eaml-semantic |
 | SEM035 | Bounds in parameter position       | TYPE    | ERROR    | eaml-semantic |
 | SEM040 | Tool body has no implementation    | TYPE    | ERROR    | eaml-semantic |
 | SEM050 | Type annotation required           | PARSE   | ERROR    | eaml-parser   |
 | SEM060 | Chained comparison                 | TYPE    | ERROR    | eaml-semantic |
+| SEM061 | Positional after named argument    | TYPE    | ERROR    | eaml-semantic |
 | SEM070 | Recursive schema reference         | TYPE    | WARNING  | eaml-semantic |
 | TYP001 | Built-in type shadowing            | TYPE    | WARNING  | eaml-semantic |
 | TYP002 | Reserved future type name          | TYPE    | WARNING  | eaml-semantic |
@@ -1026,19 +1099,19 @@ prompt Greet() -> string {
 | Severity  | Count  | Codes                                                                                                                                                  |
 |-----------|--------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
 | FATAL     | 1      | CAP010                                                                                                                                                 |
-| ERROR     | 26     | SYN042–045, SYN050, SYN060–061, SYN080–083, SYN090, SEM010, SEM020, SEM030, SEM035, SEM040, SEM050, SEM060, TYP003, TYP010, TYP030–032, PYB001, RES001 |
+| ERROR     | 29     | SYN042–046, SYN050, SYN060–061, SYN080–083, SYN090, SEM010, SEM020, SEM025, SEM030, SEM035, SEM040, SEM050, SEM060, SEM061, TYP003, TYP010, TYP030–032, PYB001, RES001 |
 | WARNING   | 8      | SEM070, TYP001, TYP002, TYP040, CAP001, CAP002, CAP020, PYB010                                                                                         |
 | RUNTIME   | 1      | CapabilityActivationError                                                                                                                              |
-| **Total** | **36** | 35 compiler codes + 1 runtime exception                                                                                                                |
+| **Total** | **39** | 38 compiler codes + 1 runtime exception                                                                                                                |
 
 ### 8.3 Phase Summary
 
 | Phase   | Count   | Codes                                                                                          |
 |---------|---------|------------------------------------------------------------------------------------------------|
-| LEX     | 1       | SYN045                                                                                         |
+| LEX     | 2       | SYN045, SYN046                                                                                 |
 | PARSE   | 12      | SYN042-044, SYN050, SYN060-061, SYN080-083, SYN090, SEM050                                     |
 | RESOLVE | 2       | SEM010, RES001                                                                                 |
-| TYPE    | 15      | SEM020, SEM030, SEM035, SEM040, SEM060, SEM070, TYP001-003, TYP010, TYP030-032, TYP040, PYB010 |
+| TYPE    | 17      | SEM020, SEM025, SEM030, SEM035, SEM040, SEM060, SEM061, SEM070, TYP001-003, TYP010, TYP030-032, TYP040, PYB010 |
 | CAP     | 4       | CAP001, CAP002, CAP010, CAP020                                                                 |
 | CODEGEN | 1       | PYB001                                                                                         |
 
@@ -1056,19 +1129,13 @@ Layer 5 Section 10.2 assigns PYB010 for unknown provider validation, but the che
 
 ### 9.2 Open Questions
 
-**OQ-1: Unclosed python %{ delimiter.**
-If `python %{` appears without a matching `}%`, this is a lexer error (EOF while scanning for `}%`). No specific error code has been assigned. The lexer currently produces a generic SYN error for unterminated tokens. Recommendation: assign a dedicated code (e.g., SYN046) or document as covered by generic lexer EOF handling.
+All open questions from the initial draft have been closed in v0.1.0 remediation:
 
-**OQ-2: Missing user: field in prompt body.**
-Grammar annotation [sem: prompt-requires-user-field] on Production [32] has no
-assigned error code. The semantic rule fires when a promptBody has no 'user:'
-promptField. Recommendation: assign SEM025 (SEM021-029 range, schema/declaration
-semantic errors).
+**OQ-1: Unclosed python %{ delimiter.** → **CLOSED: SYN046 assigned.** See §2.
 
-**OQ-3: Positional argument after named argument.**
-Grammar annotation [sem: no-positional-after-named] on Production [74] has no
-assigned error code. Recommendation: assign SEM061 (SEM061-069 range, expression
-semantic errors).
+**OQ-2: Missing user: field in prompt body.** → **CLOSED: SEM025 assigned.** See §3.
+
+**OQ-3: Positional argument after named argument.** → **CLOSED: SEM061 assigned.** See §3.
 
 ### 9.3 TYP500/SEM050 Overlap
 
@@ -1086,18 +1153,18 @@ The following code ranges are reserved for future use. Unassigned codes within a
 | Range       | Reserved for                                    |
 |-------------|-------------------------------------------------|
 | SYN001-041  | Future lexer and parser errors                  |
-| SYN046-049  | Future lexer errors (template strings, etc.)    |
+| SYN047-049  | Future lexer errors (template strings, etc.)    |
 | SYN051-059  | Future tool-related syntax errors               |
 | SYN062-079  | Future import and module errors                 |
 | SYN084-089  | Future post-MVP syntax features                 |
 | SYN091-099  | Future annotation errors                        |
 | SEM001-009  | Future import/resolution semantic errors        |
-| SEM021-029  | Future schema semantic errors                   |
+| SEM026-029  | Future schema semantic errors                   |
 | SEM031-034  | Future bounds semantic errors                   |
 | SEM036-039  | Future parameter semantic errors                |
 | SEM041-049  | Future tool semantic errors                     |
 | SEM051-059  | Future annotation semantic errors               |
-| SEM061-069  | Future expression semantic errors               |
+| SEM062-069  | Future expression semantic errors               |
 | SEM071-099  | Future semantic warnings                        |
 | TYP004-009  | Future type declaration errors                  |
 | TYP011-029  | Future type resolution errors                   |
@@ -1126,21 +1193,21 @@ The following code ranges are reserved for future use. Unassigned codes within a
 Failed checks: 0
 Ghost citations found: 0
 Orphan entries found: 0
-Open Questions: 1 (OQ-1: unclosed python %{ delimiter)
+Open Questions: 0 (all closed in v0.1.0 remediation)
 Conflicts resolved: 2
 
 ### Total Defined Codes
 
-SYN: 12 | SEM: 8 | TYP: 8 | CAP: 4 | PYB: 2 | RES: 1 | RUNTIME: 1
+SYN: 13 | SEM: 11 | TYP: 8 | CAP: 4 | PYB: 2 | RES: 1 | RUNTIME: 1
 
-Grand total: 35 compiler codes + 1 runtime exception = 36
+Grand total: 38 compiler codes + 1 runtime exception = 39
 
 ### Group A — Completeness: Every Code Defined
 
 **A1[PASS]** SYN codes from grammar.ebnf Post-MVP productions:
-SYN042 (§2), SYN043 (§2), SYN044 (§2), SYN045 (§2), SYN050 (§2),
+SYN042 (§2), SYN043 (§2), SYN044 (§2), SYN045 (§2), SYN046 (§2), SYN050 (§2),
 SYN060 (§2), SYN061 (§2), SYN080 (§2), SYN081 (§2), SYN082 (§2),
-SYN083 (§2), SYN090 (§2). All 12 present.
+SYN083 (§2), SYN090 (§2). All 13 present.
 
 **A2[PASS]** SEM codes from grammar.ebnf [sem:] annotations (E2 check):
 - [sem: no-chained-comparison] → SEM060 ✓
@@ -1149,8 +1216,8 @@ SYN083 (§2), SYN090 (§2). All 12 present.
 - [sem: import-before-declarations] → SEM010 ✓
 - [sem: default-must-match-param-type] → TYP003 (semantic check) ✓
 - [sem: let-type-must-match-expr] → TYP003 (type check) ✓
-- [sem: prompt-requires-user-field] → semantic check (no specific code — enforced, not a separate error) ✓
-- [sem: no-positional-after-named] → semantic check (no specific code assigned — OPEN QUESTION flagged in grammar) ✓
+- [sem: prompt-requires-user-field] → SEM025 ✓
+- [sem: no-positional-after-named] → SEM061 ✓
 - [sem: single-dimension-only-v0.1] → SYN042 ✓
 - [sem: forward-ref-allowed] → two-pass resolution ✓
 - [sem: bounded-param-validation] → SEM030 ✓
@@ -1168,14 +1235,14 @@ CAP001 (§5), CAP002 (§5), CAP010 (§5), CAP020 (§5),
 CapabilityActivationError (§5). All 5 present.
 
 **A5[PASS]** PYB001 present in §6. --check-python opt-in documented.
-Unclosed python %{ condition documented as OQ-1.
+Unclosed python %{ condition resolved as SYN046 (§2).
 
 **A6[PASS]** RES001 present in §7. Distinction from TYP010
 (type position vs expression position) documented in Notes.
 
-**A7[PASS]** Quick Reference §8 lists 35 compiler codes + 1 runtime entry.
+**A7[PASS]** Quick Reference §8 lists 38 compiler codes + 1 runtime entry.
 This matches the sum of individual entries in §§2–7:
-SYN(12) + SEM(8) + TYP(8) + CAP(4+1 runtime) + PYB(2) + RES(1) = 36.
+SYN(13) + SEM(11) + TYP(8) + CAP(4+1 runtime) + PYB(2) + RES(1) = 39.
 
 ### Group B — Completeness: Every Citation Traced
 

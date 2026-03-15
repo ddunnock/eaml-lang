@@ -1413,6 +1413,52 @@ specifies how those representations manifest at the call boundary.
 
 ---
 
+### RULE PYB-GEN-05: Bridge block content is the function body
+
+> Context: COMPILER + GENERATED
+>
+> Plain English: The content of a `python %{ }%` block becomes the BODY of the
+> generated Python function. It is NOT a standalone module or function definition.
+> If the user writes a `def` statement inside the block, that creates a local
+> helper function within the generated function — it does not replace the tool's
+> entry point. The `return` statement (or last expression) at the top indentation
+> level of the block provides the tool's return value.
+>
+> Grammar: Production [18] `PYTHON_BLOCK` — opaque content captured verbatim.
+>
+> Valid:
+> ```eaml
+> tool complex(data: string) -> string {
+>   python %{
+>     def helper(x):
+>         return x.strip().lower()
+>
+>     processed = helper(data)
+>     return f"Result: {processed}"
+>   }%
+> }
+> ```
+>
+> Generated:
+> ```python
+> def complex(data: str) -> str:
+>     def helper(x):
+>         return x.strip().lower()
+>
+>     processed = helper(data)
+>     return f"Result: {processed}"
+> ```
+>
+> Runtime: The `helper` function is a local function inside the generated `complex`
+> function. It is called normally within that scope. The `return` at the outer level
+> provides the tool's return value.
+>
+> Notes: **[CLOSED in v0.1.0 remediation]** (promoted from OQ-03).
+> This is the standard Python pattern for local helper functions. The EAML compiler
+> does not parse or analyze the Python code — it captures and emits it verbatim.
+
+---
+
 ## 6. Error Handling in Bridge Blocks
 
 ### 6.1 Python Syntax Errors — --check-python Flag
@@ -1617,61 +1663,37 @@ generated Python functions directly using standard Python testing tools.
 
 ## 8. Open Questions
 
-### OQ-01: Async bridge blocks
+### OQ-01: Async bridge blocks — CLOSED
 
-**Context:** §7.4 (Post-MVP), PYB-GEN-01 (generated wrapper).
-
-**Question:** Should `async def` inside bridge blocks be supported in v0.1?
-Currently, the generated wrapper calls the bridge function synchronously. An
-async bridge function would return a coroutine, not a value.
-
-**Recommended resolution:** Document async bridge blocks as unsupported in v0.1.
+**[CLOSED in v0.1.0 remediation]** Async bridge blocks are unsupported in v0.1.
 The generated wrapper is synchronous. Users who need async behavior should use
 `asyncio.run()` inside the bridge block (which blocks the calling thread).
 Full async support requires `eaml_runtime` to use `await` in the wrapper,
-which is architecture-significant.
+which is architecture-significant and deferred to Post-MVP.
 
-### OQ-02: Circular import detection
+### OQ-02: Circular import detection — CLOSED
 
-**Context:** PYB-IMP-06.
+**[CLOSED in v0.1.0 remediation]** No compiler detection in v0.1 — this is a user
+responsibility. Documented as a known pitfall in PYB-IMP-06. Future versions MAY
+add detection as a SEM warning.
 
-**Question:** Should the compiler detect when a bridge block imports the generated
-module itself?
+### OQ-03: User-defined function names in bridge blocks — CLOSED (promoted to PYB-GEN-05)
 
-**Recommended resolution:** No detection in v0.1 — this is a user responsibility.
-Document as a known pitfall. Future versions MAY add detection as a SEM warning.
+**[CLOSED in v0.1.0 remediation]** Promoted to rule PYB-GEN-05. The bridge block
+content IS the function body. A `def` statement inside the block defines a local
+helper function, not the tool's entry point. The generated wrapper executes the
+block content directly — the last expression or `return` statement provides the
+return value.
 
-### OQ-03: User-defined function names in bridge blocks
+### OQ-04: --check-python Python version — CLOSED
 
-**Context:** PYB-GEN-02 (naming convention).
+**[CLOSED in v0.1.0 remediation]** Use the `python3` (or `python`) found in `PATH`.
+The check Python version should match the execution environment. If Python is not
+found in PATH, emit a warning (not error) per Layer 5 §5.3.
 
-**Question:** The v0.1 model wraps bridge block content as the BODY of a generated
-function. What if the user writes a `def` statement inside the block?
+### OQ-05: Bridge exception wrapping — CLOSED
 
-**Recommended resolution:** The bridge block content IS the function body. If the
-user writes a `def` inside it, that defines a local helper function, not the tool's
-entry point. The generated wrapper calls the tool by executing the block content
-directly (the last expression or `return` statement provides the return value).
-
-### OQ-04: --check-python Python version
-
-**Context:** PYB-ERR-01.
-
-**Question:** Which Python executable does `--check-python` use? The `python` in
-PATH, or the Python that will eventually run the generated file?
-
-**Recommended resolution:** Use the `python3` (or `python`) found in `PATH`. Document
-that the check Python version should match the execution environment. If Python is
-not found in PATH, emit a warning (not error) per Layer 5 §5.3.
-
-### OQ-05: Bridge exception wrapping
-
-**Context:** PYB-ERR-02.
-
-**Question:** Should `eaml_runtime` wrap bridge exceptions in a
-`BridgeExecutionError` for structured error handling?
-
-**Recommended resolution:** No wrapping in v0.1 — let exceptions propagate
+**[CLOSED in v0.1.0 remediation]** No wrapping in v0.1 — exceptions propagate
 naturally. This is simpler and allows users to catch specific exception types.
 Future versions MAY add an optional wrapper for structured error reporting.
 
@@ -1689,7 +1711,7 @@ Future versions MAY add an optional wrapper for structured error reporting.
 | **Total**            | **23**   | **23**   | **0**    | **0** |
 
 Failed checks: 0
-Open Questions: 5 (OQ-01 through OQ-05, see §8)
+Open Questions: 0 (all closed in v0.1.0 remediation; OQ-03 promoted to PYB-GEN-05)
 
 ### Group A — Completeness Checks
 
@@ -1721,8 +1743,8 @@ optional (PYB-MAR-03), array (PYB-MAR-04), literal union (PYB-MAR-05).
 Return types covered: primitive (PYB-MAR-06), schema (PYB-MAR-07), null (PYB-MAR-08).
 Summary tables present for both directions. All cross-reference TYPESYSTEM.md §10.3.
 
-**A6[PASS]** All five OPEN QUESTIONs are in §8 with recommended resolutions.
-None are buried in rule body text without §8 entries.
+**A6[PASS]** All five OPEN QUESTIONs from §8 are CLOSED in v0.1.0 remediation.
+OQ-03 promoted to rule PYB-GEN-05. None remain open.
 
 **A7[PASS]** Post-MVP features in §7: native tool body (SYN050 ✓), prompt bridge,
 agent bridge, async bridge (OQ-01), testing hooks. SYN050 cited from ERRORS.md.
