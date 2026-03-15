@@ -386,8 +386,9 @@ deliberate and fully accepted by the language designer.
            - Inspired by lex/yacc convention (familiar to systems engineers)
            - No brace-depth counting required
            - No Python string scanner required
-           - The sequence '}%' cannot appear in real Python code accidentally
-           - Zero known limitations — all Python code is safely capturable
+           - The sequence '}%' is rare in Python code [errata: f-strings like
+             f"{expr}% ..." produce literal }% — use str.format() workaround]
+           - One known limitation documented — see PYB-SYN-01 Notes [errata]
 
          Example:
            tool Analyze(path: string) -> DataSummary {
@@ -991,7 +992,8 @@ RULE EG-01: 'python' is a full keyword, not a contextual keyword.
 
 RULE EG-02: '}%' is the ONLY valid closing delimiter for python blocks.
             The lexer scans for this two-character sequence only.
-            There are no known cases where real Python code contains '}%'.
+            [errata] Known edge case: f-strings like f"{x}% done" produce }%.
+            Workaround: use str.format() or concatenation instead.
 
 RULE EG-03: The '->' arrow appears ONLY in declaration return type positions.
             There are no function types (String -> Int) in EAML v0.1.

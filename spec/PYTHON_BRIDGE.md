@@ -229,9 +229,12 @@ Python's side is enforced at runtime only.
 >
 > Runtime: The Python interpreter executes the emitted function body normally.
 >
-> Notes: EG-02 from grammar.ebnf: `}%` is the only valid closing delimiter. The
-> lex/yacc-style delimiter was chosen because it cannot appear in real Python code.
-> Layer 5 §5.1 [CLOSED].
+> Notes: EG-02 from grammar.ebnf: `}%` is the only valid closing delimiter.
+> The lex/yacc-style delimiter was chosen for its rarity in Python code.
+> **Known limitation:** f-strings where `%` immediately follows a closing
+> interpolation brace (e.g., `f"{value}% done"`) produce a literal `}%` that
+> prematurely closes the block. Workaround: use `str.format()` or concatenation
+> (e.g., `"{:.1f}% done".format(value)`). Layer 5 §5.1 [CLOSED] (errata).
 
 ---
 
@@ -277,8 +280,9 @@ Python's side is enforced at runtime only.
 > Runtime: Python executes the preserved code with its original indentation intact.
 >
 > Notes: `[lex: ws-preserve-python]` — whitespace preservation is critical because
-> Python's syntax is indentation-sensitive. The scan-based algorithm has zero known
-> limitations (Layer 5 §5.1 rationale).
+> Python's syntax is indentation-sensitive. The scan-based algorithm has one known
+> limitation: f-strings containing `}%` (e.g., `f"{value}% done"`) prematurely
+> terminate the block. See PYB-SYN-01 Notes for workaround. Layer 5 §5.1 (errata).
 
 ---
 
@@ -816,9 +820,15 @@ specifies how those representations manifest at the call boundary.
 | `SchemaName`          | `SchemaName`             | Pydantic `BaseModel` instance   |
 | `SchemaName?`         | `Optional[SchemaName]`   | `SchemaName` instance or `None` |
 | `string[]`            | `List[str]`              | `list` of `str`                 |
-| `string?[]`           | `List[Optional[str]]`    | `list` of `str` or `None`       |
-| `string[]?`           | `Optional[List[str]]`    | `list` of `str` or `None`       |
+| `string?[]`           | `List[Optional[str]]`    | `list` of (`str` or `None`) elements |
+| `string[]?`           | `Optional[List[str]]`    | `list` of `str`, or `None` for entire list |
 | `"a" \| "b"`          | `Literal["a", "b"]`      | `str` (one of the members)      |
+| `null`                | `None`                   | Always `None` — see note        |
+
+> **Note on `null` parameters:** The `null` type (TYPESYSTEM.md TS-PRM-05) is a
+> valid parameter type but rarely useful — a `null`-typed parameter always receives
+> `None`. When present, the generated signature uses `x: None`. No marshaling is
+> needed since the value is always `None`.
 
 ---
 
@@ -836,7 +846,7 @@ specifies how those representations manifest at the call boundary.
 > | EAML Return Type  | Required Python Return   | Validation                         |
 > |-------------------|--------------------------|------------------------------------|
 > | `-> string`       | `str`                    | `isinstance(result, str)`          |
-> | `-> int`          | `int`                    | `isinstance(result, int)`          |
+> | `-> int`          | `int` (not `bool`)       | `isinstance(result, int) and not isinstance(result, bool)` |
 > | `-> float`        | `int` or `float`         | `isinstance(result, (int, float))` |
 > | `-> bool`         | `bool`                   | `isinstance(result, bool)`         |
 >
@@ -857,7 +867,7 @@ specifies how those representations manifest at the call boundary.
 > # eaml_runtime wrapper validates the return:
 > def _eaml_call_add(a: int, b: int) -> int:
 >     result = add(a, b)
->     if not isinstance(result, int):
+>     if not isinstance(result, int) or isinstance(result, bool):
 >         raise TypeError(f"Tool 'add' expected return type 'int', got '{type(result).__name__}'")
 >     return result
 > ```
@@ -866,6 +876,10 @@ specifies how those representations manifest at the call boundary.
 >
 > Notes: `-> float` accepts Python `int` return values (implicit int-to-float
 > coercion is standard Python behavior). Cross-reference: TYPESYSTEM.md §2.6.
+>
+> `-> int` explicitly excludes `bool` because Python's `bool` subclasses `int`
+> (`isinstance(True, int)` is `True`). TYPESYSTEM.md TS-PRM-04 treats `bool` and
+> `int` as distinct types.
 
 ---
 
@@ -902,7 +916,7 @@ specifies how those representations manifest at the call boundary.
 >     mean: float
 >     count: int
 >
-> def analyze(path: str) -> DataSummary:
+> def analyze(path: str) -> dict:
 >     import pandas as pd
 >     df = pd.read_csv(path)
 >     return {"mean": float(df.mean().mean()), "count": len(df)}
@@ -920,6 +934,113 @@ specifies how those representations manifest at the call boundary.
 > Notes: Layer 5 §5.4 [CLOSED]: "The emitted Python wraps the block's return
 > value in: `ReturnType.model_validate(result)`". Both dict and model instance
 > are accepted by `model_validate()`. Cross-reference: TYPESYSTEM.md TS-SCH-06.
+>
+> The inner bridge function uses `-> dict` (not `-> DataSummary`) because
+> the user's Python code returns a raw dict. The wrapper function carries the
+> schema type annotation and performs `model_validate()`.
+
+---
+
+### RULE PYB-MAR-07a: Array of schema return marshaling
+
+> Context: RUNTIME
+>
+> Plain English: A tool with an array-of-schema return type (`-> SchemaName[]`)
+> must return a Python `list`. Each element is validated via
+> `SchemaName.model_validate(item)`. Non-list returns raise `TypeError`.
+>
+> Grammar: Production [34] `toolDecl` — `"->" typeExpr` where `typeExpr` is
+> `SchemaName "[]"`.
+>
+> Valid:
+> ```eaml
+> schema User {
+>   name: string
+>   email: string
+> }
+>
+> tool listUsers(group: string) -> User[] {
+>   python %{
+>     db = get_database()
+>     return [{"name": r[0], "email": r[1]} for r in db.query(group)]
+>   }%
+> }
+> ```
+>
+> Generated:
+> ```python
+> def list_users(group: str) -> list:
+>     db = get_database()
+>     return [{"name": r[0], "email": r[1]} for r in db.query(group)]
+>
+> # eaml_runtime wrapper validates each element:
+> def _eaml_call_list_users(group: str) -> list[User]:
+>     result = list_users(group)
+>     if not isinstance(result, list):
+>         raise TypeError(f"Tool 'listUsers' expected list return, got '{type(result).__name__}'")
+>     return [User.model_validate(item) for item in result]
+> ```
+>
+> Runtime: `eaml_runtime` first validates that the return value is a `list`,
+> then validates each element via `SchemaName.model_validate(item)`. If any
+> element fails validation, Pydantic v2 raises `ValidationError`.
+>
+> Notes: The inner bridge function uses `-> list` (not `-> list[User]`) because
+> the user's Python code returns raw dicts. The wrapper performs per-element
+> validation. Cross-reference: TYPESYSTEM.md TS-COMP-04.
+
+---
+
+### RULE PYB-MAR-07b: Literal union return marshaling
+
+> Context: RUNTIME
+>
+> Plain English: A tool with a literal union return type (`-> "a" | "b" | "c"`)
+> must return a Python `str` that is one of the declared members. The runtime
+> performs a membership check. Non-member values raise `ValueError`.
+>
+> Grammar: Production [34] `toolDecl` — `"->" typeExpr` where `typeExpr` is
+> `literalUnionType`.
+>
+> Valid:
+> ```eaml
+> tool classify(text: string) -> "positive" | "negative" | "neutral" {
+>   python %{
+>     from textblob import TextBlob
+>     polarity = TextBlob(text).sentiment.polarity
+>     if polarity > 0.1: return "positive"
+>     elif polarity < -0.1: return "negative"
+>     else: return "neutral"
+>   }%
+> }
+> ```
+>
+> Generated:
+> ```python
+> def classify(text: str) -> str:
+>     from textblob import TextBlob
+>     polarity = TextBlob(text).sentiment.polarity
+>     if polarity > 0.1: return "positive"
+>     elif polarity < -0.1: return "negative"
+>     else: return "neutral"
+>
+> # eaml_runtime wrapper validates membership:
+> def _eaml_call_classify(text: str) -> str:
+>     result = classify(text)
+>     if result not in ("positive", "negative", "neutral"):
+>         raise ValueError(
+>             f"Tool 'classify' returned '{result}', expected one of: 'positive', 'negative', 'neutral'"
+>         )
+>     return result
+> ```
+>
+> Runtime: `eaml_runtime` checks that the return value is a member of the
+> declared literal union. On mismatch, raises `ValueError` with the expected
+> members listed.
+>
+> Notes: The inner bridge function uses `-> str` because the user's Python code
+> returns a plain string. The wrapper enforces the membership constraint.
+> Cross-reference: TYPESYSTEM.md TS-RET-03.
 
 ---
 
@@ -996,7 +1117,7 @@ specifies how those representations manifest at the call boundary.
 | EAML Return Type   | Required Python Return   | Validation Method                   | On Mismatch                |
 |--------------------|--------------------------|-------------------------------------|----------------------------|
 | `-> string`        | `str`                    | `isinstance(result, str)`           | `TypeError`                |
-| `-> int`           | `int`                    | `isinstance(result, int)`           | `TypeError`                |
+| `-> int`           | `int` (not `bool`)       | `isinstance(result, int) and not isinstance(result, bool)` | `TypeError` |
 | `-> float`         | `int` or `float`         | `isinstance(result, (int, float))`  | `TypeError`                |
 | `-> bool`          | `bool`                   | `isinstance(result, bool)`          | `TypeError`                |
 | `-> null`          | `None` (or implicit)     | No validation                       | Return discarded           |
@@ -1098,7 +1219,7 @@ specifies how those representations manifest at the call boundary.
 > # (a) Standard imports for generated code
 > from pydantic import BaseModel, Field
 > from typing import Optional, List, Literal
-> from eaml_runtime import ToolMetadata, validate_return
+> from eaml_runtime import ToolMetadata
 >
 > # (b) Pydantic schema classes — from schema declarations
 > class PageInfo(BaseModel):
@@ -1246,7 +1367,7 @@ specifies how those representations manifest at the call boundary.
 > import httpx
 > from pydantic import BaseModel, Field
 > from typing import Optional, List, Literal
-> from eaml_runtime import ToolMetadata, validate_return
+> from eaml_runtime import ToolMetadata
 >
 > # Schema classes (once each)
 > class DataSummary(BaseModel):

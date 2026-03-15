@@ -278,8 +278,8 @@ docComment ::= "///" ( AnyChar - NL )*
              [lex: ws-preserve-python]
 
         NOTE: The closing delimiter is the two-character sequence '}%'.
-        No brace-depth counting is required. '}%' cannot appear in real
-        Python code accidentally (EG-02).
+        No brace-depth counting is required. '}%' is rare in Python code
+        but CAN appear in f-strings like f"{x}% done" (EG-02 errata).
 
         Layer 5 §5.1 [CLOSED]: python %{ ... }% is the only valid delimiter.
 */
@@ -512,6 +512,7 @@ toolBodyInner ::= pythonImpl
 /* [37] Python implementation block.
         Delimiter: python %{ ... }% (LEX/YACC-style).
         Layer 5 §5.1 [CLOSED]. EG-02: '}%' is the only closing delimiter.
+        [errata] f-string edge case — see EG-02.
         [lex: python-block-capture] */
 pythonImpl ::= "python" "%{" PYTHON_BLOCK "}%"
 
