@@ -14,15 +14,15 @@
 
 ### Lexer
 
-- [ ] **LEX-01**: Lexer tokenizes all keywords from grammar.ebnf (model, schema, prompt, tool, agent, import, let, if, else, return, true, false, null, requires)
-- [ ] **LEX-02**: Lexer tokenizes all operators and delimiters from grammar.ebnf
-- [ ] **LEX-03**: Lexer tokenizes string literals (double-quoted) with escape sequences
-- [ ] **LEX-04**: Lexer tokenizes numeric literals (integers and floats)
+- [x] **LEX-01**: Lexer tokenizes all keywords from grammar.ebnf (model, schema, prompt, tool, agent, import, let, if, else, return, true, false, null, requires)
+- [x] **LEX-02**: Lexer tokenizes all operators and delimiters from grammar.ebnf
+- [x] **LEX-03**: Lexer tokenizes string literals (double-quoted) with escape sequences
+- [x] **LEX-04**: Lexer tokenizes numeric literals (integers and floats)
 - [ ] **LEX-05**: Lexer tokenizes template strings with `{expr}` interpolation tracking brace depth correctly
 - [ ] **LEX-06**: Lexer captures python bridge blocks `python %{ ... }%` as opaque content
-- [ ] **LEX-07**: Lexer interns identifiers via lasso for memory-efficient deduplication
-- [ ] **LEX-08**: Lexer skips comments (`//`, `/* */`) while preserving accurate byte-offset spans
-- [ ] **LEX-09**: Lexer emits SYN error codes for malformed tokens with accurate source positions
+- [x] **LEX-07**: Lexer interns identifiers via lasso for memory-efficient deduplication
+- [x] **LEX-08**: Lexer skips comments (`//`, `/* */`) while preserving accurate byte-offset spans
+- [x] **LEX-09**: Lexer emits SYN error codes for malformed tokens with accurate source positions
 
 ### Parser
 
@@ -129,15 +129,15 @@
 | ERR-02 | Phase 1 | Complete |
 | ERR-03 | Phase 1 | Complete |
 | ERR-04 | Phase 1 | Complete |
-| LEX-01 | Phase 1 | Pending |
-| LEX-02 | Phase 1 | Pending |
-| LEX-03 | Phase 1 | Pending |
-| LEX-04 | Phase 1 | Pending |
+| LEX-01 | Phase 1 | Complete |
+| LEX-02 | Phase 1 | Complete |
+| LEX-03 | Phase 1 | Complete |
+| LEX-04 | Phase 1 | Complete |
 | LEX-05 | Phase 1 | Pending |
 | LEX-06 | Phase 1 | Pending |
-| LEX-07 | Phase 1 | Pending |
-| LEX-08 | Phase 1 | Pending |
-| LEX-09 | Phase 1 | Pending |
+| LEX-07 | Phase 1 | Complete |
+| LEX-08 | Phase 1 | Complete |
+| LEX-09 | Phase 1 | Complete |
 | PAR-01 | Phase 2 | Pending |
 | PAR-02 | Phase 2 | Pending |
 | PAR-03 | Phase 2 | Pending |
