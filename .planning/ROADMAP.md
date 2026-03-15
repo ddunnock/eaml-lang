@@ -31,11 +31,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Python bridge blocks `python %{ ... }%` are captured as single opaque tokens preserving their full content
   4. Malformed input produces SYN-prefixed error diagnostics with colored source snippets via codespan-reporting, and lexing continues past errors to report multiple issues
   5. Identifiers are interned via lasso so that repeated identifiers share a single allocation
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 01-01: TBD
-- [ ] 01-02: TBD
+- [ ] 01-01-PLAN.md -- Error foundation: ErrorCode enum, Diagnostic struct, DiagnosticCollector, codespan-reporting rendering
+- [ ] 01-02-PLAN.md -- Core lexer: Token types, logos DFA, interner, Normal mode tokenization with error recovery
+- [ ] 01-03-PLAN.md -- Advanced lexer: Template string interpolation with brace-depth tracking, python bridge capture
 
 ### Phase 2: Parser
 **Goal**: The compiler can parse token streams into a complete AST representing all EAML language constructs
@@ -123,7 +124,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Error Foundation and Lexer | 0/0 | Not started | - |
+| 1. Error Foundation and Lexer | 0/3 | Planning complete | - |
 | 2. Parser | 0/0 | Not started | - |
 | 3. Semantic Analysis | 0/0 | Not started | - |
 | 4. Code Generation | 0/0 | Not started | - |
