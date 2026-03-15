@@ -1,3 +1,11 @@
-//! EAML lexer — tokenizes EAML source into a token stream.
+//! EAML lexer -- tokenizes EAML source into a token stream.
 //!
-//! Public API: `lex(source: &str) -> TokenStream`
+//! Public API: [`lex()`] function, [`Token`], [`TokenKind`], [`Span`], [`Interner`].
+
+pub mod intern;
+pub mod lexer;
+pub(crate) mod logos_lexer;
+pub mod token;
+
+pub use intern::Interner;
+pub use token::{Span, Token, TokenKind};
