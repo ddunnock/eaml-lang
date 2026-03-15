@@ -1,0 +1,39 @@
+// ============================================================
+// FILE: bad_model.eaml
+// PURPOSE: Intentional CAP010 capability mismatch — negative test
+// EXPECTED: FATAL — exactly one CAP010 error
+// ============================================================
+//
+// Prompt 'AnalyzeText' requires 'json_mode' but model 'WeakModel'
+// declares caps: [] — the capability mismatch is intentional.
+//
+// To fix: add json_mode to WeakModel's caps list, or remove the
+// requires clause from the prompt.
+
+// Model with explicitly empty capability list.
+model WeakModel = Model(
+  id: "ollama/llama3",
+  provider: "ollama",
+  caps: []
+)
+
+// Schema for structured output — needed so the prompt return type
+// motivates the json_mode requirement.
+schema TextAnalysis {
+  summary: string
+  topic: string
+}
+
+// This prompt requires json_mode, which WeakModel does not declare.
+// Expected error:
+//   CAP010: Prompt 'AnalyzeText' requires capability 'json_mode' but model
+//           'WeakModel' does not declare it.
+//           Declared capabilities: []
+//           Hint: Add 'json_mode' to the model's caps list, or remove the
+//           requirement from the prompt.
+prompt AnalyzeText(content: string)
+  requires json_mode
+  -> TextAnalysis
+{
+  user: "Analyze the following text and provide a summary and topic:\n\n{content}"
+}
