@@ -18,8 +18,8 @@
 - [x] **LEX-02**: Lexer tokenizes all operators and delimiters from grammar.ebnf
 - [x] **LEX-03**: Lexer tokenizes string literals (double-quoted) with escape sequences
 - [x] **LEX-04**: Lexer tokenizes numeric literals (integers and floats)
-- [ ] **LEX-05**: Lexer tokenizes template strings with `{expr}` interpolation tracking brace depth correctly
-- [ ] **LEX-06**: Lexer captures python bridge blocks `python %{ ... }%` as opaque content
+- [x] **LEX-05**: Lexer tokenizes template strings with `{expr}` interpolation tracking brace depth correctly
+- [x] **LEX-06**: Lexer captures python bridge blocks `python %{ ... }%` as opaque content
 - [x] **LEX-07**: Lexer interns identifiers via lasso for memory-efficient deduplication
 - [x] **LEX-08**: Lexer skips comments (`//`, `/* */`) while preserving accurate byte-offset spans
 - [x] **LEX-09**: Lexer emits SYN error codes for malformed tokens with accurate source positions
@@ -133,8 +133,8 @@
 | LEX-02 | Phase 1 | Complete |
 | LEX-03 | Phase 1 | Complete |
 | LEX-04 | Phase 1 | Complete |
-| LEX-05 | Phase 1 | Pending |
-| LEX-06 | Phase 1 | Pending |
+| LEX-05 | Phase 1 | Complete |
+| LEX-06 | Phase 1 | Complete |
 | LEX-07 | Phase 1 | Complete |
 | LEX-08 | Phase 1 | Complete |
 | LEX-09 | Phase 1 | Complete |

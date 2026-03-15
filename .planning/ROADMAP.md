@@ -12,7 +12,7 @@ The EAML compiler is built as a strict pipeline following crate boundaries: shar
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Error Foundation and Lexer** - Shared error infrastructure and complete tokenization of all EAML constructs
+- [x] **Phase 1: Error Foundation and Lexer** - Shared error infrastructure and complete tokenization of all EAML constructs (completed 2026-03-15)
 - [ ] **Phase 2: Parser** - Hand-written recursive descent parser producing AST for all 84 grammar productions
 - [ ] **Phase 3: Semantic Analysis** - Name resolution, type checking, and capability checking across the AST
 - [ ] **Phase 4: Code Generation** - Python/Pydantic code emission from validated AST
@@ -124,7 +124,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Error Foundation and Lexer | 1/3 | In Progress|  |
+| 1. Error Foundation and Lexer | 3/3 | Complete   | 2026-03-15 |
 | 2. Parser | 0/0 | Not started | - |
 | 3. Semantic Analysis | 0/0 | Not started | - |
 | 4. Code Generation | 0/0 | Not started | - |
