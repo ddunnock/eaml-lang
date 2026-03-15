@@ -5,8 +5,9 @@
 
 pub mod codes;
 pub mod diagnostic;
+pub mod render;
 pub mod severity;
 
 pub use codes::ErrorCode;
-pub use diagnostic::{Diagnostic, Span};
+pub use diagnostic::{Diagnostic, DiagnosticCollector, Span};
 pub use severity::Severity;

@@ -51,3 +51,68 @@ impl Diagnostic {
         self
     }
 }
+
+/// Accumulates diagnostics up to a configurable error limit.
+///
+/// When the number of error-severity (Error or Fatal) diagnostics exceeds
+/// `max_errors`, the collector stops storing new diagnostics and sets an
+/// overflow flag.
+pub struct DiagnosticCollector {
+    diagnostics: Vec<Diagnostic>,
+    max_errors: usize,
+    error_count: usize,
+    overflow: bool,
+}
+
+impl DiagnosticCollector {
+    /// Creates a new collector with the given maximum error count.
+    pub fn new(max_errors: usize) -> Self {
+        Self {
+            diagnostics: Vec::new(),
+            max_errors,
+            error_count: 0,
+            overflow: false,
+        }
+    }
+
+    /// Emits a diagnostic into the collector.
+    ///
+    /// Error and Fatal severity diagnostics count toward the error limit.
+    /// Once the limit is exceeded, new diagnostics are dropped and overflow
+    /// is set to true.
+    pub fn emit(&mut self, diag: Diagnostic) {
+        if diag.severity == Severity::Error || diag.severity == Severity::Fatal {
+            self.error_count += 1;
+            if self.error_count > self.max_errors {
+                self.overflow = true;
+                return;
+            }
+        }
+        self.diagnostics.push(diag);
+    }
+
+    /// Returns true if any Error or Fatal diagnostics have been emitted.
+    pub fn has_errors(&self) -> bool {
+        self.error_count > 0
+    }
+
+    /// Returns true if the error limit was exceeded.
+    pub fn overflow(&self) -> bool {
+        self.overflow
+    }
+
+    /// Returns the count of Error and Fatal severity diagnostics emitted.
+    pub fn error_count(&self) -> usize {
+        self.error_count
+    }
+
+    /// Returns a slice of all collected diagnostics.
+    pub fn diagnostics(&self) -> &[Diagnostic] {
+        &self.diagnostics
+    }
+
+    /// Consumes the collector and returns the diagnostics vector.
+    pub fn into_diagnostics(self) -> Vec<Diagnostic> {
+        self.diagnostics
+    }
+}
