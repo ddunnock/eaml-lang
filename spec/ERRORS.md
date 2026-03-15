@@ -795,11 +795,11 @@ Capability errors are emitted during the capability subset-checking phase of sem
 
 **Example:**
 ```eaml
-model my_model {
-  provider: "anthropic"
-  model_id: "claude-sonnet-4-20250514"
+model MyModel = Model(
+  id: "claude-sonnet-4-20250514",
+  provider: "anthropic",
   caps: [json_mode, custom_feature]
-}
+)
 ```
 
 **Resolution:** Check spelling of the capability name. If using a custom capability, this warning can be suppressed. With `--strict-caps`, unknown capabilities are treated as errors.
@@ -818,11 +818,11 @@ model my_model {
 
 **Example:**
 ```eaml
-model my_model {
-  provider: "anthropic"
-  model_id: "claude-sonnet-4-20250514"
+model MyModel = Model(
+  id: "claude-sonnet-4-20250514",
+  provider: "anthropic",
   caps: [json_mode, tools, json_mode]
-}
+)
 ```
 
 **Resolution:** Remove the duplicate capability entry.
@@ -841,16 +841,14 @@ model my_model {
 
 **Example:**
 ```eaml
-model basic_model {
-  provider: "openai"
-  model_id: "gpt-4o"
+model BasicModel = Model(
+  id: "gpt-4o",
+  provider: "openai",
   caps: [json_mode]
-}
+)
 
-prompt ToolUser {
-  model basic_model
-  requires [tools]
-  "Use the tools"
+prompt ToolUser(text: string) requires [tools] -> string {
+  user: "Use the tools on {text}"
 }
 ```
 
@@ -945,11 +943,11 @@ tool lookup(query: string) -> string {
 
 **Example:**
 ```eaml
-model my_model {
-  provider: "custom_llm"
-  model_id: "my-model-v1"
+model MyModel = Model(
+  id: "my-model-v1",
+  provider: "custom_llm",
   caps: [json_mode]
-}
+)
 ```
 
 **Resolution:** If using a built-in provider, check spelling. Custom providers are allowed but must be configured in the runtime.

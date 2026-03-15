@@ -157,6 +157,9 @@
    In errorPolicy [40]:
      fail  retry  then
 
+   In requiresClause [76]:
+     requires
+
    NOTE: Some names appear in multiple contexts (e.g., "system" in
    promptField and agentField, "model" as both a keyword and a
    contextual keyword in agentField). The parser distinguishes by

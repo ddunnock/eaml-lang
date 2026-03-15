@@ -984,7 +984,10 @@ custom capability names.
 > ```
 >
 > Multiple missing capabilities emit **one CAP010 per missing capability**, so each
-> is independently actionable.
+> is independently actionable. Within the CAP phase, errors accumulate subject to the
+> 20-error limit (ERRORS.md §1.6). All CAP010 errors are reported before compilation
+> halts. Code generation (the next phase) is blocked regardless of how many errors
+> were accumulated.
 >
 > Valid (three resolution paths):
 > ```eaml
@@ -1140,7 +1143,7 @@ custom capability names.
 > The capability check fires only at the agent declaration that binds the model to
 > the tools.
 >
-> Formal: `agentDecl A with model M and tools T: tools ∈ T ⟹ "tools" must ∈ caps(M)`
+> Formal: `agentDecl A with model M and tool list T: T ≠ ∅ ⟹ "tools" ∈ caps(M)`
 >
 > Grammar: Production [38] `agentDecl`, Production [39] `agentField` — `"tools" ":"
 > "[" IDENT ("," IDENT)* "]"` binds tools to the agent. The `model:` field in the
@@ -1343,8 +1346,9 @@ evolving LLM capability landscape.
 > custom capabilities — the error is reserved for built-in capabilities that the
 > provider does not support.
 >
-> Notes: Layer 5 §6.1: "Unknown capability: SEM CAP001 warning (not error) in v0.1.
-> This allows engineers to declare capabilities before the registry is updated,
+> Notes: Layer 5 §6.1: "Unknown capability: SEM CAP001 warning (not error) in v0.1."
+> [Layer 5 §6.1 typo — correct code prefix is CAP, not SEM; the error code is CAP001.]
+> "This allows engineers to declare capabilities before the registry is updated,
 > using the --strict-caps flag to promote to error." The open registry design ensures
 > EAML can track new provider features without requiring grammar or compiler changes.
 
@@ -1438,7 +1442,7 @@ behavior, but warning is the recommended and adopted resolution.
 **Condition:** A prompt's `requiresClause` names a capability that the model used at
 the call site does not declare in its `caps:` list.
 
-**Severity:** ERROR (fatal — compilation halts)
+**Severity:** FATAL
 
 **Message:**
 ```
@@ -1639,9 +1643,12 @@ None are hidden inside rule text — all are clearly marked.
 - §10.4: Conditional capabilities
 - §10.5: Strict custom capability registration
 
-**A6[PASS]** Layer 5 [GRAMMAR IMPACT] annotations with corresponding rules:
-- §6.2 [GRAMMAR IMPACT] (requiresClause syntax) → CAP-REQ-01, CAP-REQ-02
-- §10.2 [GRAMMAR IMPACT] (modelDecl caps field) → CAP-MDL-01
+**A6[PASS with note]** Layer 5 [GRAMMAR IMPACT] annotations with corresponding rules:
+- §6.2 [GRAMMAR IMPACT] (requiresClause syntax) → CAP-REQ-01, CAP-REQ-02 ✓
+- §10.2 [GRAMMAR IMPACT] (modelDecl caps field) → CAP-MDL-01 ✓
+  NOTE: Layer 5 §10.2 shows `capList` (without `?`), but grammar Production [27]
+  has `capList?`. Empty caps lists (`caps: []`) are valid. CAPABILITIES.md CAP-MDL-01
+  correctly uses `capList?` per the grammar. Layer 5 §10.2 has a typo.
 
 **A7[PASS]** Error catalog (§9) is cross-referenced:
 - CAP001 ← CAP-MDL-02, CAP-REQ-04, CAP-REG-06, CAP-CUST-01
@@ -1745,7 +1752,7 @@ schema type"), MAY for optional (§4.1 CAP-REQ-01: "prompt MAY declare"). No low
 "should" where MUST is intended.
 
 **E3[PASS]** Compile-time CAP010 and runtime CapabilityActivationError are distinct:
-- CAP010: §5.3, §9 (Severity: ERROR, fatal, compile-time)
+- CAP010: §5.3, §9 (Severity: FATAL, compile-time)
 - CapabilityActivationError: §7.1, §9 (Severity: RUNTIME, exception)
 §7.1 explicitly documents they are "complementary, not redundant" with a comparison table.
 

@@ -481,7 +481,7 @@ deliberate and fully accepted by the language designer.
          without grammar changes. This is a deliberate design choice allowing
          the language to track the rapidly evolving LLM capability landscape.
 
-         Unknown capability: SEM CAP001 warning (not error) in v0.1.
+         Unknown capability: CAP001 warning (not error) in v0.1.
          This allows engineers to declare capabilities before the registry
          is updated, using the --strict-caps flag to promote to error.
 ```
@@ -787,7 +787,7 @@ deliberate and fully accepted by the language designer.
   modelDecl ::= "model" IDENT "=" "Model" "("
                 "id" ":" STRING ","
                 "provider" ":" STRING ","
-                "caps" ":" "[" capList "]"
+                "caps" ":" "[" capList? "]"
                 ")" ";"?
 ```
 
