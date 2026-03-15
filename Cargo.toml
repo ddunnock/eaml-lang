@@ -14,7 +14,7 @@ version    = "0.1.0"
 edition    = "2021"
 license    = "Apache-2.0"
 repository = "https://github.com/YOUR_ORG/eaml"
-rust-version = "1.75"
+rust-version = "1.78"
 
 [workspace.dependencies]
 # Shared across crates — pin versions here, reference with { workspace = true }

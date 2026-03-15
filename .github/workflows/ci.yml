@@ -43,7 +43,7 @@ jobs:
     needs: rust-check
     strategy:
       matrix:
-        rust: [stable, "1.75"]  # stable + MSRV
+        rust: [stable, "1.78"]  # stable + MSRV
     steps:
       - uses: actions/checkout@v4
 
@@ -76,7 +76,7 @@ jobs:
         run: uv python install 3.11
 
       - name: Install dependencies
-        run: uv sync --dev
+        run: uv sync --extra dev
 
       - name: Ruff check
         run: uv run ruff check .
@@ -107,7 +107,7 @@ jobs:
         run: uv python install ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: uv sync --dev
+        run: uv sync --extra dev
 
       - name: Run tests
         run: uv run pytest
