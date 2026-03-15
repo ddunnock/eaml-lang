@@ -569,10 +569,15 @@ typeExpr ::= baseType typeModifiers
            optionalSuffix → { "?" }
            ε              → FOLLOW(typeExpr) = { ")", ",", NL, ";", "]", "}", "=" }
          Note: "=" is in FOLLOW from letDecl context (let x: Tag = ...).
-         All three disjoint. LL(1). */
-typeModifiers ::= arraySuffix optionalSuffix?    /* []  then ?  → Tag[]? */
-                | optionalSuffix arraySuffix?    /* ?   then [] → Tag?[] */
-                |                                /* bare type   → Tag    */
+         All three disjoint. LL(1).
+
+         After initial "?", sub-dispatch:
+           "["   → arraySuffix, then optionally "?" again
+           other → bare optional (Tag?)
+         Also LL(1) at this sub-dispatch point. */
+typeModifiers ::= arraySuffix optionalSuffix?                    /* []  then ?  → Tag[]?  */
+                | optionalSuffix (arraySuffix optionalSuffix?)?  /* ?   then [] then ? → Tag?[]? */
+                |                                                /* bare type   → Tag    */
 
 /* [43] Base type — named type, literal union, or grouped type */
 baseType ::= namedType
