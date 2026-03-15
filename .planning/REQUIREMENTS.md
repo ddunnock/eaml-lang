@@ -7,10 +7,10 @@
 
 ### Error Foundation
 
-- [ ] **ERR-01**: Compiler defines all error codes from spec/ERRORS.md as a Rust enum (SYN, SEM, CAP, TYP, PYB, RES)
-- [ ] **ERR-02**: Diagnostic struct carries error code, message, source span, severity, and optional hints
-- [ ] **ERR-03**: Errors display with codespan-reporting showing colored source snippets and underlines
-- [ ] **ERR-04**: Multiple errors accumulate per compilation (not abort-on-first)
+- [x] **ERR-01**: Compiler defines all error codes from spec/ERRORS.md as a Rust enum (SYN, SEM, CAP, TYP, PYB, RES)
+- [x] **ERR-02**: Diagnostic struct carries error code, message, source span, severity, and optional hints
+- [x] **ERR-03**: Errors display with codespan-reporting showing colored source snippets and underlines
+- [x] **ERR-04**: Multiple errors accumulate per compilation (not abort-on-first)
 
 ### Lexer
 
@@ -125,10 +125,10 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ERR-01 | Phase 1 | Pending |
-| ERR-02 | Phase 1 | Pending |
-| ERR-03 | Phase 1 | Pending |
-| ERR-04 | Phase 1 | Pending |
+| ERR-01 | Phase 1 | Complete |
+| ERR-02 | Phase 1 | Complete |
+| ERR-03 | Phase 1 | Complete |
+| ERR-04 | Phase 1 | Complete |
 | LEX-01 | Phase 1 | Pending |
 | LEX-02 | Phase 1 | Pending |
 | LEX-03 | Phase 1 | Pending |
