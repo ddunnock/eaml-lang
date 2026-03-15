@@ -505,6 +505,8 @@ before raising `LLMValidationError`.
 >
 > Pydantic v2: `Optional[T]` (equivalent to `T | None`).
 > Optional fields in generated models receive `= None` as default value.
+> See Rule TS-GEN-01 (§10.4) for the critical Pydantic v2 requirement that
+> `Optional[T]` without `= None` is still required in Pydantic v2.
 >
 > JSON wire format: Field absent from JSON object, or explicitly `null`.
 
@@ -524,6 +526,12 @@ before raising `LLMValidationError`.
 > | `name: string` | Yes | No — ValidationError | `str` (required) |
 > | `name: string?` | Yes | Yes — defaults to None | `Optional[str] = None` |
 > | `name: null` | No | Yes — always null | `None` |
+>
+> **Usage note on `null` as a field type:** A field typed as `null` means the
+> JSON value MUST be explicitly `null` — the field cannot be absent. This is
+> rarely useful as a standalone field type. Typical use cases include placeholder
+> fields in forward-compatible schemas or discriminated union markers. For fields
+> that should accept absence, use `T?` (optional) instead.
 >
 > Grammar: `null` is Production [44] `namedType` (IDENT "null").
 > `?` is Production [49] `optionalSuffix`.
@@ -616,9 +624,10 @@ Layer 5 §3.3 [CLOSED]: "POSITION DETERMINES MEANING."
 > Formal: `Optional(Array(Optional(T)))`
 >
 > Grammar: Production [42] `typeExpr` — `baseType typeModifiers`.
-> Production [42a] `typeModifiers` — `optionalSuffix arraySuffix` (second alternative)
-> produces `T?[]`. The outer `?` requires grouping: `(T?[])?` which is equivalent
-> to writing `T?[]?` where the final `?` applies to the whole preceding type.
+> Production [42a] `typeModifiers` — second alternative:
+> `optionalSuffix (arraySuffix optionalSuffix?)?`. The first `?` applies to the
+> base type, `[]` wraps it as an array, and the final `?` makes the whole array
+> optional: `Optional(Array(Optional(T)))`.
 >
 > Valid:
 > ```eaml
@@ -698,6 +707,38 @@ metadata that Pydantic enforces at validation time. This means:
 
 Grammar: Production [45] `boundedSuffix` — `"<" boundParams ">"`.
 Applied to Production [44] `namedType` — `IDENT boundedSuffix?`.
+
+**RULE TS-BND-08: Bounded types are not permitted in parameter positions**
+
+> Plain English: Bounds are schema field constraints for validating LLM output.
+> They are NOT permitted in prompt or tool parameter type positions. Use the
+> unbounded base type as the parameter type and validate calling code separately.
+>
+> Grammar: Production [73] `param` uses `typeExpr`, which includes `namedType`
+> with `boundedSuffix`. The grammar permits `score: float<0.0, 1.0>` as a
+> parameter, but semantic analysis rejects it.
+>
+> Valid:
+> ```eaml
+> prompt analyze(score: float) -> Result {
+>   user: "Analyze score {score}"
+> }
+> ```
+>
+> Invalid:
+> ```eaml
+> prompt analyze(score: float<0.0, 1.0>) -> Result {
+>   user: "Analyze score {score}"
+> }
+> // → SEM035: Bounded type parameters are not permitted in prompt or tool
+> //   parameter positions. Bounds are schema field constraints for validating
+> //   LLM output. Use 'float' as the parameter type and validate the calling
+> //   code separately.
+> ```
+>
+> Notes: This restriction exists because prompt/tool parameters are values
+> passed IN to the prompt, not values returned FROM the LLM. Pydantic field
+> validation (which enforces bounds) applies only to LLM response schemas.
 
 ### 4.2 float Bounds
 
@@ -1291,6 +1332,30 @@ produce a generic "unexpected token" error.
 > `model_validate_json()`. When return type is `string`, no Pydantic validation
 > occurs — the raw response is returned.
 
+**RULE TS-RET-03: Literal union as prompt return type**
+
+> Plain English: A prompt MAY use a literal union as its return type. This is
+> a natural fit for classification prompts where the LLM must respond with
+> exactly one of the listed string values.
+>
+> Grammar: Production [31] `promptDecl` uses `typeExpr` for the return type,
+> and `typeExpr` includes `literalUnion` (Production [50]).
+>
+> Valid:
+> ```eaml
+> prompt classify(text: string) requires json_mode
+>     -> "positive" | "negative" | "neutral" {
+>     user: "Classify the sentiment of: {text}"
+> }
+> ```
+>
+> Pydantic v2: Generated return type is `Literal["positive", "negative", "neutral"]`.
+> Runtime behavior: the LLM response string must exactly match one of the listed
+> members. If it does not match, the retry policy applies (see §10.3).
+>
+> Notes: All literal union rules (TS-LIT-01 through TS-LIT-07) apply to literal
+> unions in return type position. Minimum two members required, duplicates warned.
+
 **RULE TS-RET-02: Tool return type and `-> null` for void tools**
 
 > Plain English: Every tool MUST have a return type annotation. Tools with no
@@ -1317,6 +1382,10 @@ produce a generic "unexpected token" error.
 ---
 
 ## 8. Type Error Catalog
+
+> **Note:** Error codes within each range are not required to be contiguous.
+> Unassigned codes (e.g., TYP002–TYP009, TYP011–TYP029) are reserved for
+> future type system errors in their respective categories.
 
 ### TYP0xx — Primitive Type Errors
 
@@ -1387,7 +1456,7 @@ Referenced by: TS-PRM-06, TS-RET-02.
 
 ---
 
-### TYP0xx — Bounded Type Errors
+### TYP03x — Bounded Type Errors
 
 #### TYP030: Lower bound exceeds upper bound
 
@@ -1446,7 +1515,7 @@ accept bounds.
 
 ---
 
-### TYP0xx — Literal Union Errors
+### TYP04x — Literal Union Errors
 
 #### TYP040: Duplicate literal union member
 
@@ -1709,7 +1778,8 @@ This is the canonical reference. Every type form MUST be derivable from this pat
 | `int` | `int` | — | (required) | |
 | `float` | `float` | — | (required) | |
 | `bool` | `bool` | — | (required) | |
-| `null` | `None` | — | (required) | Used as `-> null` return type |
+| `null` (field) | `None` | — | (required) | Rarely used; field must be explicitly `null` |
+| `null` (return) | `None` | — | n/a | `-> null` for void tools (§7.4 TS-RET-02) |
 | `string?` | `Optional[str]` | — | `= None` | |
 | `int?` | `Optional[int]` | — | `= None` | |
 | `float?` | `Optional[float]` | — | `= None` | |
@@ -1800,6 +1870,7 @@ status: Literal["pass", "fail", "skip"]
 
 Failed checks: 0
 Open Questions: 3 (OQ-01, OQ-02, OQ-03)
+Closed decisions added in v0.1.0 remediation: TS-BND-08 (SEM035), TS-RET-03
 
 ### Verification Details
 
@@ -1809,7 +1880,7 @@ A1[PASS] Every typeExpr production has a corresponding rule:
 - [42] typeExpr, [42a] typeModifiers → TS-COMP-01 through TS-COMP-04 (orderings)
 - [43] baseType → TS-PRM-01..06, TS-SCH-01, TS-LIT-01, TS-COMP-06
 - [44] namedType → TS-PRM-01..06, TS-SCH-01
-- [45] boundedSuffix → TS-BND-01..07
+- [45] boundedSuffix → TS-BND-01..08
 - [46] boundParams → TS-BND-01..05
 - [47] boundParam → TS-BND-01..05
 - [48] arraySuffix → TS-ARR-01, TS-ARR-02
@@ -1936,6 +2007,9 @@ OQ-01 (int literal coercion in float bounds) — §4.2
 OQ-02 (duplicate literal union members) — §5.3
 OQ-03 (recursive schemas) — §6.2, §9.6
 All include recommended resolutions.
+2 design decisions closed during remediation:
+TS-BND-08 (SEM035: bounds forbidden in parameter positions) — §4.1
+TS-RET-03 (literal union return types permitted) — §7.4
 
 E3[PASS] Normative language consistent: MUST/MUST NOT for requirements,
 SHOULD for recommendations, MAY for optional. No lowercase "should"
@@ -1968,7 +2042,7 @@ Pydantic v2 docs can implement the type checker and codegen crate.
 ### Grammar.ebnf Production Citations
 
 All 24 production numbers cited in this document have been verified against
-the current `spec/grammar.ebnf` (v0.1.0, 2026-03-14, 82 productions).
+the current `spec/grammar.ebnf` (v0.1.0, 2026-03-14, 84 productions).
 
 ### Pydantic v2 Version Assumption
 
