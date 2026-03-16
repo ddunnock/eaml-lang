@@ -94,59 +94,43 @@ impl Parser {
         self.advance(); // consume `import`
 
         // LL(2): if next is KwPython -> Python import, else EAML import
-        if self.at(TokenKind::KwPython) {
+        let is_python = self.at(TokenKind::KwPython);
+        if is_python {
             self.advance(); // consume `python`
-            let module = self.parse_template_string();
-
-            let alias = if self.at_contextual("as") {
-                self.advance(); // consume `as`
-                match self.expect_ident() {
-                    Ok((spur, _)) => Some(spur),
-                    Err(()) => {
-                        self.synchronize();
-                        let end = self.previous_span().end;
-                        return DeclId::Error(start..end);
-                    }
-                }
-            } else {
-                None
-            };
-
-            self.eat(TokenKind::Semicolon);
-            let end = self.previous_span().end;
-            let id = self.ast.alloc_import(ImportDecl::Python {
-                module,
-                alias,
-                span: start..end,
-            });
-            DeclId::Import(id)
-        } else {
-            // EAML file import
-            let path = self.parse_template_string();
-
-            let alias = if self.at_contextual("as") {
-                self.advance(); // consume `as`
-                match self.expect_ident() {
-                    Ok((spur, _)) => Some(spur),
-                    Err(()) => {
-                        self.synchronize();
-                        let end = self.previous_span().end;
-                        return DeclId::Error(start..end);
-                    }
-                }
-            } else {
-                None
-            };
-
-            self.eat(TokenKind::Semicolon);
-            let end = self.previous_span().end;
-            let id = self.ast.alloc_import(ImportDecl::Eaml {
-                path,
-                alias,
-                span: start..end,
-            });
-            DeclId::Import(id)
         }
+
+        let path_or_module = self.parse_template_string();
+
+        let alias = if self.at_contextual("as") {
+            self.advance(); // consume `as`
+            match self.expect_ident() {
+                Ok((spur, _)) => Some(spur),
+                Err(()) => {
+                    self.synchronize();
+                    return DeclId::Error(start..self.previous_span().end);
+                }
+            }
+        } else {
+            None
+        };
+
+        self.eat(TokenKind::Semicolon);
+        let end = self.previous_span().end;
+
+        let id = if is_python {
+            self.ast.alloc_import(ImportDecl::Python {
+                module: path_or_module,
+                alias,
+                span: start..end,
+            })
+        } else {
+            self.ast.alloc_import(ImportDecl::Eaml {
+                path: path_or_module,
+                alias,
+                span: start..end,
+            })
+        };
+        DeclId::Import(id)
     }
 
     // ========================================================================
@@ -225,13 +209,9 @@ impl Parser {
 
         // Parse capability list (comma-separated idents, may be empty)
         let mut caps = Vec::new();
-        let mut cap_spans = Vec::new();
         if self.at_ident() {
             match self.expect_ident() {
-                Ok((spur, span)) => {
-                    caps.push(spur);
-                    cap_spans.push(span);
-                }
+                Ok((spur, span)) => caps.push((spur, span)),
                 Err(()) => {
                     self.synchronize();
                     return DeclId::Error(start..self.previous_span().end);
@@ -239,10 +219,7 @@ impl Parser {
             }
             while self.eat(TokenKind::Comma) {
                 match self.expect_ident() {
-                    Ok((spur, span)) => {
-                        caps.push(spur);
-                        cap_spans.push(span);
-                    }
+                    Ok((spur, span)) => caps.push((spur, span)),
                     Err(()) => {
                         self.synchronize();
                         return DeclId::Error(start..self.previous_span().end);
@@ -269,7 +246,6 @@ impl Parser {
             model_id,
             provider,
             caps,
-            cap_spans,
             span: start..end,
         });
         DeclId::Model(id)
@@ -472,21 +448,16 @@ impl Parser {
         self.advance(); // consume "requires"
 
         let mut caps = Vec::new();
-        let mut cap_spans = Vec::new();
 
         if self.eat(TokenKind::LBracket) {
             // Bracketed list: [cap1, cap2] or []
             if self.at_ident() {
                 if let Ok((spur, span)) = self.expect_ident() {
-                    caps.push(spur);
-                    cap_spans.push(span);
+                    caps.push((spur, span));
                 }
                 while self.eat(TokenKind::Comma) {
                     match self.expect_ident() {
-                        Ok((spur, span)) => {
-                            caps.push(spur);
-                            cap_spans.push(span);
-                        }
+                        Ok((spur, span)) => caps.push((spur, span)),
                         Err(()) => break,
                     }
                 }
@@ -495,8 +466,7 @@ impl Parser {
         } else if self.at_ident() {
             // Bare single capability
             if let Ok((spur, span)) = self.expect_ident() {
-                caps.push(spur);
-                cap_spans.push(span);
+                caps.push((spur, span));
             }
         } else {
             let span = self.peek_span();
@@ -511,7 +481,6 @@ impl Parser {
         let end = self.previous_span().end;
         Some(RequiresClause {
             caps,
-            cap_spans,
             span: start..end,
         })
     }
@@ -742,26 +711,7 @@ impl Parser {
 
         // Left-factored dispatch after '{'
         if self.at(TokenKind::KwPythonBridge) {
-            // python %{ ... }%
-            self.advance(); // consume KwPythonBridge
-            let code_span = self.peek_span();
-            if self.at(TokenKind::PythonBlock) {
-                self.advance();
-            } else {
-                self.emit_error(
-                    ErrorCode::Syn050,
-                    "expected Python block content".into(),
-                    code_span.clone(),
-                    "expected Python code".into(),
-                );
-            }
-            let _ = self.expect(TokenKind::RBrace);
-            let end = self.previous_span().end;
-            ToolBody::PythonBridge {
-                description: None,
-                code_span,
-                span: start..end,
-            }
+            self.parse_python_bridge(None, start)
         } else if self.at_contextual("description") {
             // description: "..." python %{ ... }%
             self.advance(); // consume "description"
@@ -771,27 +721,8 @@ impl Parser {
             }
             let description = self.parse_template_string();
 
-            // Now expect python bridge
             if self.at(TokenKind::KwPythonBridge) {
-                self.advance(); // consume KwPythonBridge
-                let code_span = self.peek_span();
-                if self.at(TokenKind::PythonBlock) {
-                    self.advance();
-                } else {
-                    self.emit_error(
-                        ErrorCode::Syn050,
-                        "expected Python block content".into(),
-                        code_span.clone(),
-                        "expected Python code".into(),
-                    );
-                }
-                let _ = self.expect(TokenKind::RBrace);
-                let end = self.previous_span().end;
-                ToolBody::PythonBridge {
-                    description: Some(description),
-                    code_span,
-                    span: start..end,
-                }
+                self.parse_python_bridge(Some(description), start)
             } else {
                 let span = self.peek_span();
                 self.emit_error(
@@ -846,6 +777,33 @@ impl Parser {
         }
     }
 
+    /// Parses a `python %{ ... }%` block with an optional description.
+    fn parse_python_bridge(
+        &mut self,
+        description: Option<TemplateString>,
+        start: usize,
+    ) -> ToolBody {
+        self.advance(); // consume KwPythonBridge
+        let code_span = self.peek_span();
+        if self.at(TokenKind::PythonBlock) {
+            self.advance();
+        } else {
+            self.emit_error(
+                ErrorCode::Syn050,
+                "expected Python block content".into(),
+                code_span.clone(),
+                "expected Python code".into(),
+            );
+        }
+        let _ = self.expect(TokenKind::RBrace);
+        let end = self.previous_span().end;
+        ToolBody::PythonBridge {
+            description,
+            code_span,
+            span: start..end,
+        }
+    }
+
     // ========================================================================
     // Agent declaration (production [38])
     // ========================================================================
@@ -894,22 +852,15 @@ impl Parser {
                     break;
                 }
 
-                let mut tool_names = Vec::new();
-                let mut tool_spans = Vec::new();
+                let mut tools = Vec::new();
                 if self.at_ident() {
                     match self.expect_ident() {
-                        Ok((spur, span)) => {
-                            tool_names.push(spur);
-                            tool_spans.push(span);
-                        }
+                        Ok((spur, span)) => tools.push((spur, span)),
                         Err(()) => break,
                     }
                     while self.eat(TokenKind::Comma) {
                         match self.expect_ident() {
-                            Ok((spur, span)) => {
-                                tool_names.push(spur);
-                                tool_spans.push(span);
-                            }
+                            Ok((spur, span)) => tools.push((spur, span)),
                             Err(()) => break,
                         }
                     }
@@ -919,7 +870,7 @@ impl Parser {
                     break;
                 }
                 let end = self.previous_span().end;
-                fields.push(AgentField::Tools(tool_names, tool_spans, field_start..end));
+                fields.push(AgentField::Tools(tools, field_start..end));
             } else if self.at_contextual("system") {
                 self.advance();
                 if self.expect(TokenKind::Colon).is_err() {

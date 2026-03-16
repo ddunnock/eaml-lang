@@ -1,7 +1,11 @@
 //! Tests for template string parsing.
 
+#[allow(dead_code)]
+mod test_helpers;
+
 use eaml_parser::ast::*;
 use eaml_parser::parser::Parser;
+use test_helpers::format_template;
 
 /// Helper: parses a template string from source text.
 fn parse_template(
@@ -24,51 +28,19 @@ fn parse_template(
     (ast, ts, diagnostics, interner)
 }
 
-/// Format a template string for snapshot testing.
-fn format_template(ast: &Ast, ts: &TemplateString, interner: &eaml_lexer::Interner) -> String {
-    let parts: Vec<String> = ts
-        .parts
-        .iter()
-        .map(|p| match p {
-            TemplatePart::Text(span) => format!("Text({:?})", span),
-            TemplatePart::Interpolation(expr_id, span) => {
-                format!(
-                    "Interp({}, {:?})",
-                    format_expr(ast, *expr_id, interner),
-                    span
-                )
-            }
-        })
-        .collect();
-    format!("TemplateString([{}], {:?})", parts.join(", "), ts.span)
-}
-
-fn format_expr(ast: &Ast, id: ExprId, interner: &eaml_lexer::Interner) -> String {
-    match &ast[id] {
-        Expr::IntLit(span) => format!("IntLit({:?})", span),
-        Expr::FloatLit(span) => format!("FloatLit({:?})", span),
-        Expr::BoolLit(val, span) => format!("BoolLit({}, {:?})", val, span),
-        Expr::NullLit(span) => format!("NullLit({:?})", span),
-        Expr::Ident(spur, span) => format!("Ident({}, {:?})", interner.resolve(spur), span),
-        Expr::BinaryOp {
-            left, op, right, ..
-        } => {
-            format!(
-                "BinaryOp({}, {:?}, {})",
-                format_expr(ast, *left, interner),
-                op,
-                format_expr(ast, *right, interner),
-            )
-        }
-        Expr::TemplateStr(ts) => format!("TemplateStr({})", format_template(ast, ts, interner)),
-        Expr::Error(span) => format!("Error({:?})", span),
-        _ => format!("OtherExpr"),
-    }
+/// Format a template string with span for snapshot testing.
+fn format_template_with_span(
+    ast: &Ast,
+    ts: &TemplateString,
+    interner: &eaml_lexer::Interner,
+) -> String {
+    let inner = format_template(ast, ts, interner);
+    format!("TemplateString({}, {:?})", inner, ts.span)
 }
 
 fn parse_and_format(source: &str) -> String {
     let (ast, ts, _diags, interner) = parse_template(source);
-    format_template(&ast, &ts, &interner)
+    format_template_with_span(&ast, &ts, &interner)
 }
 
 #[test]

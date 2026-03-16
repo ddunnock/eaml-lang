@@ -249,8 +249,7 @@ pub struct ModelDecl {
     pub name: Spur,
     pub model_id: TemplateString,
     pub provider: TemplateString,
-    pub caps: Vec<Spur>,
-    pub cap_spans: Vec<Span>,
+    pub caps: Vec<(Spur, Span)>,
     pub span: Span,
 }
 
@@ -301,8 +300,7 @@ pub enum PromptField {
 /// A `requires` clause listing capabilities.
 #[derive(Debug, Clone)]
 pub struct RequiresClause {
-    pub caps: Vec<Spur>,
-    pub cap_spans: Vec<Span>,
+    pub caps: Vec<(Spur, Span)>,
     pub span: Span,
 }
 
@@ -343,7 +341,7 @@ pub struct AgentDecl {
 #[derive(Debug, Clone)]
 pub enum AgentField {
     Model(Spur, Span),
-    Tools(Vec<Spur>, Vec<Span>, Span),
+    Tools(Vec<(Spur, Span)>, Span),
     System(TemplateString),
     MaxTurns(Span),
     OnError(ErrorPolicy, Span),

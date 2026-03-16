@@ -1,7 +1,11 @@
 //! Tests for Pratt expression parsing.
 
+#[allow(dead_code)]
+mod test_helpers;
+
 use eaml_parser::ast::*;
 use eaml_parser::parser::Parser;
+use test_helpers::format_expr;
 
 /// Helper: parses an expression from source text.
 fn parse_expr(
@@ -22,115 +26,6 @@ fn parse_expr(
     let id = parser.parse_expr(0);
     let (ast, diagnostics, interner) = parser.finish_with_interner();
     (ast, id, diagnostics, interner)
-}
-
-/// Format an expression tree for snapshot testing.
-fn format_expr(ast: &Ast, id: ExprId, interner: &eaml_lexer::Interner) -> String {
-    match &ast[id] {
-        Expr::IntLit(span) => format!("IntLit({:?})", span),
-        Expr::FloatLit(span) => format!("FloatLit({:?})", span),
-        Expr::StringLit(ts) => format!("StringLit({})", format_template(ast, ts, interner)),
-        Expr::BoolLit(val, span) => format!("BoolLit({}, {:?})", val, span),
-        Expr::NullLit(span) => format!("NullLit({:?})", span),
-        Expr::Ident(spur, span) => format!("Ident({}, {:?})", interner.resolve(spur), span),
-        Expr::BinaryOp {
-            left,
-            op,
-            right,
-            span,
-        } => {
-            format!(
-                "BinaryOp({}, {:?}, {}, {:?})",
-                format_expr(ast, *left, interner),
-                op,
-                format_expr(ast, *right, interner),
-                span
-            )
-        }
-        Expr::UnaryOp { op, operand, span } => {
-            format!(
-                "UnaryOp({:?}, {}, {:?})",
-                op,
-                format_expr(ast, *operand, interner),
-                span
-            )
-        }
-        Expr::Await { operand, span } => {
-            format!(
-                "Await({}, {:?})",
-                format_expr(ast, *operand, interner),
-                span
-            )
-        }
-        Expr::FieldAccess {
-            object,
-            field,
-            span,
-        } => {
-            format!(
-                "FieldAccess({}, {}, {:?})",
-                format_expr(ast, *object, interner),
-                interner.resolve(field),
-                span
-            )
-        }
-        Expr::FnCall { callee, args, span } => {
-            let args_str: Vec<String> = args
-                .iter()
-                .map(|a| {
-                    let name_str = match &a.name {
-                        Some(spur) => format!("{}:", interner.resolve(spur)),
-                        None => String::new(),
-                    };
-                    format!("{}{}", name_str, format_expr(ast, a.value, interner))
-                })
-                .collect();
-            format!(
-                "FnCall({}, [{}], {:?})",
-                format_expr(ast, *callee, interner),
-                args_str.join(", "),
-                span
-            )
-        }
-        Expr::Index {
-            object,
-            index,
-            span,
-        } => {
-            format!(
-                "Index({}, {}, {:?})",
-                format_expr(ast, *object, interner),
-                format_expr(ast, *index, interner),
-                span
-            )
-        }
-        Expr::Paren { inner, span } => {
-            format!("Paren({}, {:?})", format_expr(ast, *inner, interner), span)
-        }
-        Expr::TemplateStr(ts) => format!("TemplateStr({})", format_template(ast, ts, interner)),
-        Expr::Error(span) => format!("Error({:?})", span),
-        Expr::If { .. } => "If(...)".to_string(),
-        Expr::Return { .. } => "Return(...)".to_string(),
-        Expr::Let { .. } => "Let(...)".to_string(),
-    }
-}
-
-fn format_template(ast: &Ast, ts: &TemplateString, interner: &eaml_lexer::Interner) -> String {
-    let parts: Vec<String> = ts
-        .parts
-        .iter()
-        .map(|p| match p {
-            TemplatePart::Text(span) => format!("Text({:?})", span),
-            TemplatePart::Interpolation(expr_id, span) => {
-                format!(
-                    "Interp({}, {:?})",
-                    format_expr(ast, *expr_id, interner),
-                    span
-                )
-            }
-        })
-        .collect();
-    format!("[{}]", parts.join(", "))
 }
 
 fn parse_and_format(source: &str) -> String {

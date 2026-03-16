@@ -147,7 +147,7 @@ fn verify_all_spans(output: &eaml_parser::ParseOutput, source: &str) {
             model.provider.span.end <= source_len,
             "Model provider template span out of bounds"
         );
-        for cap_span in &model.cap_spans {
+        for (_, cap_span) in &model.caps {
             assert!(cap_span.end <= source_len, "Model cap span out of bounds");
         }
     }
@@ -175,7 +175,7 @@ fn verify_all_spans(output: &eaml_parser::ParseOutput, source: &str) {
                 req.span.end <= source_len,
                 "Requires clause span out of bounds"
             );
-            for cap_span in &req.cap_spans {
+            for (_, cap_span) in &req.caps {
                 assert!(
                     cap_span.end <= source_len,
                     "Requires cap span out of bounds"
@@ -205,9 +205,9 @@ fn verify_all_spans(output: &eaml_parser::ParseOutput, source: &str) {
                 AgentField::Model(_, span) => {
                     assert!(span.end <= source_len, "Agent model span out of bounds");
                 }
-                AgentField::Tools(_, spans, span) => {
+                AgentField::Tools(tools, span) => {
                     assert!(span.end <= source_len, "Agent tools span out of bounds");
-                    for s in spans {
+                    for (_, s) in tools {
                         assert!(s.end <= source_len, "Agent tool name span out of bounds");
                     }
                 }

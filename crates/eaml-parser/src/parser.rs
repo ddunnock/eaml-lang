@@ -19,6 +19,7 @@ pub struct Parser {
     pub(crate) ast: Ast,
     pub(crate) diagnostics: Vec<Diagnostic>,
     pub(crate) interner: Interner,
+    error_count: usize,
 }
 
 impl Parser {
@@ -29,6 +30,10 @@ impl Parser {
         interner: Interner,
         lex_diagnostics: Vec<Diagnostic>,
     ) -> Self {
+        let error_count = lex_diagnostics
+            .iter()
+            .filter(|d| d.severity == Severity::Error || d.severity == Severity::Fatal)
+            .count();
         Self {
             tokens,
             pos: 0,
@@ -36,6 +41,7 @@ impl Parser {
             ast: Ast::new(),
             diagnostics: lex_diagnostics,
             interner,
+            error_count,
         }
     }
 
@@ -197,6 +203,7 @@ impl Parser {
     pub fn emit_error(&mut self, code: ErrorCode, message: String, span: Span, label: String) {
         self.diagnostics
             .push(Diagnostic::new(code, message, span, Severity::Error, label));
+        self.error_count += 1;
     }
 
     /// Emits an error diagnostic with a hint message.
@@ -210,6 +217,7 @@ impl Parser {
     ) {
         self.diagnostics
             .push(Diagnostic::new(code, message, span, Severity::Error, label).with_hint(hint));
+        self.error_count += 1;
     }
 
     // ========================================================================
@@ -257,12 +265,7 @@ impl Parser {
 
     /// Returns `true` if the error limit (20 errors) has been reached.
     pub fn error_limit_reached(&self) -> bool {
-        let error_count = self
-            .diagnostics
-            .iter()
-            .filter(|d| d.severity == Severity::Error || d.severity == Severity::Fatal)
-            .count();
-        error_count >= 20
+        self.error_count >= 20
     }
 
     // ========================================================================

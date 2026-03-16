@@ -4,26 +4,16 @@
 //! recovers to parse subsequent valid declarations, respects the error
 //! limit (20), and never panics on any input.
 
-use eaml_errors::{ErrorCode, Severity};
+#[allow(dead_code)]
+mod test_helpers;
+
+use eaml_errors::ErrorCode;
 use eaml_parser::ast::*;
+use test_helpers::{error_count, has_code};
 
 /// Helper: parse source and return output.
 fn parse(source: &str) -> eaml_parser::ParseOutput {
     eaml_parser::parse(source)
-}
-
-/// Count error-severity diagnostics.
-fn error_count(output: &eaml_parser::ParseOutput) -> usize {
-    output
-        .diagnostics
-        .iter()
-        .filter(|d| d.severity == Severity::Error || d.severity == Severity::Fatal)
-        .count()
-}
-
-/// Check if any diagnostic has the given error code.
-fn has_code(output: &eaml_parser::ParseOutput, code: ErrorCode) -> bool {
-    output.diagnostics.iter().any(|d| d.code == code)
 }
 
 // ===================================================================

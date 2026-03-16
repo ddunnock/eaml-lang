@@ -3,29 +3,11 @@
 //! Validates PAR-01: all populated example files parse into correct
 //! AST structures with 0 diagnostics.
 
-use eaml_errors::Severity;
-use eaml_parser::ast::*;
+#[allow(dead_code)]
+mod test_helpers;
 
-/// Parse an example source and assert zero error diagnostics.
-fn parse_example(source: &str) -> eaml_parser::ParseOutput {
-    let output = eaml_parser::parse(source);
-    let errors: Vec<_> = output
-        .diagnostics
-        .iter()
-        .filter(|d| d.severity == Severity::Error || d.severity == Severity::Fatal)
-        .collect();
-    assert!(
-        errors.is_empty(),
-        "Expected no error diagnostics but got {}:\n{}",
-        errors.len(),
-        errors
-            .iter()
-            .map(|d| format!("  {}: {} (at {:?})", d.code, d.message, d.span))
-            .collect::<Vec<_>>()
-            .join("\n")
-    );
-    output
-}
+use eaml_parser::ast::*;
+use test_helpers::parse_example;
 
 // ===================================================================
 // 01-minimal/minimal.eaml
@@ -51,7 +33,11 @@ fn example_minimal_model_structure() {
     if let DeclId::Model(id) = &output.program.declarations[0] {
         let m = &output.ast[*id];
         assert_eq!(output.interner.resolve(&m.name), "Haiku");
-        assert!(m.caps.is_empty(), "minimal model should have empty caps");
+        assert!(
+            m.caps.is_empty(),
+            "minimal model should have empty caps (got {:?})",
+            m.caps
+        );
     } else {
         panic!("expected Model declaration");
     }
@@ -121,7 +107,11 @@ fn example_sentiment_model_with_caps() {
         let m = &output.ast[*id];
         assert_eq!(output.interner.resolve(&m.name), "Sonnet");
         assert_eq!(m.caps.len(), 2);
-        let cap_names: Vec<&str> = m.caps.iter().map(|s| output.interner.resolve(s)).collect();
+        let cap_names: Vec<&str> = m
+            .caps
+            .iter()
+            .map(|(s, _)| output.interner.resolve(s))
+            .collect();
         assert!(cap_names.contains(&"json_mode"));
         assert!(cap_names.contains(&"streaming"));
     } else {
@@ -161,7 +151,7 @@ fn example_sentiment_prompt_with_requires() {
         assert!(p.requires.is_some());
         let req = p.requires.as_ref().unwrap();
         assert_eq!(req.caps.len(), 1);
-        assert_eq!(output.interner.resolve(&req.caps[0]), "json_mode");
+        assert_eq!(output.interner.resolve(&req.caps[0].0), "json_mode");
 
         // Should have system, user, temperature, max_tokens fields
         let has_system = p
@@ -383,7 +373,11 @@ fn example_capability_error_model_empty_caps() {
     if let DeclId::Model(id) = &output.program.declarations[0] {
         let m = &output.ast[*id];
         assert_eq!(output.interner.resolve(&m.name), "WeakModel");
-        assert!(m.caps.is_empty(), "WeakModel should have empty caps");
+        assert!(
+            m.caps.is_empty(),
+            "WeakModel should have empty caps (got {:?})",
+            m.caps
+        );
     } else {
         panic!("expected Model declaration");
     }
@@ -400,7 +394,7 @@ fn example_capability_error_prompt_requires() {
         assert!(p.requires.is_some());
         let req = p.requires.as_ref().unwrap();
         assert_eq!(req.caps.len(), 1);
-        assert_eq!(output.interner.resolve(&req.caps[0]), "json_mode");
+        assert_eq!(output.interner.resolve(&req.caps[0].0), "json_mode");
     } else {
         panic!("expected Prompt declaration");
     }

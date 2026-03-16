@@ -1,11 +1,10 @@
 //! Tests for declaration parsing.
 
-use eaml_parser::ast::*;
+#[allow(dead_code)]
+mod test_helpers;
 
-/// Helper: parses a full program from source text.
-fn parse_program(source: &str) -> eaml_parser::ParseOutput {
-    eaml_parser::parse(source)
-}
+use eaml_parser::ast::*;
+use test_helpers::parse_program;
 
 /// Format a DeclId for snapshot testing.
 fn format_decl(ast: &Ast, decl: &DeclId, interner: &eaml_lexer::Interner) -> String {
@@ -16,7 +15,7 @@ fn format_decl(ast: &Ast, decl: &DeclId, interner: &eaml_lexer::Interner) -> Str
             let caps: Vec<String> = m
                 .caps
                 .iter()
-                .map(|s| interner.resolve(s).to_string())
+                .map(|(s, _)| interner.resolve(s).to_string())
                 .collect();
             format!(
                 "Model({}, id={}, provider={}, caps=[{}], span={:?})",
@@ -100,7 +99,7 @@ fn format_decl(ast: &Ast, decl: &DeclId, interner: &eaml_lexer::Interner) -> Str
                     let caps: Vec<String> = req
                         .caps
                         .iter()
-                        .map(|s| interner.resolve(s).to_string())
+                        .map(|(s, _)| interner.resolve(s).to_string())
                         .collect();
                     format!("requires [{}]", caps.join(", "))
                 }
@@ -171,7 +170,8 @@ fn decl_empty_program() {
         output
             .diagnostics
             .iter()
-            .filter(|d| d.severity == eaml_errors::Severity::Error)
+            .filter(|d| d.severity == eaml_errors::Severity::Error
+                || d.severity == eaml_errors::Severity::Fatal)
             .count()
             == 0
     );
@@ -233,7 +233,9 @@ fn decl_model_empty_caps() {
     let errors: Vec<_> = output
         .diagnostics
         .iter()
-        .filter(|d| d.severity == eaml_errors::Severity::Error)
+        .filter(|d| {
+            d.severity == eaml_errors::Severity::Error || d.severity == eaml_errors::Severity::Fatal
+        })
         .collect();
     assert!(errors.is_empty(), "unexpected errors: {:?}", errors);
     let s = format_decl(
@@ -252,7 +254,9 @@ fn decl_model_with_caps() {
     let errors: Vec<_> = output
         .diagnostics
         .iter()
-        .filter(|d| d.severity == eaml_errors::Severity::Error)
+        .filter(|d| {
+            d.severity == eaml_errors::Severity::Error || d.severity == eaml_errors::Severity::Fatal
+        })
         .collect();
     assert!(errors.is_empty(), "unexpected errors: {:?}", errors);
     let s = format_decl(
@@ -271,7 +275,9 @@ fn decl_schema_two_fields() {
     let errors: Vec<_> = output
         .diagnostics
         .iter()
-        .filter(|d| d.severity == eaml_errors::Severity::Error)
+        .filter(|d| {
+            d.severity == eaml_errors::Severity::Error || d.severity == eaml_errors::Severity::Fatal
+        })
         .collect();
     assert!(errors.is_empty(), "unexpected errors: {:?}", errors);
     let s = format_decl(
@@ -290,7 +296,9 @@ fn decl_schema_newline_separation() {
     let errors: Vec<_> = output
         .diagnostics
         .iter()
-        .filter(|d| d.severity == eaml_errors::Severity::Error)
+        .filter(|d| {
+            d.severity == eaml_errors::Severity::Error || d.severity == eaml_errors::Severity::Fatal
+        })
         .collect();
     assert!(errors.is_empty(), "unexpected errors: {:?}", errors);
 }
@@ -303,7 +311,9 @@ fn decl_let_int() {
     let errors: Vec<_> = output
         .diagnostics
         .iter()
-        .filter(|d| d.severity == eaml_errors::Severity::Error)
+        .filter(|d| {
+            d.severity == eaml_errors::Severity::Error || d.severity == eaml_errors::Severity::Fatal
+        })
         .collect();
     assert!(errors.is_empty(), "unexpected errors: {:?}", errors);
     let s = format_decl(
@@ -322,7 +332,9 @@ fn decl_let_string() {
     let errors: Vec<_> = output
         .diagnostics
         .iter()
-        .filter(|d| d.severity == eaml_errors::Severity::Error)
+        .filter(|d| {
+            d.severity == eaml_errors::Severity::Error || d.severity == eaml_errors::Severity::Fatal
+        })
         .collect();
     assert!(errors.is_empty(), "unexpected errors: {:?}", errors);
 }
@@ -349,7 +361,9 @@ fn decl_optional_semicolon() {
     let errors: Vec<_> = output
         .diagnostics
         .iter()
-        .filter(|d| d.severity == eaml_errors::Severity::Error)
+        .filter(|d| {
+            d.severity == eaml_errors::Severity::Error || d.severity == eaml_errors::Severity::Fatal
+        })
         .collect();
     assert!(errors.is_empty(), "unexpected errors: {:?}", errors);
 }
@@ -428,7 +442,9 @@ fn decl_prompt_simple() {
     let errors: Vec<_> = output
         .diagnostics
         .iter()
-        .filter(|d| d.severity == eaml_errors::Severity::Error)
+        .filter(|d| {
+            d.severity == eaml_errors::Severity::Error || d.severity == eaml_errors::Severity::Fatal
+        })
         .collect();
     assert!(errors.is_empty(), "unexpected errors: {:?}", errors);
     assert!(matches!(output.program.declarations[0], DeclId::Prompt(_)));
@@ -450,7 +466,9 @@ fn decl_prompt_bare_requires() {
     let errors: Vec<_> = output
         .diagnostics
         .iter()
-        .filter(|d| d.severity == eaml_errors::Severity::Error)
+        .filter(|d| {
+            d.severity == eaml_errors::Severity::Error || d.severity == eaml_errors::Severity::Fatal
+        })
         .collect();
     assert!(errors.is_empty(), "unexpected errors: {:?}", errors);
     // Check requires clause
@@ -473,7 +491,9 @@ fn decl_prompt_bracketed_requires() {
     let errors: Vec<_> = output
         .diagnostics
         .iter()
-        .filter(|d| d.severity == eaml_errors::Severity::Error)
+        .filter(|d| {
+            d.severity == eaml_errors::Severity::Error || d.severity == eaml_errors::Severity::Fatal
+        })
         .collect();
     assert!(errors.is_empty(), "unexpected errors: {:?}", errors);
     if let DeclId::Prompt(id) = &output.program.declarations[0] {
@@ -494,7 +514,9 @@ fn decl_prompt_empty_requires() {
     let errors: Vec<_> = output
         .diagnostics
         .iter()
-        .filter(|d| d.severity == eaml_errors::Severity::Error)
+        .filter(|d| {
+            d.severity == eaml_errors::Severity::Error || d.severity == eaml_errors::Severity::Fatal
+        })
         .collect();
     assert!(errors.is_empty(), "unexpected errors: {:?}", errors);
     if let DeclId::Prompt(id) = &output.program.declarations[0] {
@@ -518,7 +540,9 @@ fn decl_prompt_all_fields() {
     let errors: Vec<_> = output
         .diagnostics
         .iter()
-        .filter(|d| d.severity == eaml_errors::Severity::Error)
+        .filter(|d| {
+            d.severity == eaml_errors::Severity::Error || d.severity == eaml_errors::Severity::Fatal
+        })
         .collect();
     assert!(errors.is_empty(), "unexpected errors: {:?}", errors);
     if let DeclId::Prompt(id) = &output.program.declarations[0] {
@@ -540,7 +564,9 @@ fn decl_prompt_max_retries() {
     let errors: Vec<_> = output
         .diagnostics
         .iter()
-        .filter(|d| d.severity == eaml_errors::Severity::Error)
+        .filter(|d| {
+            d.severity == eaml_errors::Severity::Error || d.severity == eaml_errors::Severity::Fatal
+        })
         .collect();
     assert!(errors.is_empty(), "unexpected errors: {:?}", errors);
     if let DeclId::Prompt(id) = &output.program.declarations[0] {
@@ -563,7 +589,9 @@ return requests.get(url).text
     let errors: Vec<_> = output
         .diagnostics
         .iter()
-        .filter(|d| d.severity == eaml_errors::Severity::Error)
+        .filter(|d| {
+            d.severity == eaml_errors::Severity::Error || d.severity == eaml_errors::Severity::Fatal
+        })
         .collect();
     assert!(errors.is_empty(), "unexpected errors: {:?}", errors);
     assert!(matches!(output.program.declarations[0], DeclId::Tool(_)));
@@ -585,7 +613,9 @@ return x * 2
     let errors: Vec<_> = output
         .diagnostics
         .iter()
-        .filter(|d| d.severity == eaml_errors::Severity::Error)
+        .filter(|d| {
+            d.severity == eaml_errors::Severity::Error || d.severity == eaml_errors::Severity::Fatal
+        })
         .collect();
     assert!(errors.is_empty(), "unexpected errors: {:?}", errors);
     if let DeclId::Tool(id) = &output.program.declarations[0] {
@@ -612,7 +642,9 @@ fn decl_agent_all_fields() {
     let errors: Vec<_> = output
         .diagnostics
         .iter()
-        .filter(|d| d.severity == eaml_errors::Severity::Error)
+        .filter(|d| {
+            d.severity == eaml_errors::Severity::Error || d.severity == eaml_errors::Severity::Fatal
+        })
         .collect();
     assert!(errors.is_empty(), "unexpected errors: {:?}", errors);
     assert!(matches!(output.program.declarations[0], DeclId::Agent(_)));
@@ -633,7 +665,9 @@ fn decl_agent_retry_policy() {
     let errors: Vec<_> = output
         .diagnostics
         .iter()
-        .filter(|d| d.severity == eaml_errors::Severity::Error)
+        .filter(|d| {
+            d.severity == eaml_errors::Severity::Error || d.severity == eaml_errors::Severity::Fatal
+        })
         .collect();
     assert!(errors.is_empty(), "unexpected errors: {:?}", errors);
     if let DeclId::Agent(id) = &output.program.declarations[0] {
@@ -668,7 +702,9 @@ fn decl_example_minimal() {
     let errors: Vec<_> = output
         .diagnostics
         .iter()
-        .filter(|d| d.severity == eaml_errors::Severity::Error)
+        .filter(|d| {
+            d.severity == eaml_errors::Severity::Error || d.severity == eaml_errors::Severity::Fatal
+        })
         .collect();
     assert!(
         errors.is_empty(),
@@ -685,7 +721,9 @@ fn decl_example_sentiment() {
     let errors: Vec<_> = output
         .diagnostics
         .iter()
-        .filter(|d| d.severity == eaml_errors::Severity::Error)
+        .filter(|d| {
+            d.severity == eaml_errors::Severity::Error || d.severity == eaml_errors::Severity::Fatal
+        })
         .collect();
     assert!(
         errors.is_empty(),
@@ -702,7 +740,9 @@ fn decl_example_types() {
     let errors: Vec<_> = output
         .diagnostics
         .iter()
-        .filter(|d| d.severity == eaml_errors::Severity::Error)
+        .filter(|d| {
+            d.severity == eaml_errors::Severity::Error || d.severity == eaml_errors::Severity::Fatal
+        })
         .collect();
     assert!(
         errors.is_empty(),
@@ -720,7 +760,9 @@ fn decl_example_bad_model() {
     let errors: Vec<_> = output
         .diagnostics
         .iter()
-        .filter(|d| d.severity == eaml_errors::Severity::Error)
+        .filter(|d| {
+            d.severity == eaml_errors::Severity::Error || d.severity == eaml_errors::Severity::Fatal
+        })
         .collect();
     assert!(
         errors.is_empty(),

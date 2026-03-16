@@ -60,7 +60,6 @@ fn alloc_model_returns_model_decl_id() {
             span: 0..0,
         },
         caps: vec![],
-        cap_spans: vec![],
         span: 0..10,
     });
     assert_eq!(id, ModelDeclId(0));
@@ -189,7 +188,6 @@ fn every_ast_node_has_span() {
             span: 0..0,
         },
         caps: vec![],
-        cap_spans: vec![],
         span: 0..10,
     };
     assert_eq!(model.span, 0..10);
