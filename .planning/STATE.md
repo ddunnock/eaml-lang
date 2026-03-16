@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in-progress
-stopped_at: Completed 03-01 name resolution
-last_updated: "2026-03-16T14:22:25Z"
-last_activity: 2026-03-16 -- Completed 03-01 name resolution foundation
+stopped_at: Completed 03-02 type checking pass
+last_updated: "2026-03-16T14:35:32Z"
+last_activity: 2026-03-16 -- Completed 03-02 type checking pass
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 10
-  completed_plans: 8
-  percent: 80
+  completed_plans: 9
+  percent: 90
 ---
 
 # Project State
@@ -26,18 +26,18 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 ## Current Position
 
 Phase: 3 of 6 (Semantic Analysis)
-Plan: 1 of 3 in current phase (completed)
+Plan: 2 of 3 in current phase (completed)
 Status: In Progress
-Last activity: 2026-03-16 -- Completed 03-01 name resolution foundation
+Last activity: 2026-03-16 -- Completed 03-02 type checking pass
 
-Progress: [########--] 80% (8/10 plans)
+Progress: [#########-] 90% (9/10 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 8
+- Total plans completed: 9
 - Average duration: 8 min
-- Total execution time: 1.0 hours
+- Total execution time: 1.2 hours
 
 **By Phase:**
 
@@ -59,6 +59,7 @@ Progress: [########--] 80% (8/10 plans)
 | Phase 02 P03 | 11 | 2 tasks | 14 files |
 | Phase 02 P04 | 6 | 2 tasks | 3 files |
 | Phase 03 P01 | 9 | 2 tasks | 12 files |
+| Phase 03 P02 | 9 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -89,6 +90,10 @@ Recent decisions affecting current work:
 - Added Interner::get() method to eaml-lexer for non-mutating Spur lookups (03-01)
 - DFS cycle detection uses three-color marking with per-node reporting (03-01)
 - lasso added as direct dependency of eaml-semantic for Spur type access (03-01)
+- TYP031 code path exists but untestable from source -- parser cannot parse negative bounded params (03-02)
+- SEM060 chained comparison tested via let binding since native tool bodies are post-MVP (03-02)
+- ToolBody::Empty enforced as SEM040 error -- resolution tests updated to use python bridge (03-02)
+- Template interpolation scope: params + top-level let bindings only; schema fields excluded (03-02)
 
 ### Pending Todos
 
@@ -101,6 +106,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-16T14:22:25Z
-Stopped at: Completed 03-01 name resolution
-Resume file: .planning/phases/03-semantic-analysis/03-01-SUMMARY.md
+Last session: 2026-03-16T14:35:32Z
+Stopped at: Completed 03-02 type checking pass
+Resume file: .planning/phases/03-semantic-analysis/03-02-SUMMARY.md

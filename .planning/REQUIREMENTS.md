@@ -41,13 +41,13 @@
 - [x] **SEM-01**: Name resolution populates symbol table with all top-level declarations
 - [x] **SEM-02**: Name resolution detects duplicate declarations (RES010)
 - [x] **SEM-03**: Name resolution detects undefined references (RES001)
-- [ ] **SEM-04**: Type checker validates bounded type parameters (float<min,max>, int<min,max>, string<minLen,maxLen>)
-- [ ] **SEM-05**: Type checker validates literal union members are consistent types
-- [ ] **SEM-06**: Type checker validates composite type modifiers (T?, T[], T[]?, T?[], T?[]?)
-- [ ] **SEM-07**: Type checker validates schema field types resolve to known types
+- [x] **SEM-04**: Type checker validates bounded type parameters (float<min,max>, int<min,max>, string<minLen,maxLen>)
+- [x] **SEM-05**: Type checker validates literal union members are consistent types
+- [x] **SEM-06**: Type checker validates composite type modifiers (T?, T[], T[]?, T?[], T?[]?)
+- [x] **SEM-07**: Type checker validates schema field types resolve to known types
 - [ ] **SEM-08**: Capability checker performs subset check: prompt requires ⊆ model capabilities
 - [ ] **SEM-09**: Capability checker emits CAP010 FATAL on capability mismatch
-- [ ] **SEM-10**: Template string interpolation validates referenced variables are in scope
+- [x] **SEM-10**: Template string interpolation validates referenced variables are in scope
 - [ ] **SEM-11**: Semantic analysis emits all SEM, TYP, CAP, and RES error codes from spec
 
 ### Code Generation
@@ -150,13 +150,13 @@
 | SEM-01 | Phase 3 | Complete |
 | SEM-02 | Phase 3 | Complete |
 | SEM-03 | Phase 3 | Complete |
-| SEM-04 | Phase 3 | Pending |
-| SEM-05 | Phase 3 | Pending |
-| SEM-06 | Phase 3 | Pending |
-| SEM-07 | Phase 3 | Pending |
+| SEM-04 | Phase 3 | Complete |
+| SEM-05 | Phase 3 | Complete |
+| SEM-06 | Phase 3 | Complete |
+| SEM-07 | Phase 3 | Complete |
 | SEM-08 | Phase 3 | Pending |
 | SEM-09 | Phase 3 | Pending |
-| SEM-10 | Phase 3 | Pending |
+| SEM-10 | Phase 3 | Complete |
 | SEM-11 | Phase 3 | Pending |
 | GEN-01 | Phase 4 | Pending |
 | GEN-02 | Phase 4 | Pending |
