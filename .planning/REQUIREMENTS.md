@@ -45,10 +45,10 @@
 - [x] **SEM-05**: Type checker validates literal union members are consistent types
 - [x] **SEM-06**: Type checker validates composite type modifiers (T?, T[], T[]?, T?[], T?[]?)
 - [x] **SEM-07**: Type checker validates schema field types resolve to known types
-- [ ] **SEM-08**: Capability checker performs subset check: prompt requires ⊆ model capabilities
-- [ ] **SEM-09**: Capability checker emits CAP010 FATAL on capability mismatch
+- [x] **SEM-08**: Capability checker performs subset check: prompt requires ⊆ model capabilities
+- [x] **SEM-09**: Capability checker emits CAP010 FATAL on capability mismatch
 - [x] **SEM-10**: Template string interpolation validates referenced variables are in scope
-- [ ] **SEM-11**: Semantic analysis emits all SEM, TYP, CAP, and RES error codes from spec
+- [x] **SEM-11**: Semantic analysis emits all SEM, TYP, CAP, and RES error codes from spec
 
 ### Code Generation
 
@@ -154,10 +154,10 @@
 | SEM-05 | Phase 3 | Complete |
 | SEM-06 | Phase 3 | Complete |
 | SEM-07 | Phase 3 | Complete |
-| SEM-08 | Phase 3 | Pending |
-| SEM-09 | Phase 3 | Pending |
+| SEM-08 | Phase 3 | Complete |
+| SEM-09 | Phase 3 | Complete |
 | SEM-10 | Phase 3 | Complete |
-| SEM-11 | Phase 3 | Pending |
+| SEM-11 | Phase 3 | Complete |
 | GEN-01 | Phase 4 | Pending |
 | GEN-02 | Phase 4 | Pending |
 | GEN-03 | Phase 4 | Pending |

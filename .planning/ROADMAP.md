@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Error Foundation and Lexer** - Shared error infrastructure and complete tokenization of all EAML constructs (completed 2026-03-15)
 - [x] **Phase 2: Parser** - Hand-written recursive descent parser producing AST for all 84 grammar productions (completed 2026-03-16)
-- [ ] **Phase 3: Semantic Analysis** - Name resolution, type checking, and capability checking across the AST
+- [x] **Phase 3: Semantic Analysis** - Name resolution, type checking, and capability checking across the AST (completed 2026-03-16)
 - [ ] **Phase 4: Code Generation** - Python/Pydantic code emission from validated AST
 - [ ] **Phase 5: Python Runtime** - Provider adapters, validation/retry, and telemetry for generated code
 - [ ] **Phase 6: CLI and Integration** - CLI binary orchestrating the pipeline, validated against all example programs
@@ -129,7 +129,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 |-------|----------------|--------|-----------|
 | 1. Error Foundation and Lexer | 3/3 | Complete   | 2026-03-15 |
 | 2. Parser | 4/4 | Complete   | 2026-03-16 |
-| 3. Semantic Analysis | 1/3 | In progress | - |
+| 3. Semantic Analysis | 3/3 | Complete   | 2026-03-16 |
 | 4. Code Generation | 0/0 | Not started | - |
 | 5. Python Runtime | 0/0 | Not started | - |
 | 6. CLI and Integration | 0/0 | Not started | - |
