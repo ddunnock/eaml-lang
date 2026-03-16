@@ -1,3 +1,7 @@
-//! EAML parser — recursive descent parser producing an AST.
+//! EAML parser -- recursive descent parser producing an AST.
 //!
-//! Public API: `parse(tokens: TokenStream) -> Program`
+//! Public API: [`parse()`] function, [`ParseOutput`] struct, AST types.
+
+pub mod ast;
+
+pub use ast::*;

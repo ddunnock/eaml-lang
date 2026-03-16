@@ -6,6 +6,7 @@ edition.workspace = true
 [dependencies]
 eaml-errors = { path = "../eaml-errors" }
 eaml-lexer  = { path = "../eaml-lexer" }
+lasso       = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }
