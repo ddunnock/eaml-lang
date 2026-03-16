@@ -76,12 +76,12 @@ Plans:
 ### Phase 4: Code Generation
 **Goal**: The compiler emits valid, runnable Python 3.11+ / Pydantic v2 code from a semantically-validated AST
 **Depends on**: Phase 3
-**Requirements**: GEN-01, GEN-02, GEN-03, GEN-04, GEN-05, GEN-06, GEN-07, GEN-08, GEN-09, GEN-10, GEN-11, GEN-12
+**Requirements**: GEN-01, GEN-02, GEN-03, GEN-04, GEN-05, GEN-06, GEN-07, GEN-08, GEN-09, GEN-10
 **Success Criteria** (what must be TRUE):
   1. Schema declarations produce Pydantic BaseModel classes where bounded fields use `Field(ge=..., le=...)` constraints and literal unions use `Literal[...]` annotations
   2. Prompt declarations produce async Python functions that construct system/user messages with f-string interpolation matching the EAML template strings
   3. Model, tool, and agent declarations each produce their corresponding Python constructs (config dicts, functions with bridge bodies, orchestration classes)
-  4. Generated Python files have correct, deduplicated imports (pydantic, typing, eaml_runtime) and pass mypy type checking without errors
+  4. Generated Python files have correct, deduplicated imports (pydantic, typing, eaml_runtime)
   5. Generated Python is structurally correct: indentation is consistent, no syntax errors, and the output is importable as a Python module
 **Plans**: 4 plans
 
@@ -89,7 +89,7 @@ Plans:
 - [ ] 04-01-PLAN.md -- Foundation: CodeWriter (indentation), type annotation mapper (ResolvedType -> Python), name converters (snake_case, UPPER_SNAKE), test helpers
 - [ ] 04-02-PLAN.md -- Schema and model emitters: Pydantic BaseModel classes with all type variants, model config dicts, let bindings
 - [ ] 04-03-PLAN.md -- Prompt, tool, and agent emitters: async prompt functions, bridge tool functions with wrappers/metadata, agent classes
-- [ ] 04-04-PLAN.md -- Integration: generate() wiring, import deduplication, declaration ordering, full example file snapshot tests
+- [ ] 04-04-PLAN.md -- Integration: generate() wiring, import deduplication, schema topological sort, declaration ordering, full example file snapshot tests
 
 ### Phase 5: Python Runtime
 **Goal**: Generated Python code can actually execute, calling LLM providers and validating responses against Pydantic models
@@ -109,12 +109,14 @@ Plans:
 ### Phase 6: CLI and Integration
 **Goal**: Users can compile and validate EAML files from the command line, and all example programs work end-to-end
 **Depends on**: Phase 4, Phase 5
-**Requirements**: CLI-01, CLI-02, CLI-03, CLI-04, INT-01, INT-02, INT-03
+**Requirements**: CLI-01, CLI-02, CLI-03, CLI-04, INT-01, INT-02, INT-03, GEN-11, GEN-12
 **Success Criteria** (what must be TRUE):
   1. `eamlc compile sentiment.eaml` produces a `.py` file and exits with code 0; `eamlc check bad_model.eaml` reports the CAP010 error and exits with non-zero code
   2. All 7 example programs (01-minimal through 07-all-type-variants) compile without errors
   3. The generated Python from sentiment.eaml can be executed and returns structured LLM output matching the declared schema
   4. Compilation errors display with colored source snippets, underlines, and error codes matching spec/ERRORS.md
+  5. Generated Python passes mypy type checking without errors (GEN-11, deferred from Phase 4 -- requires CLI to produce output files)
+  6. Generated Python runs and calls LLM APIs via eaml_runtime (GEN-12, deferred from Phase 4 -- requires runtime from Phase 5)
 **Plans**: TBD
 
 Plans:
