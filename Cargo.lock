@@ -183,6 +183,7 @@ dependencies = [
  "eaml-parser",
  "eaml-semantic",
  "insta",
+ "lasso",
 ]
 
 [[package]]
@@ -220,6 +221,9 @@ dependencies = [
  "eaml-errors",
  "eaml-lexer",
  "eaml-parser",
+ "insta",
+ "lasso",
+ "strsim",
 ]
 
 [[package]]

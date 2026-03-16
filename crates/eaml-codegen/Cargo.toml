@@ -8,6 +8,7 @@ eaml-errors   = { path = "../eaml-errors" }
 eaml-lexer    = { path = "../eaml-lexer" }
 eaml-parser   = { path = "../eaml-parser" }
 eaml-semantic = { path = "../eaml-semantic" }
+lasso         = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }
