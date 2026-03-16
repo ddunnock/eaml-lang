@@ -38,9 +38,9 @@
 
 ### Semantic Analysis
 
-- [ ] **SEM-01**: Name resolution populates symbol table with all top-level declarations
-- [ ] **SEM-02**: Name resolution detects duplicate declarations (RES010)
-- [ ] **SEM-03**: Name resolution detects undefined references (RES001)
+- [x] **SEM-01**: Name resolution populates symbol table with all top-level declarations
+- [x] **SEM-02**: Name resolution detects duplicate declarations (RES010)
+- [x] **SEM-03**: Name resolution detects undefined references (RES001)
 - [ ] **SEM-04**: Type checker validates bounded type parameters (float<min,max>, int<min,max>, string<minLen,maxLen>)
 - [ ] **SEM-05**: Type checker validates literal union members are consistent types
 - [ ] **SEM-06**: Type checker validates composite type modifiers (T?, T[], T[]?, T?[], T?[]?)
@@ -147,9 +147,9 @@
 | PAR-07 | Phase 2 | Complete |
 | PAR-08 | Phase 2 | Complete |
 | PAR-09 | Phase 2 | Complete |
-| SEM-01 | Phase 3 | Pending |
-| SEM-02 | Phase 3 | Pending |
-| SEM-03 | Phase 3 | Pending |
+| SEM-01 | Phase 3 | Complete |
+| SEM-02 | Phase 3 | Complete |
+| SEM-03 | Phase 3 | Complete |
 | SEM-04 | Phase 3 | Pending |
 | SEM-05 | Phase 3 | Pending |
 | SEM-06 | Phase 3 | Pending |

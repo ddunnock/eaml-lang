@@ -129,7 +129,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 |-------|----------------|--------|-----------|
 | 1. Error Foundation and Lexer | 3/3 | Complete   | 2026-03-15 |
 | 2. Parser | 4/4 | Complete   | 2026-03-16 |
-| 3. Semantic Analysis | 0/3 | In progress | - |
+| 3. Semantic Analysis | 1/3 | In progress | - |
 | 4. Code Generation | 0/0 | Not started | - |
 | 5. Python Runtime | 0/0 | Not started | - |
 | 6. CLI and Integration | 0/0 | Not started | - |
