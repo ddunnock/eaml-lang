@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 04-03-PLAN.md
-last_updated: "2026-03-16T20:14:16.893Z"
-last_activity: 2026-03-16 -- Completed 04-02 schema and model emitters
+stopped_at: Completed 04-04-PLAN.md
+last_updated: "2026-03-16T20:23:27.000Z"
+last_activity: 2026-03-16 -- Completed 04-04 generate function integration
 progress:
   total_phases: 6
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 14
-  completed_plans: 13
-  percent: 86
+  completed_plans: 14
+  percent: 100
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 
 ## Current Position
 
-Phase: 4 of 6 (Code Generation)
-Plan: 3 of 4 in current phase (completed)
-Status: Executing Phase 4
-Last activity: 2026-03-16 -- Completed 04-03 prompt, tool, and agent emitters
+Phase: 4 of 6 (Code Generation) -- COMPLETE
+Plan: 4 of 4 in current phase (completed)
+Status: Phase 4 Complete
+Last activity: 2026-03-16 -- Completed 04-04 generate function integration
 
-Progress: [█████████░] 93% (13/14 plans)
+Progress: [██████████] 100% (14/14 plans)
 
 ## Performance Metrics
 
@@ -64,6 +64,7 @@ Progress: [█████████░] 93% (13/14 plans)
 | Phase 04 P01 | 5 | 2 tasks | 9 files |
 | Phase 04 P02 | 3 | 2 tasks | 4 files |
 | Phase 04 P03 | 5 | 2 tasks | 4 files |
+| Phase 04 P04 | 6 | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -106,6 +107,8 @@ Recent decisions affecting current work:
 - [Phase 04]: Template strings with no interpolation emit plain strings; with interpolation emit f-strings with brace escaping
 - [Phase 04]: Tool bridge functions return dict per PYB-GEN-01; wrapper validates with model_validate (schema) or isinstance (primitive)
 - [Phase 04]: Agent tool references use snake_case Python function names per CONTEXT.md locked decision
+- [Phase 04]: Kahn's algorithm for schema topological sort; cycle fallback to source order
+- [Phase 04]: Declaration emit order: imports, lets, schemas, models, prompts/tools, agents
 
 ### Pending Todos
 
@@ -118,6 +121,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-16T20:14:16.890Z
-Stopped at: Completed 04-03-PLAN.md
+Last session: 2026-03-16T20:23:27Z
+Stopped at: Completed 04-04-PLAN.md (Phase 4 complete)
 Resume file: None

@@ -61,7 +61,7 @@
 - [x] **GEN-07**: Model declarations generate provider configuration dicts
 - [x] **GEN-08**: Tool declarations generate Python functions with bridge block bodies
 - [x] **GEN-09**: Agent declarations generate orchestration classes with tool dispatch
-- [ ] **GEN-10**: Generated Python imports are deduplicated, sorted, and include eaml_runtime
+- [x] **GEN-10**: Generated Python imports are deduplicated, sorted, and include eaml_runtime
 - [ ] **GEN-11**: Generated Python type-checks with mypy without errors
 - [ ] **GEN-12**: Generated Python runs and calls LLM APIs via eaml_runtime
 
@@ -167,7 +167,7 @@
 | GEN-07 | Phase 4 | Complete |
 | GEN-08 | Phase 4 | Complete |
 | GEN-09 | Phase 4 | Complete |
-| GEN-10 | Phase 4 | Pending |
+| GEN-10 | Phase 4 | Complete |
 | GEN-11 | Phase 4 | Pending |
 | GEN-12 | Phase 4 | Pending |
 | RUN-01 | Phase 5 | Pending |
