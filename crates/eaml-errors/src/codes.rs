@@ -108,6 +108,8 @@ pub enum ErrorCode {
     // === RES: Resolution errors ===
     /// RES001: Unresolved name
     Res001,
+    /// RES010: Duplicate top-level declaration
+    Res010,
 }
 
 impl ErrorCode {
@@ -156,7 +158,7 @@ impl ErrorCode {
 
             Self::Pyb001 | Self::Pyb010 => "PYB",
 
-            Self::Res001 => "RES",
+            Self::Res001 | Self::Res010 => "RES",
         }
     }
 
@@ -210,6 +212,7 @@ impl ErrorCode {
             Self::Pyb010 => 10,
 
             Self::Res001 => 1,
+            Self::Res010 => 10,
         }
     }
 }

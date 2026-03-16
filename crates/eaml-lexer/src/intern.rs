@@ -28,6 +28,11 @@ impl Interner {
         self.rodeo.get_or_intern(s)
     }
 
+    /// Looks up a string without interning it. Returns `None` if not present.
+    pub fn get(&self, s: &str) -> Option<Spur> {
+        self.rodeo.get(s)
+    }
+
     /// Resolves a [`Spur`] key back to the original string.
     pub fn resolve(&self, key: &Spur) -> &str {
         self.rodeo.resolve(key)

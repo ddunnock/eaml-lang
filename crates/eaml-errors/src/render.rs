@@ -24,12 +24,15 @@ pub fn to_codespan(diag: &Diagnostic, file_id: usize) -> CSDiagnostic<usize> {
         Severity::Warning => CSSeverity::Warning,
     };
 
+    let mut labels = vec![Label::primary(file_id, diag.span.clone()).with_message(&diag.label)];
+    for (span, msg) in &diag.secondary_labels {
+        labels.push(Label::secondary(file_id, span.clone()).with_message(msg));
+    }
+
     let mut cs_diag = CSDiagnostic::new(severity)
         .with_code(diag.code.to_string())
         .with_message(&diag.message)
-        .with_labels(vec![
-            Label::primary(file_id, diag.span.clone()).with_message(&diag.label)
-        ]);
+        .with_labels(labels);
 
     if !diag.hints.is_empty() {
         cs_diag = cs_diag.with_notes(diag.hints.clone());

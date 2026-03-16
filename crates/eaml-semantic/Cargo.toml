@@ -7,5 +7,8 @@ edition.workspace = true
 eaml-errors = { path = "../eaml-errors" }
 eaml-lexer = { path = "../eaml-lexer" }
 eaml-parser = { path = "../eaml-parser" }
+lasso = { workspace = true }
+strsim = { workspace = true }
 
 [dev-dependencies]
+insta = { workspace = true }

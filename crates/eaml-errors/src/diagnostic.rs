@@ -24,6 +24,8 @@ pub struct Diagnostic {
     pub label: String,
     /// Optional hint messages displayed after the diagnostic.
     pub hints: Vec<String>,
+    /// Secondary source spans with labels (e.g., "first defined here").
+    pub secondary_labels: Vec<(Span, String)>,
 }
 
 impl Diagnostic {
@@ -42,7 +44,14 @@ impl Diagnostic {
             severity,
             label,
             hints: Vec::new(),
+            secondary_labels: Vec::new(),
         }
+    }
+
+    /// Adds a secondary label at the given span (builder pattern).
+    pub fn with_secondary(mut self, span: Span, label: impl Into<String>) -> Self {
+        self.secondary_labels.push((span, label.into()));
+        self
     }
 
     /// Adds a hint message to this diagnostic (builder pattern).
