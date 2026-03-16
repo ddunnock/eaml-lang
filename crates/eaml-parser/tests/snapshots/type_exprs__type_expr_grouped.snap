@@ -1,0 +1,5 @@
+---
+source: crates/eaml-parser/tests/type_exprs.rs
+expression: result
+---
+Grouped(Named(string, 1..7), 0..8)

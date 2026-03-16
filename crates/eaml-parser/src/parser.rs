@@ -15,7 +15,7 @@ use crate::ParseOutput;
 /// Consumes a token stream and produces an AST with typed arena allocation.
 pub struct Parser {
     tokens: Vec<Token>,
-    pos: usize,
+    pub(crate) pos: usize,
     source: String,
     pub(crate) ast: Ast,
     pub(crate) diagnostics: Vec<Diagnostic>,
@@ -278,6 +278,21 @@ impl Parser {
     /// Resolves a `Spur` to the original interned string.
     pub fn resolve_spur(&self, spur: &Spur) -> &str {
         self.interner.resolve(spur)
+    }
+
+    // ========================================================================
+    // Testing support
+    // ========================================================================
+
+    /// Consumes the parser and returns the AST and diagnostics.
+    /// Used by tests that call individual parse methods directly.
+    pub fn finish(self) -> (Ast, Vec<Diagnostic>) {
+        (self.ast, self.diagnostics)
+    }
+
+    /// Returns a reference to the interner.
+    pub fn interner(&self) -> &Interner {
+        &self.interner
     }
 
     // ========================================================================

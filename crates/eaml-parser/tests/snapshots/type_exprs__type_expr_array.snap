@@ -1,0 +1,5 @@
+---
+source: crates/eaml-parser/tests/type_exprs.rs
+expression: result
+---
+Array(Named(string, 0..6), 0..8)

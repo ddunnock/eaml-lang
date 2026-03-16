@@ -4,6 +4,7 @@
 
 pub mod ast;
 pub mod parser;
+pub mod type_expr;
 
 use eaml_errors::Diagnostic;
 use eaml_lexer::Interner;

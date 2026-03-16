@@ -1,0 +1,5 @@
+---
+source: crates/eaml-parser/tests/type_exprs.rs
+expression: result
+---
+LiteralUnion([1..4, 9..15, 20..24, 29..37], 0..38)

@@ -1,0 +1,5 @@
+---
+source: crates/eaml-parser/tests/type_exprs.rs
+expression: result
+---
+Bounded(base: string, params: [BoundParam(name: Some(max), value_span: 12..15, span: 7..15)], span: 0..16)

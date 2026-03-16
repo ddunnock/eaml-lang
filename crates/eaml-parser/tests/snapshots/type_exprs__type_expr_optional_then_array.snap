@@ -1,0 +1,5 @@
+---
+source: crates/eaml-parser/tests/type_exprs.rs
+expression: result
+---
+Array(Optional(Named(string, 0..6), 0..7), 0..9)
