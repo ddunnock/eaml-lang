@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: in-progress
-stopped_at: Completed 02-03 declaration parsers
-last_updated: "2026-03-16T12:30:09Z"
-last_activity: 2026-03-16 -- Completed 02-03 declaration parsers
+status: executing
+stopped_at: Completed 02-04 error recovery, integration and span tests
+last_updated: "2026-03-16T12:41:43.864Z"
+last_activity: 2026-03-16 -- Completed 02-04 error recovery, integration and span tests (Phase 2 complete)
 progress:
   total_phases: 6
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 7
-  completed_plans: 6
-  percent: 86
+  completed_plans: 7
+  percent: 100
 ---
 
 # Project State
@@ -25,26 +25,26 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 
 ## Current Position
 
-Phase: 2 of 6 (Parser)
-Plan: 3 of 4 in current phase (completed)
-Status: In Progress
-Last activity: 2026-03-16 -- Completed 02-03 declaration parsers
+Phase: 2 of 6 (Parser) -- COMPLETE
+Plan: 4 of 4 in current phase (completed)
+Status: Phase 2 Complete
+Last activity: 2026-03-16 -- Completed 02-04 error recovery, integration and span tests
 
-Progress: [########░░] 86% (6/7 plans)
+Progress: [##########] 100% (7/7 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 6
+- Total plans completed: 7
 - Average duration: 8 min
-- Total execution time: 0.75 hours
+- Total execution time: 0.82 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-error-foundation-and-lexer | 3 | 18 min | 6 min |
-| 02-parser | 3 | 27 min | 9 min |
+| 02-parser | 4 | 33 min | 8 min |
 
 **Recent Trend:**
 - Last 5 plans: -
@@ -56,6 +56,7 @@ Progress: [########░░] 86% (6/7 plans)
 | Phase 02 P01 | 7 | 2 tasks | 5 files |
 | Phase 02 P02 | 9 | 2 tasks | 8 files |
 | Phase 02 P03 | 11 | 2 tasks | 14 files |
+| Phase 02 P04 | 6 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -81,6 +82,7 @@ Recent decisions affecting current work:
 - finish_with_interner() added to Parser for tests needing Spur resolution after parsing (02-02)
 - Agent 'model' field uses at(KwModel) since lexer tokenizes 'model' as keyword, not contextual ident (02-03)
 - KwNull handled as valid primitive type name in type_expr parser for 'null' type in schemas (02-03)
+- [Phase 02]: Assertion-based recovery tests rather than snapshots for stable behavioral contracts
 
 ### Pending Todos
 
@@ -93,6 +95,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-16T12:30:09Z
-Stopped at: Completed 02-03 declaration parsers
-Resume file: .planning/phases/02-parser/02-03-SUMMARY.md
+Last session: 2026-03-16T12:41:43.861Z
+Stopped at: Completed 02-04 error recovery, integration and span tests
+Resume file: None
