@@ -1,0 +1,5 @@
+---
+source: crates/eaml-parser/tests/expressions.rs
+expression: result
+---
+FnCall(Ident(f, 0..1), [name:Ident(x, 8..9)], 0..10)

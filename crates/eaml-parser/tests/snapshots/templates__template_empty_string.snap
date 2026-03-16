@@ -1,0 +1,5 @@
+---
+source: crates/eaml-parser/tests/templates.rs
+expression: result
+---
+TemplateString([], 0..2)

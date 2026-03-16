@@ -1,0 +1,5 @@
+---
+source: crates/eaml-parser/tests/expressions.rs
+expression: result
+---
+FieldAccess(Ident(obj, 0..3), field, 0..9)

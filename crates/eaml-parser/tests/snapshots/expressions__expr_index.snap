@@ -1,0 +1,5 @@
+---
+source: crates/eaml-parser/tests/expressions.rs
+expression: result
+---
+Index(Ident(arr, 0..3), IntLit(4..5), 0..6)

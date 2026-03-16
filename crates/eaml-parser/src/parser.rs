@@ -290,6 +290,12 @@ impl Parser {
         (self.ast, self.diagnostics)
     }
 
+    /// Consumes the parser and returns the AST, diagnostics, and interner.
+    /// Used by tests that need to resolve Spur values after parsing.
+    pub fn finish_with_interner(self) -> (Ast, Vec<Diagnostic>, Interner) {
+        (self.ast, self.diagnostics, self.interner)
+    }
+
     /// Returns a reference to the interner.
     pub fn interner(&self) -> &Interner {
         &self.interner

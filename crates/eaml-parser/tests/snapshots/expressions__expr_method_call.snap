@@ -1,0 +1,5 @@
+---
+source: crates/eaml-parser/tests/expressions.rs
+expression: result
+---
+FnCall(FieldAccess(Ident(obj, 0..3), method, 0..10), [Ident(x, 11..12)], 0..13)

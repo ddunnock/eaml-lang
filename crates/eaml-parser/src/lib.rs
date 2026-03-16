@@ -3,7 +3,9 @@
 //! Public API: [`parse()`] function, [`ParseOutput`] struct, AST types.
 
 pub mod ast;
+pub mod expr;
 pub mod parser;
+pub mod template;
 pub mod type_expr;
 
 use eaml_errors::Diagnostic;

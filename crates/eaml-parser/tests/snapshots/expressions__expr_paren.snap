@@ -1,0 +1,5 @@
+---
+source: crates/eaml-parser/tests/expressions.rs
+expression: result
+---
+Paren(BinaryOp(Ident(a, 1..2), Add, Ident(b, 5..6), 1..6), 0..7)

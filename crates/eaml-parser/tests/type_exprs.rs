@@ -4,8 +4,14 @@ use eaml_parser::ast::*;
 use eaml_parser::parser::Parser;
 
 /// Helper: parses a type expression from source text.
-/// Returns the Ast and the TypeExprId of the parsed type expression.
-fn parse_type_expr(source: &str) -> (Ast, TypeExprId, Vec<eaml_errors::Diagnostic>) {
+fn parse_type_expr(
+    source: &str,
+) -> (
+    Ast,
+    TypeExprId,
+    Vec<eaml_errors::Diagnostic>,
+    eaml_lexer::Interner,
+) {
     let lex_output = eaml_lexer::lex(source);
     let mut parser = Parser::new(
         source.to_string(),
@@ -14,8 +20,8 @@ fn parse_type_expr(source: &str) -> (Ast, TypeExprId, Vec<eaml_errors::Diagnosti
         lex_output.diagnostics,
     );
     let id = parser.parse_type_expr();
-    let (ast, diagnostics) = parser.finish();
-    (ast, id, diagnostics)
+    let (ast, diagnostics, interner) = parser.finish_with_interner();
+    (ast, id, diagnostics, interner)
 }
 
 /// Helper: format a TypeExpr tree recursively for snapshot testing.
@@ -77,10 +83,8 @@ fn format_type_expr(ast: &Ast, id: TypeExprId, interner: &eaml_lexer::Interner) 
 }
 
 fn parse_and_format(source: &str) -> String {
-    let lex_output_for_interner = eaml_lexer::lex(source);
-    let interner_copy = lex_output_for_interner.interner;
-    let (ast, id, _diags) = parse_type_expr(source);
-    format_type_expr(&ast, id, &interner_copy)
+    let (ast, id, _diags, interner) = parse_type_expr(source);
+    format_type_expr(&ast, id, &interner)
 }
 
 // === Primitive / Named types ===
@@ -187,7 +191,7 @@ fn type_expr_grouped() {
 
 #[test]
 fn type_expr_multi_dim_array_syn042() {
-    let (_, _, diags) = parse_type_expr("string[][]");
+    let (_, _, diags, _) = parse_type_expr("string[][]");
     assert!(
         diags
             .iter()

@@ -1,0 +1,5 @@
+---
+source: crates/eaml-parser/tests/templates.rs
+expression: result
+---
+TemplateString([Text(1..10)], 0..11)

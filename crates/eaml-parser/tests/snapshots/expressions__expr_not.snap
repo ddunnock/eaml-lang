@@ -1,0 +1,5 @@
+---
+source: crates/eaml-parser/tests/expressions.rs
+expression: result
+---
+UnaryOp(Not, Ident(flag, 1..5), 0..5)

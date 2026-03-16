@@ -1,0 +1,5 @@
+---
+source: crates/eaml-parser/tests/expressions.rs
+expression: result
+---
+BinaryOp(IntLit(0..1), Add, IntLit(4..5), 0..5)
