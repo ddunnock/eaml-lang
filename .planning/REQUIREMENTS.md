@@ -27,9 +27,9 @@
 ### Parser
 
 - [ ] **PAR-01**: Parser produces AST nodes for all 7 top-level declaration types (model, schema, prompt, tool, agent, import, let)
-- [ ] **PAR-02**: Parser handles type expressions: primitives, named types, arrays, optionals, bounded types, literal unions
-- [ ] **PAR-03**: Parser handles expressions via Pratt parsing (identifiers, literals, field access, function calls, binary ops)
-- [ ] **PAR-04**: Parser handles prompt body with system/user/assistant message sections and template strings
+- [x] **PAR-02**: Parser handles type expressions: primitives, named types, arrays, optionals, bounded types, literal unions
+- [x] **PAR-03**: Parser handles expressions via Pratt parsing (identifiers, literals, field access, function calls, binary ops)
+- [x] **PAR-04**: Parser handles prompt body with system/user/assistant message sections and template strings
 - [ ] **PAR-05**: Parser handles `requires` clauses on prompt declarations
 - [ ] **PAR-06**: Parser handles tool declarations with parameter lists, return types, and python bridge bodies
 - [ ] **PAR-07**: Parser handles agent declarations with model binding, tools list, and configuration
@@ -139,9 +139,9 @@
 | LEX-08 | Phase 1 | Complete |
 | LEX-09 | Phase 1 | Complete |
 | PAR-01 | Phase 2 | Pending |
-| PAR-02 | Phase 2 | Pending |
-| PAR-03 | Phase 2 | Pending |
-| PAR-04 | Phase 2 | Pending |
+| PAR-02 | Phase 2 | Complete |
+| PAR-03 | Phase 2 | Complete |
+| PAR-04 | Phase 2 | Complete |
 | PAR-05 | Phase 2 | Pending |
 | PAR-06 | Phase 2 | Pending |
 | PAR-07 | Phase 2 | Pending |
