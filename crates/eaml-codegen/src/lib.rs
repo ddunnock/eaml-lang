@@ -2,6 +2,7 @@
 //!
 //! Public API: [`generate()`] function producing Python source.
 
+pub mod emitters;
 pub mod names;
 pub mod types;
 pub mod writer;
