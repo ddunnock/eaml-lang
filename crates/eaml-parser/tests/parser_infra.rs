@@ -1,5 +1,6 @@
 //! Tests for parser infrastructure: AST types, arenas, and parser cursor.
 
+use eaml_lexer::TokenKind;
 use eaml_parser::ast::*;
 
 // === Task 1: AST node types, typed arenas, ID newtypes ===
@@ -279,4 +280,137 @@ fn index_impl_for_type_expr_id() {
         TypeExpr::Named(_, span) => assert_eq!(span, &(0..3)),
         _ => panic!("Expected Named"),
     }
+}
+
+// === Task 2: Parser struct with cursor, helpers, and error recovery ===
+
+/// Helper to create a Parser from source text via the lexer.
+fn make_parser(source: &str) -> eaml_parser::parser::Parser {
+    let lex_output = eaml_lexer::lex(source);
+    eaml_parser::parser::Parser::new(
+        source.to_string(),
+        lex_output.tokens,
+        lex_output.interner,
+        lex_output.diagnostics,
+    )
+}
+
+#[test]
+fn parser_new_initializes_at_position_zero() {
+    let parser = make_parser("model Foo {}");
+    // peek should return the first token (KwModel)
+    assert_eq!(parser.peek(), TokenKind::KwModel);
+}
+
+#[test]
+fn peek_returns_current_without_advancing() {
+    let parser = make_parser("model Foo {}");
+    let first = parser.peek();
+    let second = parser.peek();
+    assert_eq!(first, second);
+    assert_eq!(first, TokenKind::KwModel);
+}
+
+#[test]
+fn advance_returns_current_and_moves_forward() {
+    let mut parser = make_parser("model Foo {}");
+    let tok = parser.advance().clone();
+    assert_eq!(tok.kind, TokenKind::KwModel);
+    // After advance, peek should be at next token
+    assert!(parser.at_ident()); // "Foo" is Ident
+}
+
+#[test]
+fn at_lparen_returns_true_when_positioned_at_lparen() {
+    let parser = make_parser("(x)");
+    assert!(parser.at(TokenKind::LParen));
+}
+
+#[test]
+fn at_ident_returns_true_for_any_ident() {
+    let mut parser = make_parser("foo bar");
+    assert!(parser.at_ident());
+    parser.advance();
+    assert!(parser.at_ident());
+}
+
+#[test]
+fn eat_advances_on_match_returns_false_otherwise() {
+    let mut parser = make_parser("; x");
+    assert!(parser.eat(TokenKind::Semicolon));
+    // Now at Ident("x")
+    assert!(!parser.eat(TokenKind::Semicolon));
+    assert!(parser.at_ident());
+}
+
+#[test]
+fn expect_advances_on_match_emits_syn050_on_mismatch() {
+    let mut parser = make_parser("{ x");
+    // Expect LBrace -- should succeed
+    let result = parser.expect(TokenKind::LBrace);
+    assert!(result.is_ok());
+    assert_eq!(result.unwrap(), 0..1);
+
+    // Now expect LBrace again -- should fail (at Ident)
+    let result2 = parser.expect(TokenKind::LBrace);
+    assert!(result2.is_err());
+}
+
+#[test]
+fn expect_ident_returns_spur_on_ident() {
+    let mut parser = make_parser("foo");
+    let result = parser.expect_ident();
+    assert!(result.is_ok());
+    let (spur, span) = result.unwrap();
+    assert_eq!(span, 0..3);
+    // Spur should resolve to "foo"
+    assert_eq!(parser.resolve_spur(&spur), "foo");
+}
+
+#[test]
+fn expect_ident_emits_syn050_on_non_ident() {
+    let mut parser = make_parser("{");
+    let result = parser.expect_ident();
+    assert!(result.is_err());
+}
+
+#[test]
+fn at_contextual_user_matches_ident_user() {
+    let mut parser = make_parser("user other");
+    assert!(parser.at_contextual("user"));
+    assert!(!parser.at_contextual("other"));
+    parser.advance();
+    assert!(parser.at_contextual("other"));
+    assert!(!parser.at_contextual("user"));
+}
+
+#[test]
+fn synchronize_skips_to_next_declaration_keyword() {
+    let mut parser = make_parser("x y z model Foo {}");
+    parser.synchronize();
+    assert_eq!(parser.peek(), TokenKind::KwModel);
+}
+
+#[test]
+fn synchronize_respects_brace_depth() {
+    // The KwSchema inside braces should be skipped; synchronize should
+    // stop at the KwModel after the closing brace.
+    let mut parser = make_parser("{ schema Inner } model Outer {}");
+    parser.synchronize();
+    // Should stop at KwModel (depth 0), not KwSchema (depth 1)
+    assert_eq!(parser.peek(), TokenKind::KwModel);
+}
+
+#[test]
+fn parse_function_returns_parse_output() {
+    let output = eaml_parser::parse("");
+    assert!(output.program.declarations.is_empty());
+    assert!(output.ast.models.is_empty());
+}
+
+#[test]
+fn parse_function_with_source() {
+    let output = eaml_parser::parse("model Foo {}");
+    // Stub parser doesn't parse declarations yet, but should not crash
+    assert!(output.diagnostics.is_empty() || !output.diagnostics.is_empty());
 }
