@@ -116,6 +116,20 @@ pub fn check(
     annotations
 }
 
+/// Builds a scope with parameters and top-level let bindings.
+fn build_param_scope(params: &[Param], symbols: &SymbolTable) -> Scope {
+    let mut scope = Scope::new();
+    for param in params {
+        scope.insert(param.name, param.span.clone());
+    }
+    for (spur, info) in symbols.iter() {
+        if matches!(info.kind, SymbolKind::Let(_)) {
+            scope.insert(*spur, info.span.clone());
+        }
+    }
+    scope
+}
+
 // =============================================================================
 // Type expression validation
 // =============================================================================
@@ -423,19 +437,8 @@ fn check_prompt(
         ));
     }
 
-    // Build scope for template validation (Task 2 will use this)
-    let mut scope = Scope::new();
-    for param in &prompt.params {
-        scope.insert(param.name, param.span.clone());
-    }
-    // Add top-level let bindings to scope
-    for (spur, info) in symbols.iter() {
-        if matches!(info.kind, SymbolKind::Let(_)) {
-            scope.insert(*spur, info.span.clone());
-        }
-    }
-
-    // Validate template interpolation variables in prompt body
+    // Build scope and validate template interpolation variables in prompt body
+    let scope = build_param_scope(&prompt.params, symbols);
     for field in &prompt.body.fields {
         match field {
             PromptField::User(ts) | PromptField::System(ts) => {
@@ -496,17 +499,7 @@ fn check_tool(
 
     // For native bodies, check expressions (including chained comparisons)
     if let ToolBody::Native { stmts, .. } = &tool.body {
-        let mut scope = Scope::new();
-        for param in &tool.params {
-            scope.insert(param.name, param.span.clone());
-        }
-        // Add top-level let bindings
-        for (spur, info) in symbols.iter() {
-            if matches!(info.kind, SymbolKind::Let(_)) {
-                scope.insert(*spur, info.span.clone());
-            }
-        }
-
+        let scope = build_param_scope(&tool.params, symbols);
         for stmt_id in stmts {
             check_expr(*stmt_id, ast, interner, symbols, diags, &scope);
         }

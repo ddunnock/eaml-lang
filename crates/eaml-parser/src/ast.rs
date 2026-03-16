@@ -537,6 +537,21 @@ pub enum TypeExpr {
     Error(Span),
 }
 
+impl TypeExpr {
+    /// Returns the span of this type expression.
+    pub fn span(&self) -> &Span {
+        match self {
+            TypeExpr::Named(_, span)
+            | TypeExpr::Bounded { span, .. }
+            | TypeExpr::Array(_, span)
+            | TypeExpr::Optional(_, span)
+            | TypeExpr::LiteralUnion { span, .. }
+            | TypeExpr::Grouped(_, span)
+            | TypeExpr::Error(span) => span,
+        }
+    }
+}
+
 /// A parameter in a bounded type expression.
 #[derive(Debug, Clone)]
 pub struct BoundParam {

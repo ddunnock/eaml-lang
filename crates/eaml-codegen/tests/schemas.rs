@@ -59,11 +59,10 @@ schema Greeting {
 }
 "#;
     let output = emit_schemas_and_lets(source);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     class Greeting(BaseModel):
         message: str
         word_count: int
-
     ");
 }
 
@@ -75,10 +74,9 @@ schema Scored {
 }
 "#;
     let output = emit_schemas_and_lets(source);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     class Scored(BaseModel):
         score: float = Field(ge=0.0, le=1.0)
-
     ");
 }
 
@@ -91,11 +89,10 @@ schema WithOptional {
 }
 "#;
     let output = emit_schemas_and_lets(source);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     class WithOptional(BaseModel):
         name: str
         source: Optional[str] = None
-
     ");
 }
 
@@ -110,7 +107,6 @@ schema Sentiment {
     insta::assert_snapshot!(output, @r#"
     class Sentiment(BaseModel):
         sentiment: Literal["positive", "neutral", "negative"]
-
     "#);
 }
 
@@ -122,10 +118,9 @@ schema Tagged {
 }
 "#;
     let output = emit_schemas_and_lets(source);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     class Tagged(BaseModel):
         tags: List[str]
-
     ");
 }
 
@@ -137,10 +132,9 @@ schema MaybeTagged {
 }
 "#;
     let output = emit_schemas_and_lets(source);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     class MaybeTagged(BaseModel):
         items: Optional[List[str]] = None
-
     ");
 }
 
@@ -158,7 +152,7 @@ schema Person {
 }
 "#;
     let output = emit_schemas_and_lets(source);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     class Address(BaseModel):
         street: str
         city: str
@@ -166,7 +160,6 @@ schema Person {
     class Person(BaseModel):
         name: str
         address: Address
-
     ");
 }
 
@@ -176,10 +169,7 @@ fn test_let_binding() {
 let x: int = 42
 "#;
     let output = emit_schemas_and_lets(source);
-    insta::assert_snapshot!(output, @r"
-    x: int = 42
-
-    ");
+    insta::assert_snapshot!(output, @"x: int = 42");
 }
 
 #[test]
@@ -207,6 +197,5 @@ schema AllTypes {
         optional_name: Optional[str] = None
         tags: List[str]
         sentiment: Literal["positive", "neutral", "negative"]
-
     "#);
 }

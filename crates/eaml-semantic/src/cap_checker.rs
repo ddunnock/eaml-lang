@@ -14,7 +14,6 @@ use eaml_errors::{Diagnostic, DiagnosticCollector, ErrorCode, Severity, Span};
 use eaml_lexer::Interner;
 use eaml_parser::ast::*;
 
-use crate::symbol_table::SymbolTable;
 use crate::type_checker::{ResolvedType, TypeAnnotations};
 
 /// Known capabilities for EAML v0.1.
@@ -32,21 +31,18 @@ const KNOWN_CAPABILITIES: &[&str] = &[
 /// 1. Individual capability declarations (unknown caps, duplicates)
 /// 2. Capability subset checking (prompt requires vs model caps)
 /// 3. json_mode + string return type warning
-#[allow(clippy::too_many_arguments)]
 pub fn check(
     program: &Program,
     ast: &Ast,
     interner: &Interner,
-    symbols: &SymbolTable,
     type_annotations: &TypeAnnotations,
-    _source: &str,
     diags: &mut DiagnosticCollector,
 ) {
     // Step 1: Validate individual capability declarations
     validate_cap_declarations(program, ast, interner, diags);
 
     // Step 2: Capability subset checking
-    check_capability_subsets(program, ast, interner, symbols, diags);
+    check_capability_subsets(program, ast, interner, diags);
 
     // Step 3: json_mode + string return type check
     check_json_mode_string_return(program, ast, interner, type_annotations, diags);
@@ -118,7 +114,6 @@ fn check_capability_subsets(
     program: &Program,
     ast: &Ast,
     interner: &Interner,
-    symbols: &SymbolTable,
     diags: &mut DiagnosticCollector,
 ) {
     // Collect all models and their capability sets
@@ -159,30 +154,15 @@ fn check_capability_subsets(
                     continue;
                 }
 
-                // Determine which models to check against
-                let models_to_check: Vec<&(&ModelDecl, HashSet<Spur>)> =
+                // Check against agent-referenced models, or all models if no agents
+                let effective_models: Vec<&(&ModelDecl, HashSet<Spur>)> =
                     if agent_model_spurs.is_empty() {
-                        // No agents: check against ALL models
                         models.iter().collect()
                     } else {
-                        // Check against agent-referenced models
-                        models
-                            .iter()
-                            .filter(|(m, _)| {
-                                agent_model_spurs.contains(&m.name) || symbols.get(m.name).is_some()
-                            })
-                            .collect()
-                    };
-
-                // If we have agent models, only check those; otherwise check all
-                let effective_models: Vec<&(&ModelDecl, HashSet<Spur>)> =
-                    if !agent_model_spurs.is_empty() {
                         models
                             .iter()
                             .filter(|(m, _)| agent_model_spurs.contains(&m.name))
                             .collect()
-                    } else {
-                        models_to_check
                     };
 
                 for (model, model_caps) in effective_models {
@@ -258,7 +238,7 @@ fn check_json_mode_string_return(
                             diags.emit(Diagnostic::new(
                                 ErrorCode::Cap020,
                                 "json_mode is typically used with structured return types, not string".to_string(),
-                                prompt.return_type.into_span(ast),
+                                ast[prompt.return_type].span().clone(),
                                 Severity::Warning,
                                 "string return type".to_string(),
                             ));
@@ -266,25 +246,6 @@ fn check_json_mode_string_return(
                     }
                 }
             }
-        }
-    }
-}
-
-/// Helper trait to get span from a TypeExprId.
-trait IntoSpan {
-    fn into_span(self, ast: &Ast) -> Span;
-}
-
-impl IntoSpan for TypeExprId {
-    fn into_span(self, ast: &Ast) -> Span {
-        match &ast[self] {
-            TypeExpr::Named(_, span) => span.clone(),
-            TypeExpr::Bounded { span, .. } => span.clone(),
-            TypeExpr::Array(_, span) => span.clone(),
-            TypeExpr::Optional(_, span) => span.clone(),
-            TypeExpr::LiteralUnion { span, .. } => span.clone(),
-            TypeExpr::Grouped(_, span) => span.clone(),
-            TypeExpr::Error(span) => span.clone(),
         }
     }
 }

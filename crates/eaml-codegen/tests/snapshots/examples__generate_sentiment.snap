@@ -30,7 +30,7 @@ async def analyze_sentiment(text: str, *, model: dict) -> SentimentResult:
         {"role": "system", "content": "You are a sentiment analysis expert. Classify the sentiment of the given text and provide a confidence score between 0 and 1. Be concise in your explanation."},
         {"role": "user", "content": f"Analyze the sentiment of the following text:\n\n{text}"},
     ]
-    return await eaml_runtime.execute_prompt(
+    return await execute_prompt(
         model=model,
         messages=messages,
         return_type=SentimentResult,

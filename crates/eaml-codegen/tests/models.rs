@@ -16,7 +16,7 @@ fn emit_models(source: &str) -> String {
 
     for decl in &parse_output.program.declarations {
         if let DeclId::Model(id) = decl {
-            emit_model(&ast[*id], ast, interner, source, &mut writer);
+            emit_model(&ast[*id], interner, source, &mut writer);
             writer.blank_line();
         }
     }
@@ -40,7 +40,6 @@ model Haiku = Model(
         "model_id": "anthropic/claude-3-haiku-20240307",
         "capabilities": [],
     }
-
     "#);
 }
 
@@ -60,7 +59,6 @@ model Sonnet = Model(
         "model_id": "anthropic/claude-3-5-sonnet-20241022",
         "capabilities": ["json_mode", "streaming"],
     }
-
     "#);
 }
 
@@ -80,6 +78,5 @@ model ClaudeHaiku = Model(
         "model_id": "anthropic/claude-3-haiku-20240307",
         "capabilities": [],
     }
-
     "#);
 }

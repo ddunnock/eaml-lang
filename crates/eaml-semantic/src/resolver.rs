@@ -19,7 +19,6 @@ pub fn resolve(
     program: &Program,
     ast: &Ast,
     interner: &Interner,
-    _source: &str,
     diags: &mut DiagnosticCollector,
 ) -> SymbolTable {
     let mut symbols = SymbolTable::new(interner);
@@ -231,9 +230,6 @@ fn pass2_resolve(
     symbols: &SymbolTable,
     diags: &mut DiagnosticCollector,
 ) {
-    // Track which let bindings are visible (sequential scoping)
-    let mut visible_lets: HashSet<Spur> = HashSet::new();
-
     for decl_id in &program.declarations {
         match decl_id {
             DeclId::Schema(id) => {
@@ -262,11 +258,27 @@ fn pass2_resolve(
                 for field in &decl.fields {
                     match field {
                         AgentField::Model(spur, span) => {
-                            resolve_agent_model(*spur, span, interner, symbols, diags);
+                            resolve_agent_ref(
+                                *spur,
+                                span,
+                                "model",
+                                |k| matches!(k, SymbolKind::Model(_)),
+                                interner,
+                                symbols,
+                                diags,
+                            );
                         }
                         AgentField::Tools(tools, _) => {
                             for (spur, span) in tools {
-                                resolve_agent_tool(*spur, span, interner, symbols, diags);
+                                resolve_agent_ref(
+                                    *spur,
+                                    span,
+                                    "tool",
+                                    |k| matches!(k, SymbolKind::Tool(_)),
+                                    interner,
+                                    symbols,
+                                    diags,
+                                );
                             }
                         }
                         _ => {}
@@ -275,19 +287,11 @@ fn pass2_resolve(
             }
             DeclId::Let(id) => {
                 let decl = &ast[*id];
-                // Let bindings are sequential: resolve the value expression
-                // with only preceding lets visible.
-                // For now, resolve the type expression.
                 resolve_type_expr(decl.type_expr, ast, interner, symbols, diags);
-                // Mark this let as visible for subsequent lets.
-                visible_lets.insert(decl.name);
             }
             _ => {}
         }
     }
-
-    // Suppress unused variable warning
-    let _ = visible_lets;
 }
 
 fn resolve_type_expr(
@@ -331,56 +335,28 @@ fn resolve_type_expr(
     }
 }
 
-fn resolve_agent_model(
+fn resolve_agent_ref(
     spur: Spur,
     span: &Span,
+    expected: &str,
+    kind_matches: fn(&SymbolKind) -> bool,
     interner: &Interner,
     symbols: &SymbolTable,
     diags: &mut DiagnosticCollector,
 ) {
     match symbols.get(spur) {
         Some(info) => {
-            if !matches!(info.kind, SymbolKind::Model(_)) {
+            if !kind_matches(&info.kind) {
                 let name = interner.resolve(&spur);
                 diags.emit(
                     Diagnostic::new(
                         ErrorCode::Res001,
-                        format!("'{name}' is not a model"),
+                        format!("'{name}' is not a {expected}"),
                         span.clone(),
                         Severity::Error,
-                        "expected a model".to_string(),
+                        format!("expected a {expected}"),
                     )
-                    .with_secondary(info.span.clone(), "defined here as non-model"),
-                );
-            }
-        }
-        None => {
-            let name = interner.resolve(&spur);
-            emit_unresolved(name, span.clone(), interner, symbols, diags);
-        }
-    }
-}
-
-fn resolve_agent_tool(
-    spur: Spur,
-    span: &Span,
-    interner: &Interner,
-    symbols: &SymbolTable,
-    diags: &mut DiagnosticCollector,
-) {
-    match symbols.get(spur) {
-        Some(info) => {
-            if !matches!(info.kind, SymbolKind::Tool(_)) {
-                let name = interner.resolve(&spur);
-                diags.emit(
-                    Diagnostic::new(
-                        ErrorCode::Res001,
-                        format!("'{name}' is not a tool"),
-                        span.clone(),
-                        Severity::Error,
-                        "expected a tool".to_string(),
-                    )
-                    .with_secondary(info.span.clone(), "defined here as non-tool"),
+                    .with_secondary(info.span.clone(), format!("defined here as non-{expected}")),
                 );
             }
         }

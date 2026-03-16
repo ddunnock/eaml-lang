@@ -11,6 +11,7 @@ use eaml_lexer::Interner;
 use eaml_parser::ast::*;
 use eaml_semantic::type_checker::{ResolvedType, TypeAnnotations};
 
+use crate::extract_template_text;
 use crate::names::{to_config_name, to_snake_case};
 use crate::types::{emit_field_line, emit_type_annotation, is_optional, ImportTracker};
 use crate::writer::CodeWriter;
@@ -70,56 +71,14 @@ fn emit_expr_value(expr_id: ExprId, ast: &Ast, interner: &Interner, source: &str
     match &ast[expr_id] {
         Expr::IntLit(span) => source[span.clone()].to_string(),
         Expr::FloatLit(span) => source[span.clone()].to_string(),
-        Expr::StringLit(ts) => emit_template_as_string(ts, ast, interner, source),
+        Expr::StringLit(ts) => emit_template_as_python_string(ts, ast, interner, source),
         Expr::BoolLit(true, _) => "True".to_string(),
         Expr::BoolLit(false, _) => "False".to_string(),
         Expr::NullLit(_) => "None".to_string(),
         Expr::Ident(spur, _) => interner.resolve(spur).to_string(),
-        Expr::TemplateStr(ts) => emit_template_as_fstring(ts, ast, interner, source),
+        Expr::TemplateStr(ts) => emit_template_as_python_string(ts, ast, interner, source),
         _ => "None".to_string(),
     }
-}
-
-/// Emits a template string as a Python quoted string.
-///
-/// If there are no interpolations, emits a simple string.
-/// If there are interpolations, emits an f-string.
-fn emit_template_as_string(
-    ts: &TemplateString,
-    _ast: &Ast,
-    _interner: &Interner,
-    source: &str,
-) -> String {
-    let mut text = String::new();
-    for part in &ts.parts {
-        if let TemplatePart::Text(span) = part {
-            text.push_str(&source[span.clone()]);
-        }
-    }
-    format!("\"{text}\"")
-}
-
-/// Emits a template string as a Python f-string.
-fn emit_template_as_fstring(
-    ts: &TemplateString,
-    ast: &Ast,
-    interner: &Interner,
-    source: &str,
-) -> String {
-    let mut parts = String::new();
-    for part in &ts.parts {
-        match part {
-            TemplatePart::Text(span) => {
-                parts.push_str(&source[span.clone()]);
-            }
-            TemplatePart::Interpolation(expr_id, _) => {
-                parts.push('{');
-                parts.push_str(&emit_expr_value(*expr_id, ast, interner, source));
-                parts.push('}');
-            }
-        }
-    }
-    format!("f\"{parts}\"")
 }
 
 /// Emits a typed Python variable assignment from a let declaration.
@@ -146,28 +105,11 @@ pub fn emit_let(
     writer.writeln(&format!("{name}: {annotation} = {value}"));
 }
 
-/// Extracts plain text from a template string (ignoring interpolations).
-fn extract_template_text(ts: &TemplateString, source: &str) -> String {
-    let mut text = String::new();
-    for part in &ts.parts {
-        if let TemplatePart::Text(span) = part {
-            text.push_str(&source[span.clone()]);
-        }
-    }
-    text
-}
-
 /// Emits an UPPER_SNAKE_CASE config dict from a model declaration.
 ///
 /// Model name converts to UPPER_SNAKE_CASE + "_CONFIG" suffix
 /// per CONTEXT.md locked decision.
-pub fn emit_model(
-    model: &ModelDecl,
-    _ast: &Ast,
-    interner: &Interner,
-    source: &str,
-    writer: &mut CodeWriter,
-) {
+pub fn emit_model(model: &ModelDecl, interner: &Interner, source: &str, writer: &mut CodeWriter) {
     let config_name = to_config_name(interner.resolve(&model.name));
     let provider = extract_template_text(&model.provider, source);
     let model_id = extract_template_text(&model.model_id, source);
@@ -175,7 +117,7 @@ pub fn emit_model(
     let caps: Vec<String> = model
         .caps
         .iter()
-        .map(|(spur, _)| interner.resolve(spur).to_string())
+        .map(|(spur, _)| format!("\"{}\"", interner.resolve(spur)))
         .collect();
 
     writer.writeln(&format!("{config_name} = {{"));
@@ -186,8 +128,7 @@ pub fn emit_model(
     if caps.is_empty() {
         writer.writeln("\"capabilities\": [],");
     } else {
-        let caps_str: Vec<String> = caps.iter().map(|c| format!("\"{c}\"")).collect();
-        writer.writeln(&format!("\"capabilities\": [{}],", caps_str.join(", ")));
+        writer.writeln(&format!("\"capabilities\": [{}],", caps.join(", ")));
     }
 
     writer.dedent();
@@ -216,24 +157,13 @@ fn emit_template_as_python_string(
         match part {
             TemplatePart::Text(span) => {
                 let text = &source[span.clone()];
-                if has_interpolation {
-                    // Escape literal braces for f-string
-                    for ch in text.chars() {
-                        match ch {
-                            '{' => content.push_str("{{"),
-                            '}' => content.push_str("}}"),
-                            '\n' => content.push_str("\\n"),
-                            '"' => content.push_str("\\\""),
-                            _ => content.push(ch),
-                        }
-                    }
-                } else {
-                    for ch in text.chars() {
-                        match ch {
-                            '\n' => content.push_str("\\n"),
-                            '"' => content.push_str("\\\""),
-                            _ => content.push(ch),
-                        }
+                for ch in text.chars() {
+                    match ch {
+                        '{' if has_interpolation => content.push_str("{{"),
+                        '}' if has_interpolation => content.push_str("}}"),
+                        '\n' => content.push_str("\\n"),
+                        '"' => content.push_str("\\\""),
+                        _ => content.push(ch),
                     }
                 }
             }
@@ -314,11 +244,10 @@ pub fn emit_prompt(
     writer.writeln("]");
 
     // Build execute_prompt kwargs
-    let return_type_name = emit_type_annotation(return_resolved, ast, interner);
     let mut kwargs = vec![
         "model=model".to_string(),
         "messages=messages".to_string(),
-        format!("return_type={return_type_name}"),
+        format!("return_type={return_annotation}"),
     ];
 
     // Scan for optional kwargs (temperature, max_tokens, max_retries)
@@ -341,7 +270,7 @@ pub fn emit_prompt(
     }
 
     // Emit execute_prompt call
-    writer.writeln("return await eaml_runtime.execute_prompt(");
+    writer.writeln("return await execute_prompt(");
     writer.indent();
     for kwarg in &kwargs {
         writer.writeln(&format!("{kwarg},"));
@@ -364,7 +293,7 @@ fn dedent_bridge_code(code: &str) -> String {
         .min()
         .unwrap_or(0);
 
-    let mut result: Vec<&str> = lines
+    let dedented: Vec<&str> = lines
         .iter()
         .map(|line| {
             if line.len() >= min_indent {
@@ -375,16 +304,17 @@ fn dedent_bridge_code(code: &str) -> String {
         })
         .collect();
 
-    // Trim trailing empty lines
-    while result.last().is_some_and(|l| l.trim().is_empty()) {
-        result.pop();
-    }
-    // Trim leading empty lines
-    while result.first().is_some_and(|l| l.trim().is_empty()) {
-        result.remove(0);
-    }
+    // Trim leading and trailing empty lines without O(n²) remove(0)
+    let start = dedented
+        .iter()
+        .position(|l| !l.trim().is_empty())
+        .unwrap_or(dedented.len());
+    let end = dedented
+        .iter()
+        .rposition(|l| !l.trim().is_empty())
+        .map_or(start, |i| i + 1);
 
-    result.join("\n")
+    dedented[start..end].join("\n")
 }
 
 /// Returns the EAML type name string for a resolved type.
@@ -546,7 +476,7 @@ pub fn emit_agent(
     imports.need_agent();
 
     let name = interner.resolve(&agent.name);
-    writer.writeln(&format!("class {name}(eaml_runtime.Agent):"));
+    writer.writeln(&format!("class {name}(Agent):"));
     writer.indent();
 
     if agent.fields.is_empty() {

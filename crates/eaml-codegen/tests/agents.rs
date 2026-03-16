@@ -56,14 +56,13 @@ agent ResearchAssistant {
 "#;
     let output = emit_agents(source);
     insta::assert_snapshot!(output, @r#"
-    class ResearchAssistant(eaml_runtime.Agent):
+    class ResearchAssistant(Agent):
         model = SONNET_CONFIG
         tools = [fetch_page]
         system_prompt = "You are a research assistant."
         max_turns = 5
         on_error = "retry_then_fail"
         on_error_retries = 3
-
     "#);
 }
 
@@ -84,11 +83,10 @@ agent SimpleBot {
 "#;
     let output = emit_agents(source);
     insta::assert_snapshot!(output, @r#"
-    class SimpleBot(eaml_runtime.Agent):
+    class SimpleBot(Agent):
         model = HAIKU_CONFIG
         system_prompt = "You are a simple bot."
         on_error = "fail"
-
     "#);
 }
 
@@ -106,9 +104,8 @@ agent EmptyAgent {
 }
 "#;
     let output = emit_agents(source);
-    insta::assert_snapshot!(output, @r"
-    class EmptyAgent(eaml_runtime.Agent):
+    insta::assert_snapshot!(output, @"
+    class EmptyAgent(Agent):
         model = HAIKU_CONFIG
-
     ");
 }

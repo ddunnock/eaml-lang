@@ -72,7 +72,6 @@ tool fetchPage(url: string, timeout: int) -> PageInfo {
         return_type="PageInfo",
         function=_eaml_call_fetch_page,
     )
-
     "#);
 }
 
@@ -109,7 +108,6 @@ tool analyzeText(text: string) -> Result {
         return_type="Result",
         function=_eaml_call_analyze_text,
     )
-
     "#);
 }
 
@@ -142,6 +140,5 @@ tool greet(name: string) -> string {
         return_type="string",
         function=_eaml_call_greet,
     )
-
     "#);
 }

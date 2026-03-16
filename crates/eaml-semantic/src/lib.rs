@@ -33,7 +33,6 @@ pub fn analyze(parse_output: &ParseOutput, source: &str) -> AnalysisOutput {
         &parse_output.program,
         &parse_output.ast,
         &parse_output.interner,
-        source,
         &mut diags,
     );
     let type_annotations = type_checker::check(
@@ -48,9 +47,7 @@ pub fn analyze(parse_output: &ParseOutput, source: &str) -> AnalysisOutput {
         &parse_output.program,
         &parse_output.ast,
         &parse_output.interner,
-        &symbols,
         &type_annotations,
-        source,
         &mut diags,
     );
     let diagnostics = diags.into_diagnostics();

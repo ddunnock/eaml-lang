@@ -63,7 +63,7 @@ async def describe_person(name: str, *, model: dict) -> Person:
     messages = [
         {"role": "user", "content": f"Create a profile for a person named {name}."},
     ]
-    return await eaml_runtime.execute_prompt(
+    return await execute_prompt(
         model=model,
         messages=messages,
         return_type=Person,
@@ -73,7 +73,7 @@ async def classify_priority(task: str, *, model: dict) -> Literal["low", "medium
     messages = [
         {"role": "user", "content": f"Classify the priority of this task: {task}"},
     ]
-    return await eaml_runtime.execute_prompt(
+    return await execute_prompt(
         model=model,
         messages=messages,
         return_type=Literal["low", "medium", "high", "critical"],
@@ -83,7 +83,7 @@ async def summarize(text: str, *, model: dict) -> str:
     messages = [
         {"role": "user", "content": f"Summarize the following in one sentence: {text}"},
     ]
-    return await eaml_runtime.execute_prompt(
+    return await execute_prompt(
         model=model,
         messages=messages,
         return_type=str,

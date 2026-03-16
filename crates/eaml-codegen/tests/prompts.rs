@@ -52,12 +52,11 @@ prompt AskQuestion(question: string) -> Response {
         messages = [
             {"role": "user", "content": f"Please answer: {question}"},
         ]
-        return await eaml_runtime.execute_prompt(
+        return await execute_prompt(
             model=model,
             messages=messages,
             return_type=Response,
         )
-
     "#);
 }
 
@@ -95,14 +94,13 @@ prompt AnalyzeSentiment(text: string)
             {"role": "system", "content": "You are a sentiment analysis expert. Classify the sentiment of the given text and provide a confidence score between 0 and 1. Be concise in your explanation."},
             {"role": "user", "content": f"Analyze the sentiment of the following text:\n\n{text}"},
         ]
-        return await eaml_runtime.execute_prompt(
+        return await execute_prompt(
             model=model,
             messages=messages,
             return_type=SentimentResult,
             temperature=0.2,
             max_tokens=256,
         )
-
     "#);
 }
 
@@ -123,12 +121,11 @@ prompt SayHello() -> Greeting {
         messages = [
             {"role": "user", "content": "Say hello to the world"},
         ]
-        return await eaml_runtime.execute_prompt(
+        return await execute_prompt(
             model=model,
             messages=messages,
             return_type=Greeting,
         )
-
     "#);
 }
 
@@ -150,12 +147,11 @@ prompt Retry(input: string) -> Result {
         messages = [
             {"role": "user", "content": f"Process: {input}"},
         ]
-        return await eaml_runtime.execute_prompt(
+        return await execute_prompt(
             model=model,
             messages=messages,
             return_type=Result,
             max_retries=3,
         )
-
     "#);
 }

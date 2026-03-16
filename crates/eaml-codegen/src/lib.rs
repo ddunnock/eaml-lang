@@ -123,7 +123,7 @@ pub fn generate(
         body_writer.writeln("# --- Models ---");
         body_writer.blank_line();
         for (i, id) in model_decls.iter().enumerate() {
-            emitters::emit_model(&ast[*id], ast, interner, source, &mut body_writer);
+            emitters::emit_model(&ast[*id], interner, source, &mut body_writer);
             if i < model_decls.len() - 1 {
                 body_writer.blank_line();
             }
@@ -201,7 +201,7 @@ pub fn generate(
 }
 
 /// Extracts plain text from a template string (ignoring interpolations).
-fn extract_template_text(ts: &TemplateString, source: &str) -> String {
+pub(crate) fn extract_template_text(ts: &TemplateString, source: &str) -> String {
     let mut text = String::new();
     for part in &ts.parts {
         if let TemplatePart::Text(span) = part {
@@ -226,9 +226,9 @@ fn toposort_schemas(
     }
 
     // Build a map from schema name -> index in the input vec
-    let mut name_to_idx: HashMap<String, usize> = HashMap::new();
+    let mut name_to_idx: HashMap<&str, usize> = HashMap::new();
     for (idx, id) in schemas.iter().enumerate() {
-        let name = interner.resolve(&ast[*id].name).to_string();
+        let name = interner.resolve(&ast[*id].name);
         name_to_idx.insert(name, idx);
     }
 
@@ -287,15 +287,15 @@ fn collect_schema_deps(
     resolved: &ResolvedType,
     ast: &Ast,
     interner: &Interner,
-    name_to_idx: &HashMap<String, usize>,
+    name_to_idx: &HashMap<&str, usize>,
     current_idx: usize,
     dependents: &mut [Vec<usize>],
     in_degree: &mut [usize],
 ) {
     match resolved {
         ResolvedType::Schema(id) => {
-            let dep_name = interner.resolve(&ast[*id].name).to_string();
-            if let Some(&dep_idx) = name_to_idx.get(&dep_name) {
+            let dep_name = interner.resolve(&ast[*id].name);
+            if let Some(&dep_idx) = name_to_idx.get(dep_name) {
                 if dep_idx != current_idx {
                     // dep_idx must come before current_idx
                     dependents[dep_idx].push(current_idx);
