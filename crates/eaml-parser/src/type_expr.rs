@@ -33,6 +33,13 @@ impl Parser {
     fn parse_base_type(&mut self) -> TypeExprId {
         match self.peek() {
             TokenKind::Ident(_) => self.parse_named_type(),
+            // `null` is a keyword but also a valid primitive type name
+            TokenKind::KwNull => {
+                let span = self.peek_span();
+                let spur = self.interner.intern("null");
+                self.advance();
+                self.ast.alloc_type_expr(TypeExpr::Named(spur, span))
+            }
             TokenKind::LParen => {
                 let start = self.peek_span().start;
                 self.advance(); // (

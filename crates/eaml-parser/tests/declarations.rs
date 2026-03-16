@@ -413,3 +413,319 @@ fn decl_error_recovery() {
     assert!(matches!(output.program.declarations[0], DeclId::Error(_)));
     assert!(matches!(output.program.declarations[1], DeclId::Schema(_)));
 }
+
+// ===================================================================
+// Task 2 tests: prompt, tool, agent declarations
+// ===================================================================
+
+#[test]
+fn decl_prompt_simple() {
+    let source = r#"prompt Greet(name: string) -> Greeting {
+  user: "Hello {name}"
+}"#;
+    let output = parse_program(source);
+    assert_eq!(output.program.declarations.len(), 1);
+    let errors: Vec<_> = output
+        .diagnostics
+        .iter()
+        .filter(|d| d.severity == eaml_errors::Severity::Error)
+        .collect();
+    assert!(errors.is_empty(), "unexpected errors: {:?}", errors);
+    assert!(matches!(output.program.declarations[0], DeclId::Prompt(_)));
+    let s = format_decl(
+        &output.ast,
+        &output.program.declarations[0],
+        &output.interner,
+    );
+    insta::assert_snapshot!(s);
+}
+
+#[test]
+fn decl_prompt_bare_requires() {
+    let source = r#"prompt P(text: string) requires json_mode -> R {
+  user: "..."
+}"#;
+    let output = parse_program(source);
+    assert_eq!(output.program.declarations.len(), 1);
+    let errors: Vec<_> = output
+        .diagnostics
+        .iter()
+        .filter(|d| d.severity == eaml_errors::Severity::Error)
+        .collect();
+    assert!(errors.is_empty(), "unexpected errors: {:?}", errors);
+    // Check requires clause
+    if let DeclId::Prompt(id) = &output.program.declarations[0] {
+        let p = &output.ast[*id];
+        assert!(p.requires.is_some());
+        let req = p.requires.as_ref().unwrap();
+        assert_eq!(req.caps.len(), 1);
+    } else {
+        panic!("expected Prompt");
+    }
+}
+
+#[test]
+fn decl_prompt_bracketed_requires() {
+    let source = r#"prompt P(x: int) requires [json_mode, tools] -> R {
+  user: "..."
+}"#;
+    let output = parse_program(source);
+    let errors: Vec<_> = output
+        .diagnostics
+        .iter()
+        .filter(|d| d.severity == eaml_errors::Severity::Error)
+        .collect();
+    assert!(errors.is_empty(), "unexpected errors: {:?}", errors);
+    if let DeclId::Prompt(id) = &output.program.declarations[0] {
+        let p = &output.ast[*id];
+        let req = p.requires.as_ref().unwrap();
+        assert_eq!(req.caps.len(), 2);
+    } else {
+        panic!("expected Prompt");
+    }
+}
+
+#[test]
+fn decl_prompt_empty_requires() {
+    let source = r#"prompt P() requires [] -> R {
+  user: "..."
+}"#;
+    let output = parse_program(source);
+    let errors: Vec<_> = output
+        .diagnostics
+        .iter()
+        .filter(|d| d.severity == eaml_errors::Severity::Error)
+        .collect();
+    assert!(errors.is_empty(), "unexpected errors: {:?}", errors);
+    if let DeclId::Prompt(id) = &output.program.declarations[0] {
+        let p = &output.ast[*id];
+        let req = p.requires.as_ref().unwrap();
+        assert_eq!(req.caps.len(), 0);
+    } else {
+        panic!("expected Prompt");
+    }
+}
+
+#[test]
+fn decl_prompt_all_fields() {
+    let source = r#"prompt P(a: string, b: int) -> R {
+  system: "system msg"
+  user: "user msg"
+  temperature: 0.5
+  max_tokens: 100
+}"#;
+    let output = parse_program(source);
+    let errors: Vec<_> = output
+        .diagnostics
+        .iter()
+        .filter(|d| d.severity == eaml_errors::Severity::Error)
+        .collect();
+    assert!(errors.is_empty(), "unexpected errors: {:?}", errors);
+    if let DeclId::Prompt(id) = &output.program.declarations[0] {
+        let p = &output.ast[*id];
+        assert_eq!(p.params.len(), 2);
+        assert_eq!(p.body.fields.len(), 4);
+    } else {
+        panic!("expected Prompt");
+    }
+}
+
+#[test]
+fn decl_prompt_max_retries() {
+    let source = r#"prompt P() -> R {
+  user: "msg"
+  max_retries: 3
+}"#;
+    let output = parse_program(source);
+    let errors: Vec<_> = output
+        .diagnostics
+        .iter()
+        .filter(|d| d.severity == eaml_errors::Severity::Error)
+        .collect();
+    assert!(errors.is_empty(), "unexpected errors: {:?}", errors);
+    if let DeclId::Prompt(id) = &output.program.declarations[0] {
+        let p = &output.ast[*id];
+        assert_eq!(p.body.fields.len(), 2);
+    } else {
+        panic!("expected Prompt");
+    }
+}
+
+#[test]
+fn decl_tool_python_bridge() {
+    let source = r#"tool Fetch(url: string) -> string {
+  python %{
+import requests
+return requests.get(url).text
+}%
+}"#;
+    let output = parse_program(source);
+    let errors: Vec<_> = output
+        .diagnostics
+        .iter()
+        .filter(|d| d.severity == eaml_errors::Severity::Error)
+        .collect();
+    assert!(errors.is_empty(), "unexpected errors: {:?}", errors);
+    assert!(matches!(output.program.declarations[0], DeclId::Tool(_)));
+    if let DeclId::Tool(id) = &output.program.declarations[0] {
+        let t = &output.ast[*id];
+        assert!(matches!(t.body, ToolBody::PythonBridge { .. }));
+    }
+}
+
+#[test]
+fn decl_tool_with_description() {
+    let source = r#"tool T(x: int) -> int {
+  description: "does stuff"
+  python %{
+return x * 2
+}%
+}"#;
+    let output = parse_program(source);
+    let errors: Vec<_> = output
+        .diagnostics
+        .iter()
+        .filter(|d| d.severity == eaml_errors::Severity::Error)
+        .collect();
+    assert!(errors.is_empty(), "unexpected errors: {:?}", errors);
+    if let DeclId::Tool(id) = &output.program.declarations[0] {
+        let t = &output.ast[*id];
+        match &t.body {
+            ToolBody::PythonBridge { description, .. } => {
+                assert!(description.is_some());
+            }
+            _ => panic!("expected PythonBridge body"),
+        }
+    }
+}
+
+#[test]
+fn decl_agent_all_fields() {
+    let source = r#"agent Bot {
+  model: Claude
+  tools: [Search, Fetch]
+  system: "You are a helpful bot"
+  max_turns: 10
+  on_error: fail
+}"#;
+    let output = parse_program(source);
+    let errors: Vec<_> = output
+        .diagnostics
+        .iter()
+        .filter(|d| d.severity == eaml_errors::Severity::Error)
+        .collect();
+    assert!(errors.is_empty(), "unexpected errors: {:?}", errors);
+    assert!(matches!(output.program.declarations[0], DeclId::Agent(_)));
+    if let DeclId::Agent(id) = &output.program.declarations[0] {
+        let a = &output.ast[*id];
+        assert_eq!(a.fields.len(), 5);
+    }
+}
+
+#[test]
+fn decl_agent_retry_policy() {
+    let source = r#"agent A {
+  model: M
+  tools: [T]
+  on_error: retry(3) then fail
+}"#;
+    let output = parse_program(source);
+    let errors: Vec<_> = output
+        .diagnostics
+        .iter()
+        .filter(|d| d.severity == eaml_errors::Severity::Error)
+        .collect();
+    assert!(errors.is_empty(), "unexpected errors: {:?}", errors);
+    if let DeclId::Agent(id) = &output.program.declarations[0] {
+        let a = &output.ast[*id];
+        // Find the on_error field
+        let has_retry = a
+            .fields
+            .iter()
+            .any(|f| matches!(f, AgentField::OnError(ErrorPolicy::RetryThenFail { .. }, _)));
+        assert!(has_retry, "expected RetryThenFail policy");
+    }
+}
+
+#[test]
+fn decl_tool_empty_body() {
+    let source = "tool T(x: int) -> int { }";
+    let output = parse_program(source);
+    if let DeclId::Tool(id) = &output.program.declarations[0] {
+        let t = &output.ast[*id];
+        assert!(matches!(t.body, ToolBody::Empty(_)));
+    }
+}
+
+// ===================================================================
+// Integration tests: full example files
+// ===================================================================
+
+#[test]
+fn decl_example_minimal() {
+    let source = include_str!("../../../examples/01-minimal/minimal.eaml");
+    let output = parse_program(source);
+    let errors: Vec<_> = output
+        .diagnostics
+        .iter()
+        .filter(|d| d.severity == eaml_errors::Severity::Error)
+        .collect();
+    assert!(
+        errors.is_empty(),
+        "minimal.eaml had parse errors: {:?}",
+        errors
+    );
+    assert_eq!(output.program.declarations.len(), 3); // model + schema + prompt
+}
+
+#[test]
+fn decl_example_sentiment() {
+    let source = include_str!("../../../examples/02-sentiment/sentiment.eaml");
+    let output = parse_program(source);
+    let errors: Vec<_> = output
+        .diagnostics
+        .iter()
+        .filter(|d| d.severity == eaml_errors::Severity::Error)
+        .collect();
+    assert!(
+        errors.is_empty(),
+        "sentiment.eaml had parse errors: {:?}",
+        errors
+    );
+    assert_eq!(output.program.declarations.len(), 3); // model + schema + prompt
+}
+
+#[test]
+fn decl_example_types() {
+    let source = include_str!("../../../examples/07-all-type-variants/types.eaml");
+    let output = parse_program(source);
+    let errors: Vec<_> = output
+        .diagnostics
+        .iter()
+        .filter(|d| d.severity == eaml_errors::Severity::Error)
+        .collect();
+    assert!(
+        errors.is_empty(),
+        "types.eaml had parse errors: {:?}",
+        errors
+    );
+    // model + 6 schemas + 3 prompts = 10
+    assert_eq!(output.program.declarations.len(), 10);
+}
+
+#[test]
+fn decl_example_bad_model() {
+    let source = include_str!("../../../examples/06-capability-error/bad_model.eaml");
+    let output = parse_program(source);
+    let errors: Vec<_> = output
+        .diagnostics
+        .iter()
+        .filter(|d| d.severity == eaml_errors::Severity::Error)
+        .collect();
+    assert!(
+        errors.is_empty(),
+        "bad_model.eaml had parse errors (cap errors are semantic, not parser): {:?}",
+        errors
+    );
+    assert_eq!(output.program.declarations.len(), 3); // model + schema + prompt
+}

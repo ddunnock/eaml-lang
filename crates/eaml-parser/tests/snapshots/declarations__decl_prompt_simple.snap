@@ -1,0 +1,7 @@
+---
+source: crates/eaml-parser/tests/declarations.rs
+expression: s
+---
+Prompt(Greet, params=[name:Named(Spur(3), 19..25)], no requires, return=Named(Spur(4), 30..38), body=[
+  User(TemplateString { parts: [Text(50..56), Interpolation(ExprId(0), 56..62)], span: 49..63 })
+], span=0..65)
