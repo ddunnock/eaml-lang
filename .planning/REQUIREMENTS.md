@@ -56,11 +56,11 @@
 - [x] **GEN-02**: Schema declarations generate Pydantic v2 BaseModel classes with correct field types
 - [x] **GEN-03**: Bounded types generate Pydantic Field constraints (ge, le, min_length, max_length)
 - [x] **GEN-04**: Literal union types generate `Literal["a", "b", "c"]` type annotations
-- [ ] **GEN-05**: Prompt declarations generate async Python functions with system/user messages
-- [ ] **GEN-06**: Template string interpolation generates Python f-strings in prompt bodies
+- [x] **GEN-05**: Prompt declarations generate async Python functions with system/user messages
+- [x] **GEN-06**: Template string interpolation generates Python f-strings in prompt bodies
 - [x] **GEN-07**: Model declarations generate provider configuration dicts
-- [ ] **GEN-08**: Tool declarations generate Python functions with bridge block bodies
-- [ ] **GEN-09**: Agent declarations generate orchestration classes with tool dispatch
+- [x] **GEN-08**: Tool declarations generate Python functions with bridge block bodies
+- [x] **GEN-09**: Agent declarations generate orchestration classes with tool dispatch
 - [ ] **GEN-10**: Generated Python imports are deduplicated, sorted, and include eaml_runtime
 - [ ] **GEN-11**: Generated Python type-checks with mypy without errors
 - [ ] **GEN-12**: Generated Python runs and calls LLM APIs via eaml_runtime
@@ -162,11 +162,11 @@
 | GEN-02 | Phase 4 | Complete |
 | GEN-03 | Phase 4 | Complete |
 | GEN-04 | Phase 4 | Complete |
-| GEN-05 | Phase 4 | Pending |
-| GEN-06 | Phase 4 | Pending |
+| GEN-05 | Phase 4 | Complete |
+| GEN-06 | Phase 4 | Complete |
 | GEN-07 | Phase 4 | Complete |
-| GEN-08 | Phase 4 | Pending |
-| GEN-09 | Phase 4 | Pending |
+| GEN-08 | Phase 4 | Complete |
+| GEN-09 | Phase 4 | Complete |
 | GEN-10 | Phase 4 | Pending |
 | GEN-11 | Phase 4 | Pending |
 | GEN-12 | Phase 4 | Pending |

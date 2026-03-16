@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 04-02-PLAN.md
-last_updated: "2026-03-16T20:02:31Z"
+stopped_at: Completed 04-03-PLAN.md
+last_updated: "2026-03-16T20:14:16.893Z"
 last_activity: 2026-03-16 -- Completed 04-02 schema and model emitters
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 14
-  completed_plans: 12
-  percent: 79
+  completed_plans: 13
+  percent: 86
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 ## Current Position
 
 Phase: 4 of 6 (Code Generation)
-Plan: 2 of 4 in current phase (completed)
+Plan: 3 of 4 in current phase (completed)
 Status: Executing Phase 4
-Last activity: 2026-03-16 -- Completed 04-02 schema and model emitters
+Last activity: 2026-03-16 -- Completed 04-03 prompt, tool, and agent emitters
 
-Progress: [█████████░] 86% (12/14 plans)
+Progress: [█████████░] 93% (13/14 plans)
 
 ## Performance Metrics
 
@@ -63,6 +63,7 @@ Progress: [█████████░] 86% (12/14 plans)
 | Phase 03 P03 | 8 | 2 tasks | 4 files |
 | Phase 04 P01 | 5 | 2 tasks | 9 files |
 | Phase 04 P02 | 3 | 2 tasks | 4 files |
+| Phase 04 P03 | 5 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -102,6 +103,9 @@ Recent decisions affecting current work:
 - IntoSpan helper trait on TypeExprId for ergonomic span extraction in CAP020 (03-03)
 - [Phase 04]: BTreeSet for ImportTracker to emit sorted imports deterministically
 - emit_model implemented alongside emit_schema in Task 1 for cohesion; Task 2 added tests only (04-02)
+- [Phase 04]: Template strings with no interpolation emit plain strings; with interpolation emit f-strings with brace escaping
+- [Phase 04]: Tool bridge functions return dict per PYB-GEN-01; wrapper validates with model_validate (schema) or isinstance (primitive)
+- [Phase 04]: Agent tool references use snake_case Python function names per CONTEXT.md locked decision
 
 ### Pending Todos
 
@@ -114,6 +118,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-16T20:02:31Z
-Stopped at: Completed 04-02-PLAN.md
+Last session: 2026-03-16T20:14:16.890Z
+Stopped at: Completed 04-03-PLAN.md
 Resume file: None
