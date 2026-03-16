@@ -66,11 +66,12 @@ Plans:
   3. Type validation catches invalid bounded type parameters (e.g., min > max), inconsistent literal union members, and unresolved type references
   4. Capability subset checking validates that prompt `requires` clauses are subsets of the bound model's capabilities, emitting CAP010 FATAL on mismatch
   5. Template string interpolation variables are validated as in-scope, and undefined variables produce clear error messages
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 03-01: TBD
-- [ ] 03-02: TBD
+- [ ] 03-01-PLAN.md -- Foundation + name resolution: error infrastructure upgrades (Res010, secondary labels), symbol table, two-pass resolver with forward references
+- [ ] 03-02-PLAN.md -- Type checking: bounded type validation, literal unions, composite types, schema field resolution, template string scope validation
+- [ ] 03-03-PLAN.md -- Capability checking: subset check with CAP010 FATAL, integration tests confirming all error codes emittable
 
 ### Phase 4: Code Generation
 **Goal**: The compiler emits valid, runnable Python 3.11+ / Pydantic v2 code from a semantically-validated AST
@@ -128,7 +129,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 |-------|----------------|--------|-----------|
 | 1. Error Foundation and Lexer | 3/3 | Complete   | 2026-03-15 |
 | 2. Parser | 4/4 | Complete   | 2026-03-16 |
-| 3. Semantic Analysis | 0/0 | Not started | - |
+| 3. Semantic Analysis | 0/3 | In progress | - |
 | 4. Code Generation | 0/0 | Not started | - |
 | 5. Python Runtime | 0/0 | Not started | - |
 | 6. CLI and Integration | 0/0 | Not started | - |
