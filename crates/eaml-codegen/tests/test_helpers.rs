@@ -37,3 +37,10 @@ pub fn generate_from_source(source: &str) -> String {
     let (parse_output, analysis) = parse_and_analyze(source);
     generate(&parse_output, &analysis, source, "test.eaml")
 }
+
+/// Parses, analyzes, and generates Python from EAML source with a custom filename.
+#[allow(dead_code)]
+pub fn generate_from_source_with_name(source: &str, filename: &str) -> String {
+    let (parse_output, analysis) = parse_and_analyze(source);
+    generate(&parse_output, &analysis, source, filename)
+}
