@@ -33,8 +33,8 @@
 - [ ] **PAR-05**: Parser handles `requires` clauses on prompt declarations
 - [ ] **PAR-06**: Parser handles tool declarations with parameter lists, return types, and python bridge bodies
 - [ ] **PAR-07**: Parser handles agent declarations with model binding, tools list, and configuration
-- [ ] **PAR-08**: Parser recovers from syntax errors via synchronization points and continues parsing
-- [ ] **PAR-09**: Every AST node carries source span information for error reporting
+- [x] **PAR-08**: Parser recovers from syntax errors via synchronization points and continues parsing
+- [x] **PAR-09**: Every AST node carries source span information for error reporting
 
 ### Semantic Analysis
 
@@ -145,8 +145,8 @@
 | PAR-05 | Phase 2 | Pending |
 | PAR-06 | Phase 2 | Pending |
 | PAR-07 | Phase 2 | Pending |
-| PAR-08 | Phase 2 | Pending |
-| PAR-09 | Phase 2 | Pending |
+| PAR-08 | Phase 2 | Complete |
+| PAR-09 | Phase 2 | Complete |
 | SEM-01 | Phase 3 | Pending |
 | SEM-02 | Phase 3 | Pending |
 | SEM-03 | Phase 3 | Pending |
