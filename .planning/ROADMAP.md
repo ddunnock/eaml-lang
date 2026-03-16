@@ -83,11 +83,13 @@ Plans:
   3. Model, tool, and agent declarations each produce their corresponding Python constructs (config dicts, functions with bridge bodies, orchestration classes)
   4. Generated Python files have correct, deduplicated imports (pydantic, typing, eaml_runtime) and pass mypy type checking without errors
   5. Generated Python is structurally correct: indentation is consistent, no syntax errors, and the output is importable as a Python module
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 04-01: TBD
-- [ ] 04-02: TBD
+- [ ] 04-01-PLAN.md -- Foundation: CodeWriter (indentation), type annotation mapper (ResolvedType -> Python), name converters (snake_case, UPPER_SNAKE), test helpers
+- [ ] 04-02-PLAN.md -- Schema and model emitters: Pydantic BaseModel classes with all type variants, model config dicts, let bindings
+- [ ] 04-03-PLAN.md -- Prompt, tool, and agent emitters: async prompt functions, bridge tool functions with wrappers/metadata, agent classes
+- [ ] 04-04-PLAN.md -- Integration: generate() wiring, import deduplication, declaration ordering, full example file snapshot tests
 
 ### Phase 5: Python Runtime
 **Goal**: Generated Python code can actually execute, calling LLM providers and validating responses against Pydantic models
@@ -130,6 +132,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 1. Error Foundation and Lexer | 3/3 | Complete   | 2026-03-15 |
 | 2. Parser | 4/4 | Complete   | 2026-03-16 |
 | 3. Semantic Analysis | 3/3 | Complete   | 2026-03-16 |
-| 4. Code Generation | 0/0 | Not started | - |
+| 4. Code Generation | 0/4 | Not started | - |
 | 5. Python Runtime | 0/0 | Not started | - |
 | 6. CLI and Integration | 0/0 | Not started | - |
