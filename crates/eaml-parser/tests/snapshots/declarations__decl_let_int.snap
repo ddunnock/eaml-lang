@@ -1,0 +1,5 @@
+---
+source: crates/eaml-parser/tests/declarations.rs
+expression: s
+---
+Let(x, type=Named(Spur(2), 7..10), value=IntLit(13..15), span=0..15)

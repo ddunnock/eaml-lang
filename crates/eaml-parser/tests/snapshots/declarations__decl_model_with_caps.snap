@@ -1,0 +1,5 @@
+---
+source: crates/eaml-parser/tests/declarations.rs
+expression: s
+---
+Model(Sonnet, id=Template([Text(26..33)]), provider=Template([Text(47..56)]), caps=[json_mode, streaming], span=0..88)

@@ -1,0 +1,5 @@
+---
+source: crates/eaml-parser/tests/declarations.rs
+expression: s
+---
+Import::Eaml(path=Template([Text(8..16)]), alias="", span=0..17)

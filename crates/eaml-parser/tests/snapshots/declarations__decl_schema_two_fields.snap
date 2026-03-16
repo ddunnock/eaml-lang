@@ -1,0 +1,8 @@
+---
+source: crates/eaml-parser/tests/declarations.rs
+expression: s
+---
+Schema(Greeting, fields=[
+  message: Named(Spur(3), 27..33),
+  count: Named(Spur(5), 42..45)
+], span=0..47)

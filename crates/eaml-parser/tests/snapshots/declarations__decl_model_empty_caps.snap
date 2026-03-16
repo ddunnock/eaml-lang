@@ -1,0 +1,5 @@
+---
+source: crates/eaml-parser/tests/declarations.rs
+expression: s
+---
+Model(Haiku, id=Template([Text(25..32)]), provider=Template([Text(46..55)]), caps=[], span=0..67)

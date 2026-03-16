@@ -8,7 +8,6 @@ use eaml_lexer::{Interner, Token, TokenKind};
 use lasso::Spur;
 
 use crate::ast::*;
-use crate::ParseOutput;
 
 /// The EAML recursive descent parser.
 ///
@@ -301,25 +300,8 @@ impl Parser {
         &self.interner
     }
 
-    // ========================================================================
-    // Parse entry point (stub)
-    // ========================================================================
-
-    /// Parses the token stream into a Program AST.
-    ///
-    /// Currently a stub that returns an empty program. Declaration parsing
-    /// will be implemented in Plan 02-02.
-    pub fn parse_program(self) -> ParseOutput {
-        let source_len = self.source.len();
-        let program = Program {
-            declarations: vec![],
-            span: 0..source_len,
-        };
-        ParseOutput {
-            ast: self.ast,
-            program,
-            diagnostics: self.diagnostics,
-            interner: self.interner,
-        }
+    /// Returns a reference to the source string.
+    pub fn source(&self) -> &str {
+        &self.source
     }
 }

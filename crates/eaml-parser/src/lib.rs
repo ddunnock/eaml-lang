@@ -3,6 +3,7 @@
 //! Public API: [`parse()`] function, [`ParseOutput`] struct, AST types.
 
 pub mod ast;
+pub mod decl;
 pub mod expr;
 pub mod parser;
 pub mod template;

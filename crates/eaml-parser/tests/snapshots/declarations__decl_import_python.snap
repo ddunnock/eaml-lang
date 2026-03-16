@@ -1,0 +1,5 @@
+---
+source: crates/eaml-parser/tests/declarations.rs
+expression: s
+---
+Import::Python(module=Template([Text(15..17)]), alias="", span=0..18)
