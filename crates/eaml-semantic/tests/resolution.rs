@@ -18,7 +18,11 @@ fn all_seven_decl_types_register() {
         model Gpt4 = Model(id: "gpt-4", provider: "openai", caps: [])
         schema User { name: string }
         prompt greet(name: string) -> string { user: "Hello {name}" }
-        tool fetch(url: string) -> string { }
+        tool fetch(url: string) -> string {
+            python %{
+                return url
+            }%
+        }
         agent Helper { model: Gpt4; tools: [fetch] }
         let x: int = 42
     "#;
@@ -49,7 +53,11 @@ fn prompt_registers_in_symbol_table() {
 
 #[test]
 fn tool_registers_in_symbol_table() {
-    let source = r#"tool fetch(url: string) -> string { }"#;
+    let source = r#"tool fetch(url: string) -> string {
+        python %{
+            return url
+        }%
+    }"#;
     let (_, analysis) = analyze_source(source);
     assert_no_errors(&analysis);
 }
@@ -176,7 +184,11 @@ fn schema_field_undeclared_type_produces_res001() {
 fn agent_tool_reference_resolves() {
     let source = r#"
         model Gpt4 = Model(id: "gpt-4", provider: "openai", caps: [])
-        tool fetch(url: string) -> string { }
+        tool fetch(url: string) -> string {
+            python %{
+                return url
+            }%
+        }
         agent Helper { model: Gpt4; tools: [fetch] }
     "#;
     let (_, analysis) = analyze_source(source);
