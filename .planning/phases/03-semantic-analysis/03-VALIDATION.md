@@ -38,27 +38,29 @@ created: 2026-03-16
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 03-01-01 | 01 | 1 | SEM-01 | unit | `cargo test -p eaml-semantic resolve` | ❌ W0 | ⬜ pending |
-| 03-01-02 | 01 | 1 | SEM-02 | unit | `cargo test -p eaml-semantic resolve` | ❌ W0 | ⬜ pending |
-| 03-01-03 | 01 | 1 | SEM-03 | unit | `cargo test -p eaml-semantic resolve` | ❌ W0 | ⬜ pending |
-| 03-02-01 | 02 | 2 | SEM-04 | unit | `cargo test -p eaml-semantic types` | ❌ W0 | ⬜ pending |
-| 03-02-02 | 02 | 2 | SEM-05 | unit | `cargo test -p eaml-semantic types` | ❌ W0 | ⬜ pending |
-| 03-02-03 | 02 | 2 | SEM-06 | unit | `cargo test -p eaml-semantic types` | ❌ W0 | ⬜ pending |
-| 03-02-04 | 02 | 2 | SEM-07 | unit | `cargo test -p eaml-semantic types` | ❌ W0 | ⬜ pending |
-| 03-02-05 | 02 | 2 | SEM-08 | unit | `cargo test -p eaml-semantic types` | ❌ W0 | ⬜ pending |
-| 03-02-06 | 02 | 2 | SEM-09 | unit | `cargo test -p eaml-semantic types` | ❌ W0 | ⬜ pending |
-| 03-03-01 | 03 | 2 | SEM-10 | unit | `cargo test -p eaml-semantic caps` | ❌ W0 | ⬜ pending |
-| 03-03-02 | 03 | 2 | SEM-11 | unit | `cargo test -p eaml-semantic caps` | ❌ W0 | ⬜ pending |
+| 03-01-01 | 01 | 1 | SEM-01 | unit | `cargo test -p eaml-semantic resolve` | W0 | pending |
+| 03-01-02 | 01 | 1 | SEM-02 | unit | `cargo test -p eaml-semantic resolve` | W0 | pending |
+| 03-01-03 | 01 | 1 | SEM-03 | unit | `cargo test -p eaml-semantic resolve` | W0 | pending |
+| 03-02-01 | 02 | 2 | SEM-04 | unit | `cargo test -p eaml-semantic types` | W0 | pending |
+| 03-02-02 | 02 | 2 | SEM-05 | unit | `cargo test -p eaml-semantic types` | W0 | pending |
+| 03-02-03 | 02 | 2 | SEM-06 | unit | `cargo test -p eaml-semantic types` | W0 | pending |
+| 03-02-04 | 02 | 2 | SEM-07 | unit | `cargo test -p eaml-semantic types` | W0 | pending |
+| 03-02-05 | 02 | 2 | SEM-10 | unit | `cargo test -p eaml-semantic scoping` | W0 | pending |
+| 03-03-01 | 03 | 3 | SEM-08 | unit | `cargo test -p eaml-semantic caps` | W0 | pending |
+| 03-03-02 | 03 | 3 | SEM-09 | unit | `cargo test -p eaml-semantic caps` | W0 | pending |
+| 03-03-03 | 03 | 3 | SEM-11 | unit | `cargo test -p eaml-semantic integration` | W0 | pending |
 
-*Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
+*Status: pending / green / red / flaky*
 
 ---
 
 ## Wave 0 Requirements
 
 - [ ] `crates/eaml-semantic/tests/resolve.rs` — stubs for SEM-01, SEM-02, SEM-03
-- [ ] `crates/eaml-semantic/tests/types.rs` — stubs for SEM-04 through SEM-09
-- [ ] `crates/eaml-semantic/tests/caps.rs` — stubs for SEM-10, SEM-11
+- [ ] `crates/eaml-semantic/tests/types.rs` — stubs for SEM-04 through SEM-07
+- [ ] `crates/eaml-semantic/tests/scoping.rs` — stubs for SEM-10
+- [ ] `crates/eaml-semantic/tests/caps.rs` — stubs for SEM-08, SEM-09
+- [ ] `crates/eaml-semantic/tests/integration.rs` — stubs for SEM-11
 - [ ] `crates/eaml-semantic/tests/test_helpers.rs` — shared test utilities
 
 *Existing infrastructure (insta, codespan-reporting) covers framework needs.*
