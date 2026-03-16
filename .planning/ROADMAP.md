@@ -48,11 +48,13 @@ Plans:
   3. Prompt bodies with system/user/assistant sections containing template strings produce AST nodes that preserve message structure and interpolation points
   4. A source file with multiple syntax errors produces diagnostics for each error (parser recovers at synchronization points and continues)
   5. Every AST node carries source span information traceable back to the original source
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 02-01: TBD
-- [ ] 02-02: TBD
+- [ ] 02-01-PLAN.md -- AST type system (typed arenas, ID newtypes, all node types) and parser infrastructure (cursor, helpers, synchronization)
+- [ ] 02-02-PLAN.md -- Leaf parsers: type expressions (bounded, modifiers, literal unions), Pratt expression parser, template string parser
+- [ ] 02-03-PLAN.md -- Declaration parsers: all 7 types (import, model, schema, prompt, tool, agent, let), requires clauses, post-MVP error codes, error recovery
+- [ ] 02-04-PLAN.md -- Error recovery tests, integration tests against all example files, span correctness verification
 
 ### Phase 3: Semantic Analysis
 **Goal**: The compiler validates that a parsed AST is semantically correct -- all names resolve, types check, and capability requirements are satisfiable
@@ -125,7 +127,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Error Foundation and Lexer | 3/3 | Complete   | 2026-03-15 |
-| 2. Parser | 0/0 | Not started | - |
+| 2. Parser | 0/4 | Not started | - |
 | 3. Semantic Analysis | 0/0 | Not started | - |
 | 4. Code Generation | 0/0 | Not started | - |
 | 5. Python Runtime | 0/0 | Not started | - |
