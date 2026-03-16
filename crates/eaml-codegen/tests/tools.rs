@@ -122,7 +122,7 @@ tool greet(name: string) -> string {
 "#;
     let output = emit_tools(source);
     insta::assert_snapshot!(output, @r#"
-    def greet(name: str) -> dict:
+    def greet(name: str) -> str:
         return f"Hello, {name}!"
 
     def _eaml_call_greet(name: str) -> str:

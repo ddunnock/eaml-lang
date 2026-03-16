@@ -7,7 +7,7 @@ pub mod names;
 pub mod types;
 pub mod writer;
 
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap, HashSet, VecDeque};
 
 use eaml_lexer::Interner;
 use eaml_parser::ast::*;
@@ -240,6 +240,7 @@ fn toposort_schemas(
 
     for (idx, id) in schemas.iter().enumerate() {
         let schema = &ast[*id];
+        let mut seen_deps: HashSet<usize> = HashSet::new();
         for field in &schema.fields {
             if let Some(resolved) = type_annotations.type_exprs.get(&field.type_expr) {
                 collect_schema_deps(
@@ -250,6 +251,7 @@ fn toposort_schemas(
                     idx,
                     &mut dependents,
                     &mut in_degree,
+                    &mut seen_deps,
                 );
             }
         }
@@ -283,6 +285,7 @@ fn toposort_schemas(
 }
 
 /// Recursively collects schema dependencies from a resolved type.
+#[allow(clippy::too_many_arguments)]
 fn collect_schema_deps(
     resolved: &ResolvedType,
     ast: &Ast,
@@ -291,13 +294,14 @@ fn collect_schema_deps(
     current_idx: usize,
     dependents: &mut [Vec<usize>],
     in_degree: &mut [usize],
+    seen_deps: &mut HashSet<usize>,
 ) {
     match resolved {
         ResolvedType::Schema(id) => {
             let dep_name = interner.resolve(&ast[*id].name);
             if let Some(&dep_idx) = name_to_idx.get(dep_name) {
-                if dep_idx != current_idx {
-                    // dep_idx must come before current_idx
+                if dep_idx != current_idx && seen_deps.insert(dep_idx) {
+                    // dep_idx must come before current_idx (only add edge once)
                     dependents[dep_idx].push(current_idx);
                     in_degree[current_idx] += 1;
                 }
@@ -312,6 +316,7 @@ fn collect_schema_deps(
                 current_idx,
                 dependents,
                 in_degree,
+                seen_deps,
             );
         }
         _ => {}

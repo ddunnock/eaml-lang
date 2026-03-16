@@ -385,8 +385,17 @@ pub fn emit_tool(
             code_span,
             ..
         } => {
-            // (a) Bridge function -- returns dict per PYB-GEN-01
-            writer.writeln(&format!("def {snake_name}({params_str}) -> dict:"));
+            // (a) Bridge function
+            // Schema returns: -> dict (per PYB-GEN-01, validated by model_validate)
+            // Primitive returns: -> actual type (direct return)
+            let bridge_return = if is_schema_return {
+                "dict"
+            } else {
+                &return_annotation
+            };
+            writer.writeln(&format!(
+                "def {snake_name}({params_str}) -> {bridge_return}:"
+            ));
             writer.indent();
 
             // Docstring from description field
