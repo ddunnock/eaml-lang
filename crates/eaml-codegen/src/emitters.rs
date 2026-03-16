@@ -1,14 +1,17 @@
-//! Declaration emitters for schemas, models, and let bindings.
+//! Declaration emitters for schemas, models, let bindings, prompts, tools, and agents.
 //!
 //! Produces Pydantic BaseModel classes from schema declarations,
-//! UPPER_SNAKE_CASE config dicts from model declarations, and
-//! typed variable assignments from let bindings.
+//! UPPER_SNAKE_CASE config dicts from model declarations,
+//! typed variable assignments from let bindings,
+//! async prompt functions with message lists and execute_prompt() calls,
+//! tool bridge functions with wrappers and ToolMetadata, and
+//! agent classes extending eaml_runtime.Agent.
 
 use eaml_lexer::Interner;
 use eaml_parser::ast::*;
 use eaml_semantic::type_checker::TypeAnnotations;
 
-use crate::names::to_config_name;
+use crate::names::{to_config_name, to_snake_case};
 use crate::types::{emit_field_line, emit_type_annotation, is_optional, ImportTracker};
 use crate::writer::CodeWriter;
 
@@ -189,4 +192,162 @@ pub fn emit_model(
 
     writer.dedent();
     writer.writeln("}");
+}
+
+/// Emits a template string as a Python string literal.
+///
+/// If the template contains no interpolations, produces a plain string.
+/// If it contains interpolations, produces an f-string.
+/// Literal `{` and `}` in text parts are escaped to `{{` and `}}`.
+/// Multiline content uses `\n` escapes within double-quoted strings.
+fn emit_template_as_python_string(
+    ts: &TemplateString,
+    ast: &Ast,
+    interner: &Interner,
+    source: &str,
+) -> String {
+    let has_interpolation = ts
+        .parts
+        .iter()
+        .any(|p| matches!(p, TemplatePart::Interpolation(..)));
+
+    let mut content = String::new();
+    for part in &ts.parts {
+        match part {
+            TemplatePart::Text(span) => {
+                let text = &source[span.clone()];
+                if has_interpolation {
+                    // Escape literal braces for f-string
+                    for ch in text.chars() {
+                        match ch {
+                            '{' => content.push_str("{{"),
+                            '}' => content.push_str("}}"),
+                            '\n' => content.push_str("\\n"),
+                            '"' => content.push_str("\\\""),
+                            _ => content.push(ch),
+                        }
+                    }
+                } else {
+                    for ch in text.chars() {
+                        match ch {
+                            '\n' => content.push_str("\\n"),
+                            '"' => content.push_str("\\\""),
+                            _ => content.push(ch),
+                        }
+                    }
+                }
+            }
+            TemplatePart::Interpolation(expr_id, _) => {
+                content.push('{');
+                content.push_str(&emit_expr_value(*expr_id, ast, interner, source));
+                content.push('}');
+            }
+        }
+    }
+
+    if has_interpolation {
+        format!("f\"{content}\"")
+    } else {
+        format!("\"{content}\"")
+    }
+}
+
+/// Emits an async Python function from a prompt declaration.
+///
+/// Produces: `async def name(params, *, model: dict) -> ReturnType:` with
+/// a message list and `return await eaml_runtime.execute_prompt(...)` call.
+pub fn emit_prompt(
+    prompt: &PromptDecl,
+    ast: &Ast,
+    interner: &Interner,
+    type_annotations: &TypeAnnotations,
+    source: &str,
+    writer: &mut CodeWriter,
+    imports: &mut ImportTracker,
+) {
+    imports.need_execute_prompt();
+
+    let fn_name = to_snake_case(interner.resolve(&prompt.name));
+
+    // Build parameter list
+    let mut params = Vec::new();
+    for param in &prompt.params {
+        let param_name = interner.resolve(&param.name);
+        let resolved = &type_annotations.type_exprs[&param.type_expr];
+        imports.track_type(resolved);
+        let annotation = emit_type_annotation(resolved, ast, interner);
+        params.push(format!("{param_name}: {annotation}"));
+    }
+    params.push("*, model: dict".to_string());
+
+    // Return type
+    let return_resolved = &type_annotations.type_exprs[&prompt.return_type];
+    imports.track_type(return_resolved);
+    let return_annotation = emit_type_annotation(return_resolved, ast, interner);
+
+    // Emit function signature
+    writer.writeln(&format!(
+        "async def {fn_name}({}) -> {return_annotation}:",
+        params.join(", ")
+    ));
+    writer.indent();
+
+    // Emit message list
+    writer.writeln("messages = [");
+    writer.indent();
+    for field in &prompt.body.fields {
+        match field {
+            PromptField::System(ts) => {
+                let content = emit_template_as_python_string(ts, ast, interner, source);
+                writer.writeln(&format!(
+                    "{{\"role\": \"system\", \"content\": {content}}},"
+                ));
+            }
+            PromptField::User(ts) => {
+                let content = emit_template_as_python_string(ts, ast, interner, source);
+                writer.writeln(&format!("{{\"role\": \"user\", \"content\": {content}}},"));
+            }
+            _ => {}
+        }
+    }
+    writer.dedent();
+    writer.writeln("]");
+
+    // Build execute_prompt kwargs
+    let return_type_name = emit_type_annotation(return_resolved, ast, interner);
+    let mut kwargs = vec![
+        "model=model".to_string(),
+        "messages=messages".to_string(),
+        format!("return_type={return_type_name}"),
+    ];
+
+    // Scan for optional kwargs (temperature, max_tokens, max_retries)
+    for field in &prompt.body.fields {
+        match field {
+            PromptField::Temperature(span) => {
+                let val = &source[span.clone()];
+                kwargs.push(format!("temperature={val}"));
+            }
+            PromptField::MaxTokens(span) => {
+                let val = &source[span.clone()];
+                kwargs.push(format!("max_tokens={val}"));
+            }
+            PromptField::MaxRetries(span) => {
+                let val = &source[span.clone()];
+                kwargs.push(format!("max_retries={val}"));
+            }
+            _ => {}
+        }
+    }
+
+    // Emit execute_prompt call
+    writer.writeln("return await eaml_runtime.execute_prompt(");
+    writer.indent();
+    for kwarg in &kwargs {
+        writer.writeln(&format!("{kwarg},"));
+    }
+    writer.dedent();
+    writer.writeln(")");
+
+    writer.dedent();
 }
