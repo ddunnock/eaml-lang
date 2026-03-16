@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-stopped_at: Phase 4 context gathered
-last_updated: "2026-03-16T19:14:47.038Z"
-last_activity: 2026-03-16 -- Completed 03-03 capability checking and integration tests
+status: executing
+stopped_at: Completed 04-02-PLAN.md
+last_updated: "2026-03-16T20:02:31Z"
+last_activity: 2026-03-16 -- Completed 04-02 schema and model emitters
 progress:
   total_phases: 6
   completed_phases: 3
-  total_plans: 10
-  completed_plans: 10
-  percent: 100
+  total_plans: 14
+  completed_plans: 12
+  percent: 79
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-15)
 
 **Core value:** The compiler must correctly translate all v0.1 EAML constructs into runnable Python that type-checks, imports cleanly, and calls LLM APIs when executed.
-**Current focus:** Phase 3 - Semantic Analysis
+**Current focus:** Phase 4 - Code Generation
 
 ## Current Position
 
-Phase: 3 of 6 (Semantic Analysis) -- COMPLETE
-Plan: 3 of 3 in current phase (completed)
-Status: Phase 3 Complete
-Last activity: 2026-03-16 -- Completed 03-03 capability checking and integration tests
+Phase: 4 of 6 (Code Generation)
+Plan: 2 of 4 in current phase (completed)
+Status: Executing Phase 4
+Last activity: 2026-03-16 -- Completed 04-02 schema and model emitters
 
-Progress: [##########] 100% (10/10 plans)
+Progress: [█████████░] 86% (12/14 plans)
 
 ## Performance Metrics
 
@@ -61,6 +61,8 @@ Progress: [##########] 100% (10/10 plans)
 | Phase 03 P01 | 9 | 2 tasks | 12 files |
 | Phase 03 P02 | 9 | 2 tasks | 5 files |
 | Phase 03 P03 | 8 | 2 tasks | 4 files |
+| Phase 04 P01 | 5 | 2 tasks | 9 files |
+| Phase 04 P02 | 3 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -98,6 +100,8 @@ Recent decisions affecting current work:
 - Capability subset checking uses HashSet<Spur> for O(1) membership tests (03-03)
 - No agents: check all prompts against all models; agents present: check only agent-referenced models (03-03)
 - IntoSpan helper trait on TypeExprId for ergonomic span extraction in CAP020 (03-03)
+- [Phase 04]: BTreeSet for ImportTracker to emit sorted imports deterministically
+- emit_model implemented alongside emit_schema in Task 1 for cohesion; Task 2 added tests only (04-02)
 
 ### Pending Todos
 
@@ -110,6 +114,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-16T19:14:47.035Z
-Stopped at: Phase 4 context gathered
-Resume file: .planning/phases/04-code-generation/04-CONTEXT.md
+Last session: 2026-03-16T20:02:31Z
+Stopped at: Completed 04-02-PLAN.md
+Resume file: None

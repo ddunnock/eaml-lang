@@ -52,13 +52,13 @@
 
 ### Code Generation
 
-- [ ] **GEN-01**: CodeWriter handles Python indentation correctly with explicit indent/dedent tracking
-- [ ] **GEN-02**: Schema declarations generate Pydantic v2 BaseModel classes with correct field types
-- [ ] **GEN-03**: Bounded types generate Pydantic Field constraints (ge, le, min_length, max_length)
-- [ ] **GEN-04**: Literal union types generate `Literal["a", "b", "c"]` type annotations
+- [x] **GEN-01**: CodeWriter handles Python indentation correctly with explicit indent/dedent tracking
+- [x] **GEN-02**: Schema declarations generate Pydantic v2 BaseModel classes with correct field types
+- [x] **GEN-03**: Bounded types generate Pydantic Field constraints (ge, le, min_length, max_length)
+- [x] **GEN-04**: Literal union types generate `Literal["a", "b", "c"]` type annotations
 - [ ] **GEN-05**: Prompt declarations generate async Python functions with system/user messages
 - [ ] **GEN-06**: Template string interpolation generates Python f-strings in prompt bodies
-- [ ] **GEN-07**: Model declarations generate provider configuration dicts
+- [x] **GEN-07**: Model declarations generate provider configuration dicts
 - [ ] **GEN-08**: Tool declarations generate Python functions with bridge block bodies
 - [ ] **GEN-09**: Agent declarations generate orchestration classes with tool dispatch
 - [ ] **GEN-10**: Generated Python imports are deduplicated, sorted, and include eaml_runtime
@@ -158,13 +158,13 @@
 | SEM-09 | Phase 3 | Complete |
 | SEM-10 | Phase 3 | Complete |
 | SEM-11 | Phase 3 | Complete |
-| GEN-01 | Phase 4 | Pending |
-| GEN-02 | Phase 4 | Pending |
-| GEN-03 | Phase 4 | Pending |
-| GEN-04 | Phase 4 | Pending |
+| GEN-01 | Phase 4 | Complete |
+| GEN-02 | Phase 4 | Complete |
+| GEN-03 | Phase 4 | Complete |
+| GEN-04 | Phase 4 | Complete |
 | GEN-05 | Phase 4 | Pending |
 | GEN-06 | Phase 4 | Pending |
-| GEN-07 | Phase 4 | Pending |
+| GEN-07 | Phase 4 | Complete |
 | GEN-08 | Phase 4 | Pending |
 | GEN-09 | Phase 4 | Pending |
 | GEN-10 | Phase 4 | Pending |
