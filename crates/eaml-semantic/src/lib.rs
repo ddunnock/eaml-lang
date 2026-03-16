@@ -2,6 +2,7 @@
 //!
 //! Public API: [`analyze()`] function returning [`AnalysisOutput`].
 
+pub mod cap_checker;
 pub mod resolver;
 pub mod scope;
 pub mod symbol_table;
@@ -40,6 +41,15 @@ pub fn analyze(parse_output: &ParseOutput, source: &str) -> AnalysisOutput {
         &parse_output.ast,
         &parse_output.interner,
         &symbols,
+        source,
+        &mut diags,
+    );
+    cap_checker::check(
+        &parse_output.program,
+        &parse_output.ast,
+        &parse_output.interner,
+        &symbols,
+        &type_annotations,
         source,
         &mut diags,
     );
