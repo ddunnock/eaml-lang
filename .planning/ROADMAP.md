@@ -100,11 +100,11 @@ Plans:
   2. When an LLM returns output that does not match the expected Pydantic schema, validate_or_retry automatically retries up to the configured limit and either succeeds or raises a clear validation error
   3. Telemetry hooks fire for call_start, call_end, tool_call, and validation_failure events, enabling users to observe runtime behavior
   4. Missing or invalid API keys produce clear error messages indicating which environment variable to set
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 05-01: TBD
-- [ ] 05-02: TBD
+- [ ] 05-01-PLAN.md -- Foundation: error hierarchy, telemetry events/hooks, Provider ABC, Anthropic/OpenAI/Ollama adapters, comprehensive tests
+- [ ] 05-02-PLAN.md -- Orchestration: validate_or_retry, execute_prompt, Agent base class, ToolMetadata, public API, pipeline tests
 
 ### Phase 6: CLI and Integration
 **Goal**: Users can compile and validate EAML files from the command line, and all example programs work end-to-end
@@ -135,5 +135,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 2. Parser | 4/4 | Complete   | 2026-03-16 |
 | 3. Semantic Analysis | 3/3 | Complete   | 2026-03-16 |
 | 4. Code Generation | 4/4 | Complete   | 2026-03-16 |
-| 5. Python Runtime | 0/0 | Not started | - |
+| 5. Python Runtime | 0/2 | Not started | - |
 | 6. CLI and Integration | 0/0 | Not started | - |
