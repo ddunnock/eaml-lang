@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in-progress
-stopped_at: Completed 02-02 leaf parser modules
-last_updated: "2026-03-16T12:13:36Z"
-last_activity: 2026-03-16 -- Completed 02-02 leaf parser modules
+stopped_at: Completed 02-03 declaration parsers
+last_updated: "2026-03-16T12:30:09Z"
+last_activity: 2026-03-16 -- Completed 02-03 declaration parsers
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 7
-  completed_plans: 5
-  percent: 71
+  completed_plans: 6
+  percent: 86
 ---
 
 # Project State
@@ -26,25 +26,25 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 ## Current Position
 
 Phase: 2 of 6 (Parser)
-Plan: 2 of 4 in current phase (completed)
+Plan: 3 of 4 in current phase (completed)
 Status: In Progress
-Last activity: 2026-03-16 -- Completed 02-02 leaf parser modules
+Last activity: 2026-03-16 -- Completed 02-03 declaration parsers
 
-Progress: [#######░░░] 71% (5/7 plans)
+Progress: [########░░] 86% (6/7 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5
-- Average duration: 7 min
-- Total execution time: 0.57 hours
+- Total plans completed: 6
+- Average duration: 8 min
+- Total execution time: 0.75 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-error-foundation-and-lexer | 3 | 18 min | 6 min |
-| 02-parser | 2 | 16 min | 8 min |
+| 02-parser | 3 | 27 min | 9 min |
 
 **Recent Trend:**
 - Last 5 plans: -
@@ -55,6 +55,7 @@ Progress: [#######░░░] 71% (5/7 plans)
 | Phase 01 P03 | 6 | 2 tasks | 4 files |
 | Phase 02 P01 | 7 | 2 tasks | 5 files |
 | Phase 02 P02 | 9 | 2 tasks | 8 files |
+| Phase 02 P03 | 11 | 2 tasks | 14 files |
 
 ## Accumulated Context
 
@@ -78,6 +79,8 @@ Recent decisions affecting current work:
 - Literal union detection uses save/restore_pos backtracking past template string tokens (02-02)
 - Comparisons use left-associative BPs (35,36) per CONTEXT.md; semantic rejects chained comparisons (02-02)
 - finish_with_interner() added to Parser for tests needing Spur resolution after parsing (02-02)
+- Agent 'model' field uses at(KwModel) since lexer tokenizes 'model' as keyword, not contextual ident (02-03)
+- KwNull handled as valid primitive type name in type_expr parser for 'null' type in schemas (02-03)
 
 ### Pending Todos
 
@@ -90,6 +93,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-16T12:13:36Z
-Stopped at: Completed 02-02 leaf parser modules
-Resume file: .planning/phases/02-parser/02-02-SUMMARY.md
+Last session: 2026-03-16T12:30:09Z
+Stopped at: Completed 02-03 declaration parsers
+Resume file: .planning/phases/02-parser/02-03-SUMMARY.md
