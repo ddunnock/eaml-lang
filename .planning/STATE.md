@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Completed 05-01 runtime foundation
-last_updated: "2026-03-17T12:52:18.041Z"
-last_activity: 2026-03-17 -- Completed 05-01 runtime foundation
+stopped_at: Completed 05-02 orchestration layer
+last_updated: "2026-03-17T12:57:21Z"
+last_activity: 2026-03-17 -- Completed 05-02 orchestration layer
 progress:
   total_phases: 6
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 16
-  completed_plans: 15
-  percent: 94
+  completed_plans: 16
+  percent: 100
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 ## Current Position
 
 Phase: 5 of 6 (Python Runtime)
-Plan: 1 of 2 in current phase (completed)
-Status: Plan 05-01 complete, 05-02 remaining
-Last activity: 2026-03-17 -- Completed 05-01 runtime foundation
+Plan: 2 of 2 in current phase (completed)
+Status: Phase 05 complete, all plans done
+Last activity: 2026-03-17 -- Completed 05-02 orchestration layer
 
-Progress: [█████████░] 94% (15/16 plans)
+Progress: [██████████] 100% (16/16 plans)
 
 ## Performance Metrics
 
@@ -66,6 +66,7 @@ Progress: [█████████░] 94% (15/16 plans)
 | Phase 04 P03 | 5 | 2 tasks | 4 files |
 | Phase 04 P04 | 6 | 2 tasks | 7 files |
 | Phase 05 P01 | 4 | 2 tasks | 11 files |
+| Phase 05 P02 | 3 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -112,6 +113,8 @@ Recent decisions affecting current work:
 - [Phase 04]: Declaration emit order: imports, lets, schemas, models, prompts/tools, agents
 - [Phase 05]: Provider _client typed as Any to avoid requiring SDK type stubs at import time
 - [Phase 05]: telemetry._reset() helper added for test cleanup alongside clear_provider_cache()
+- [Phase 05]: int-to-float coercion in _validate_primitive for json.loads returning int for whole numbers
+- [Phase 05]: Provider errors bubble through validate_or_retry; execute_prompt wraps non-EamlError in EamlProviderError
 
 ### Pending Todos
 
@@ -124,6 +127,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-17T12:52:18.038Z
-Stopped at: Completed 05-01 runtime foundation
+Last session: 2026-03-17T12:57:21Z
+Stopped at: Completed 05-02 orchestration layer
 Resume file: None

@@ -70,7 +70,7 @@
 - [x] **RUN-01**: Anthropic provider adapter calls Claude API with correct message format
 - [x] **RUN-02**: OpenAI provider adapter calls GPT API with correct message format
 - [x] **RUN-03**: Ollama provider adapter calls local API via httpx
-- [ ] **RUN-04**: validate_or_retry validates LLM responses against Pydantic models and retries on failure
+- [x] **RUN-04**: validate_or_retry validates LLM responses against Pydantic models and retries on failure
 - [x] **RUN-05**: Telemetry hooks fire on call_start, call_end, tool_call, validation_failure events
 - [x] **RUN-06**: Provider selection is based on model declaration's provider field
 - [x] **RUN-07**: Runtime reads API keys from environment variables (ANTHROPIC_API_KEY, OPENAI_API_KEY)
@@ -173,7 +173,7 @@
 | RUN-01 | Phase 5 | Complete |
 | RUN-02 | Phase 5 | Complete |
 | RUN-03 | Phase 5 | Complete |
-| RUN-04 | Phase 5 | Pending |
+| RUN-04 | Phase 5 | Complete |
 | RUN-05 | Phase 5 | Complete |
 | RUN-06 | Phase 5 | Complete |
 | RUN-07 | Phase 5 | Complete |
