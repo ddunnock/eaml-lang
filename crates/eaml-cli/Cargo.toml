@@ -3,12 +3,20 @@ name    = "eaml-cli"
 version.workspace = true
 edition.workspace = true
 
+[[bin]]
+name = "eamlc"
+path = "src/main.rs"
+
 [dependencies]
 eaml-errors   = { path = "../eaml-errors" }
 eaml-lexer    = { path = "../eaml-lexer" }
 eaml-parser   = { path = "../eaml-parser" }
 eaml-semantic = { path = "../eaml-semantic" }
 eaml-codegen  = { path = "../eaml-codegen" }
-clap          = { workspace = true }
+clap              = { workspace = true }
+codespan-reporting = { workspace = true }
 
 [dev-dependencies]
+assert_cmd = "2"
+predicates = "3"
+tempfile   = "3"

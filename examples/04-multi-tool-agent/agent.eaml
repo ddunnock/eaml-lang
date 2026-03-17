@@ -1,0 +1,36 @@
+// ============================================================
+// FILE: agent.eaml
+// PURPOSE: Multi-tool agent -- exercises agent and tool declarations
+// EXPECTED: Clean compile, zero errors, zero warnings
+// ============================================================
+
+model Sonnet = Model(
+  id: "anthropic/claude-3-5-sonnet-20241022",
+  provider: "anthropic",
+  caps: [json_mode, tool_use]
+)
+
+schema SearchResult {
+  title: string
+  url: string
+  snippet: string
+}
+
+tool search(query: string) -> SearchResult {
+  python %{
+return {"title": "Example", "url": "https://example.com", "snippet": query}
+  }%
+}
+
+tool summarize(text: string) -> string {
+  python %{
+return text[:100]
+  }%
+}
+
+agent ResearchAssistant {
+  model: Sonnet
+  tools: [search, summarize]
+  system: "You are a helpful research assistant."
+  max_turns: 5
+}

@@ -1,0 +1,30 @@
+// ============================================================
+// FILE: bridge.eaml
+// PURPOSE: Python bridge tool -- exercises python %{ }% syntax
+// EXPECTED: Clean compile, zero errors, zero warnings
+// ============================================================
+
+model Claude = Model(
+  id: "anthropic/claude-3-5-sonnet-20241022",
+  provider: "anthropic",
+  caps: [json_mode]
+)
+
+schema WordCount {
+  total_words: int
+  unique_words: int
+}
+
+tool count_words(text: string) -> WordCount {
+  python %{
+words = text.split()
+return {"total_words": len(words), "unique_words": len(set(words))}
+  }%
+}
+
+prompt AnalyzeWords(text: string)
+  requires json_mode
+  -> WordCount
+{
+  user: "Count the words in: {text}"
+}
