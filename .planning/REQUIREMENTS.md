@@ -62,8 +62,8 @@
 - [x] **GEN-08**: Tool declarations generate Python functions with bridge block bodies
 - [x] **GEN-09**: Agent declarations generate orchestration classes with tool dispatch
 - [x] **GEN-10**: Generated Python imports are deduplicated, sorted, and include eaml_runtime
-- [ ] **GEN-11**: Generated Python type-checks with mypy without errors
-- [ ] **GEN-12**: Generated Python runs and calls LLM APIs via eaml_runtime
+- [x] **GEN-11**: Generated Python type-checks with mypy without errors
+- [x] **GEN-12**: Generated Python runs and calls LLM APIs via eaml_runtime
 
 ### Python Runtime
 
@@ -85,8 +85,8 @@
 
 ### Integration
 
-- [ ] **INT-01**: All 7 example programs (01-minimal through 07-all-type-variants) compile successfully
-- [ ] **INT-02**: Generated Python from sentiment.eaml runs and returns structured output from LLM
+- [x] **INT-01**: All 7 example programs (01-minimal through 07-all-type-variants) compile successfully
+- [x] **INT-02**: Generated Python from sentiment.eaml runs and returns structured output from LLM
 - [x] **INT-03**: bad_model.eaml triggers CAP010 capability mismatch error at compile time
 
 ## v2 Requirements
@@ -168,8 +168,8 @@
 | GEN-08 | Phase 4 | Complete |
 | GEN-09 | Phase 4 | Complete |
 | GEN-10 | Phase 4 | Complete |
-| GEN-11 | Phase 4 | Pending |
-| GEN-12 | Phase 4 | Pending |
+| GEN-11 | Phase 4 | Complete |
+| GEN-12 | Phase 4 | Complete |
 | RUN-01 | Phase 5 | Complete |
 | RUN-02 | Phase 5 | Complete |
 | RUN-03 | Phase 5 | Complete |
@@ -182,8 +182,8 @@
 | CLI-02 | Phase 6 | Complete |
 | CLI-03 | Phase 6 | Complete |
 | CLI-04 | Phase 6 | Complete |
-| INT-01 | Phase 6 | Pending |
-| INT-02 | Phase 6 | Pending |
+| INT-01 | Phase 6 | Complete |
+| INT-02 | Phase 6 | Complete |
 | INT-03 | Phase 6 | Complete |
 
 **Coverage:**
