@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Phase 5 context gathered
-last_updated: "2026-03-16T22:15:20.423Z"
-last_activity: 2026-03-16 -- Completed 04-04 generate function integration
+stopped_at: Completed 05-01 runtime foundation
+last_updated: "2026-03-17T12:52:18.041Z"
+last_activity: 2026-03-17 -- Completed 05-01 runtime foundation
 progress:
   total_phases: 6
   completed_phases: 4
-  total_plans: 14
-  completed_plans: 14
-  percent: 100
+  total_plans: 16
+  completed_plans: 15
+  percent: 94
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-15)
 
 **Core value:** The compiler must correctly translate all v0.1 EAML constructs into runnable Python that type-checks, imports cleanly, and calls LLM APIs when executed.
-**Current focus:** Phase 4 - Code Generation
+**Current focus:** Phase 5 - Python Runtime
 
 ## Current Position
 
-Phase: 4 of 6 (Code Generation) -- COMPLETE
-Plan: 4 of 4 in current phase (completed)
-Status: Phase 4 Complete
-Last activity: 2026-03-16 -- Completed 04-04 generate function integration
+Phase: 5 of 6 (Python Runtime)
+Plan: 1 of 2 in current phase (completed)
+Status: Plan 05-01 complete, 05-02 remaining
+Last activity: 2026-03-17 -- Completed 05-01 runtime foundation
 
-Progress: [██████████] 100% (14/14 plans)
+Progress: [█████████░] 94% (15/16 plans)
 
 ## Performance Metrics
 
@@ -65,6 +65,7 @@ Progress: [██████████] 100% (14/14 plans)
 | Phase 04 P02 | 3 | 2 tasks | 4 files |
 | Phase 04 P03 | 5 | 2 tasks | 4 files |
 | Phase 04 P04 | 6 | 2 tasks | 7 files |
+| Phase 05 P01 | 4 | 2 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -109,6 +110,8 @@ Recent decisions affecting current work:
 - [Phase 04]: Agent tool references use snake_case Python function names per CONTEXT.md locked decision
 - [Phase 04]: Kahn's algorithm for schema topological sort; cycle fallback to source order
 - [Phase 04]: Declaration emit order: imports, lets, schemas, models, prompts/tools, agents
+- [Phase 05]: Provider _client typed as Any to avoid requiring SDK type stubs at import time
+- [Phase 05]: telemetry._reset() helper added for test cleanup alongside clear_provider_cache()
 
 ### Pending Todos
 
@@ -121,6 +124,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-16T22:15:20.420Z
-Stopped at: Phase 5 context gathered
-Resume file: .planning/phases/05-python-runtime/05-CONTEXT.md
+Last session: 2026-03-17T12:52:18.038Z
+Stopped at: Completed 05-01 runtime foundation
+Resume file: None

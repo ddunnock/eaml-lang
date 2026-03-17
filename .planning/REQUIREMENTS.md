@@ -67,14 +67,14 @@
 
 ### Python Runtime
 
-- [ ] **RUN-01**: Anthropic provider adapter calls Claude API with correct message format
-- [ ] **RUN-02**: OpenAI provider adapter calls GPT API with correct message format
-- [ ] **RUN-03**: Ollama provider adapter calls local API via httpx
+- [x] **RUN-01**: Anthropic provider adapter calls Claude API with correct message format
+- [x] **RUN-02**: OpenAI provider adapter calls GPT API with correct message format
+- [x] **RUN-03**: Ollama provider adapter calls local API via httpx
 - [ ] **RUN-04**: validate_or_retry validates LLM responses against Pydantic models and retries on failure
-- [ ] **RUN-05**: Telemetry hooks fire on call_start, call_end, tool_call, validation_failure events
-- [ ] **RUN-06**: Provider selection is based on model declaration's provider field
-- [ ] **RUN-07**: Runtime reads API keys from environment variables (ANTHROPIC_API_KEY, OPENAI_API_KEY)
-- [ ] **RUN-08**: Runtime handles provider errors gracefully with clear error messages
+- [x] **RUN-05**: Telemetry hooks fire on call_start, call_end, tool_call, validation_failure events
+- [x] **RUN-06**: Provider selection is based on model declaration's provider field
+- [x] **RUN-07**: Runtime reads API keys from environment variables (ANTHROPIC_API_KEY, OPENAI_API_KEY)
+- [x] **RUN-08**: Runtime handles provider errors gracefully with clear error messages
 
 ### CLI
 
@@ -170,14 +170,14 @@
 | GEN-10 | Phase 4 | Complete |
 | GEN-11 | Phase 4 | Pending |
 | GEN-12 | Phase 4 | Pending |
-| RUN-01 | Phase 5 | Pending |
-| RUN-02 | Phase 5 | Pending |
-| RUN-03 | Phase 5 | Pending |
+| RUN-01 | Phase 5 | Complete |
+| RUN-02 | Phase 5 | Complete |
+| RUN-03 | Phase 5 | Complete |
 | RUN-04 | Phase 5 | Pending |
-| RUN-05 | Phase 5 | Pending |
-| RUN-06 | Phase 5 | Pending |
-| RUN-07 | Phase 5 | Pending |
-| RUN-08 | Phase 5 | Pending |
+| RUN-05 | Phase 5 | Complete |
+| RUN-06 | Phase 5 | Complete |
+| RUN-07 | Phase 5 | Complete |
+| RUN-08 | Phase 5 | Complete |
 | CLI-01 | Phase 6 | Pending |
 | CLI-02 | Phase 6 | Pending |
 | CLI-03 | Phase 6 | Pending |

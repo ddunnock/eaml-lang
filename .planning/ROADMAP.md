@@ -135,5 +135,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 2. Parser | 4/4 | Complete   | 2026-03-16 |
 | 3. Semantic Analysis | 3/3 | Complete   | 2026-03-16 |
 | 4. Code Generation | 4/4 | Complete   | 2026-03-16 |
-| 5. Python Runtime | 0/2 | Not started | - |
+| 5. Python Runtime | 1/2 | In Progress|  |
 | 6. CLI and Integration | 0/0 | Not started | - |
