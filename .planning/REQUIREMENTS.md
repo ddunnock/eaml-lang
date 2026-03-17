@@ -78,16 +78,16 @@
 
 ### CLI
 
-- [ ] **CLI-01**: `eamlc compile <file>` compiles .eaml to .py with exit code 0 on success
-- [ ] **CLI-02**: `eamlc check <file>` validates .eaml without generating output
-- [ ] **CLI-03**: CLI displays all accumulated errors/warnings using codespan-reporting
-- [ ] **CLI-04**: CLI returns non-zero exit code on compilation errors
+- [x] **CLI-01**: `eamlc compile <file>` compiles .eaml to .py with exit code 0 on success
+- [x] **CLI-02**: `eamlc check <file>` validates .eaml without generating output
+- [x] **CLI-03**: CLI displays all accumulated errors/warnings using codespan-reporting
+- [x] **CLI-04**: CLI returns non-zero exit code on compilation errors
 
 ### Integration
 
 - [ ] **INT-01**: All 7 example programs (01-minimal through 07-all-type-variants) compile successfully
 - [ ] **INT-02**: Generated Python from sentiment.eaml runs and returns structured output from LLM
-- [ ] **INT-03**: bad_model.eaml triggers CAP010 capability mismatch error at compile time
+- [x] **INT-03**: bad_model.eaml triggers CAP010 capability mismatch error at compile time
 
 ## v2 Requirements
 
@@ -178,13 +178,13 @@
 | RUN-06 | Phase 5 | Complete |
 | RUN-07 | Phase 5 | Complete |
 | RUN-08 | Phase 5 | Complete |
-| CLI-01 | Phase 6 | Pending |
-| CLI-02 | Phase 6 | Pending |
-| CLI-03 | Phase 6 | Pending |
-| CLI-04 | Phase 6 | Pending |
+| CLI-01 | Phase 6 | Complete |
+| CLI-02 | Phase 6 | Complete |
+| CLI-03 | Phase 6 | Complete |
+| CLI-04 | Phase 6 | Complete |
 | INT-01 | Phase 6 | Pending |
 | INT-02 | Phase 6 | Pending |
-| INT-03 | Phase 6 | Pending |
+| INT-03 | Phase 6 | Complete |
 
 **Coverage:**
 - v1 requirements: 55 total
