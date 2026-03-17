@@ -1,10 +1,19 @@
-"""Shared mock providers for eaml_runtime tests."""
+"""Shared test helpers for eaml_runtime tests."""
 
 from __future__ import annotations
 
 from typing import Any
 
+from pydantic import BaseModel
+
 from eaml_runtime.providers import Provider
+
+
+class Greeting(BaseModel):
+    """Shared test model."""
+
+    message: str
+    word_count: int
 
 
 class MockProvider(Provider):

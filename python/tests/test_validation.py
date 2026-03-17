@@ -5,19 +5,13 @@ from __future__ import annotations
 from typing import Any, Literal
 
 import pytest
-from pydantic import BaseModel
 
 from eaml_runtime.errors import EamlValidationError
 from eaml_runtime.events import ValidationFailureEvent
 from eaml_runtime.telemetry import configure
 from eaml_runtime.validation import validate_or_retry
 
-from tests.helpers import ErrorProvider, MockProvider
-
-
-class Greeting(BaseModel):
-    message: str
-    word_count: int
+from tests.helpers import ErrorProvider, Greeting, MockProvider
 
 
 # --- BaseModel validation tests ---
@@ -99,16 +93,15 @@ async def test_validation_error_contains_last_response() -> None:
 
 
 @pytest.mark.asyncio
-async def test_retry_appends_error_message() -> None:
+async def test_retry_does_not_mutate_caller_messages() -> None:
     provider = MockProvider(["bad", '{"message": "ok", "word_count": 1}'])
     messages: list[dict[str, str]] = [{"role": "user", "content": "hello"}]
 
     await validate_or_retry(provider, messages, "test-model", Greeting)
 
-    # After first failure, an error feedback message was appended
-    assert len(messages) == 2
-    assert "not valid" in messages[1]["content"].lower() or "error" in messages[1]["content"].lower()
-    # Second call should have received the extended messages
+    # Caller's message list is not mutated by retry error feedback
+    assert len(messages) == 1
+    # But the provider received extended messages on the retry call
     assert len(provider.calls[1]["messages"]) == 2
 
 
@@ -156,6 +149,28 @@ async def test_validate_primitive_bool() -> None:
     result = await validate_or_retry(provider, messages, "m", bool)
 
     assert result is True
+
+
+@pytest.mark.asyncio
+async def test_validate_primitive_bool_rejected_as_int() -> None:
+    """bool is a subclass of int in Python; ensure we reject it when int is expected."""
+    provider = MockProvider(["true"] * 3)
+    messages: list[dict[str, str]] = [{"role": "user", "content": "test"}]
+
+    with pytest.raises(EamlValidationError):
+        await validate_or_retry(provider, messages, "m", int, max_retries=3)
+
+
+@pytest.mark.asyncio
+async def test_validate_primitive_int_coerced_to_float() -> None:
+    """When float is expected and LLM returns an integer, coerce it."""
+    provider = MockProvider(["42"])
+    messages: list[dict[str, str]] = [{"role": "user", "content": "test"}]
+
+    result = await validate_or_retry(provider, messages, "m", float)
+
+    assert result == 42.0
+    assert isinstance(result, float)
 
 
 @pytest.mark.asyncio

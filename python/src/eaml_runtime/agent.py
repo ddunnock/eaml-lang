@@ -24,9 +24,16 @@ class Agent:
     The orchestration loop (Agent.run) is deferred to post-MVP.
     """
 
-    model: dict[str, Any] = {}
-    tools: list[Any] = []
+    model: dict[str, Any]
+    tools: list[Any]
     system_prompt: str = ""
     max_turns: int = 10
     on_error: str = "fail"
     on_error_retries: int = 0
+
+    def __init__(self) -> None:
+        # Fresh mutable containers per instance to prevent cross-instance mutation
+        if "model" not in type(self).__dict__:
+            self.model = {}
+        if "tools" not in type(self).__dict__:
+            self.tools = []

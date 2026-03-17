@@ -34,9 +34,12 @@ def _validate_primitive(raw: str, return_type: Any) -> Any:
             raise ValueError(msg)
         return value
 
+    # bool is a subclass of int in Python, so reject bool when int is expected
+    if return_type is int and isinstance(value, bool):
+        msg = "Expected int, got bool"
+        raise ValueError(msg)
+
     if not isinstance(value, return_type):
-        # json.loads returns int for 42, float for 3.14, bool for true/false, str for "..."
-        # But bool is subclass of int, so check bool first
         if return_type is float and isinstance(value, int):
             return float(value)
         msg = f"Expected {return_type.__name__}, got {type(value).__name__}"
@@ -63,6 +66,8 @@ async def validate_or_retry(
     """
     errors: list[str] = []
     raw = ""
+    # Defensive copy to avoid mutating the caller's message list
+    messages = list(messages)
 
     for attempt in range(1, max_retries + 1):
         raw = await provider.send_prompt(messages, model_id, **kwargs)
@@ -121,7 +126,7 @@ async def execute_prompt(
     provider = get_provider(provider_name)
 
     _fire("on_call_start", CallStartEvent(provider=provider_name, model_id=model_id))
-    start = time.time()
+    start = time.monotonic()
 
     kwargs: dict[str, Any] = {}
     if temperature is not None:
@@ -139,15 +144,6 @@ async def execute_prompt(
             provider_name=provider_name,
             **kwargs,
         )
-        duration = time.time() - start
-        _fire(
-            "on_call_end",
-            CallEndEvent(
-                provider=provider_name,
-                model_id=model_id,
-                duration=duration,
-            ),
-        )
         return result
     except EamlError:
         raise
@@ -156,3 +152,13 @@ async def execute_prompt(
             provider=provider_name,
             message=str(exc),
         ) from exc
+    finally:
+        duration = time.monotonic() - start
+        _fire(
+            "on_call_end",
+            CallEndEvent(
+                provider=provider_name,
+                model_id=model_id,
+                duration=duration,
+            ),
+        )

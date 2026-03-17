@@ -6,7 +6,6 @@ from typing import Any
 from unittest.mock import patch
 
 import pytest
-from pydantic import BaseModel
 
 from eaml_runtime.agent import Agent, ToolMetadata
 from eaml_runtime.errors import EamlConfigError, EamlProviderError
@@ -14,12 +13,7 @@ from eaml_runtime.events import CallEndEvent, CallStartEvent
 from eaml_runtime.telemetry import configure
 from eaml_runtime.validation import execute_prompt
 
-from tests.helpers import ErrorProvider, MockProvider
-
-
-class Greeting(BaseModel):
-    message: str
-    word_count: int
+from tests.helpers import ErrorProvider, Greeting, MockProvider
 
 
 MODEL = {"provider": "anthropic", "model_id": "test-model", "capabilities": []}
@@ -94,6 +88,25 @@ async def test_execute_prompt_fires_call_end_event() -> None:
     assert len(events) == 1
     assert isinstance(events[0], CallEndEvent)
     assert events[0].duration > 0
+    assert events[0].provider == "anthropic"
+
+
+@pytest.mark.asyncio
+async def test_execute_prompt_fires_call_end_on_failure() -> None:
+    events: list[Any] = []
+    configure(on_call_end=events.append)
+
+    mock = ErrorProvider(RuntimeError("unexpected"))
+    with _patch_provider(mock):
+        with pytest.raises(EamlProviderError):
+            await execute_prompt(
+                model=MODEL,
+                messages=[{"role": "user", "content": "hello"}],
+                return_type=Greeting,
+            )
+
+    assert len(events) == 1
+    assert isinstance(events[0], CallEndEvent)
     assert events[0].provider == "anthropic"
 
 

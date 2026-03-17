@@ -67,3 +67,9 @@ class OllamaProvider(Provider):
                 provider="ollama",
                 message=str(exc),
             ) from exc
+
+    async def close(self) -> None:
+        """Close the httpx client to release connections."""
+        if self._client is not None:
+            await self._client.aclose()
+            self._client = None
