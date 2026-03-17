@@ -117,11 +117,11 @@ Plans:
   4. Compilation errors display with colored source snippets, underlines, and error codes matching spec/ERRORS.md
   5. Generated Python passes mypy type checking without errors (GEN-11, deferred from Phase 4 -- requires CLI to produce output files)
   6. Generated Python runs and calls LLM APIs via eaml_runtime (GEN-12, deferred from Phase 4 -- requires runtime from Phase 5)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 06-01: TBD
-- [ ] 06-02: TBD
+- [ ] 06-01-PLAN.md -- CLI binary: clap subcommands (compile/check/run/--version), pipeline orchestration, error display, exit codes, missing example files
+- [ ] 06-02-PLAN.md -- Integration tests: all example compilation, mypy validation, CLI command tests, LLM e2e (ignored)
 
 ## Progress
 
@@ -136,4 +136,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 3. Semantic Analysis | 3/3 | Complete   | 2026-03-16 |
 | 4. Code Generation | 4/4 | Complete   | 2026-03-16 |
 | 5. Python Runtime | 2/2 | Complete   | 2026-03-17 |
-| 6. CLI and Integration | 0/0 | Not started | - |
+| 6. CLI and Integration | 0/2 | Not started | - |
