@@ -12,6 +12,11 @@ __all__ = ["Provider", "get_provider", "clear_provider_cache"]
 class Provider(ABC):
     """Abstract base class for LLM provider adapters."""
 
+    @staticmethod
+    def strip_model_prefix(model_id: str) -> str:
+        """Strip provider prefix from model_id (e.g. 'anthropic/claude-3' -> 'claude-3')."""
+        return model_id.split("/", 1)[-1] if "/" in model_id else model_id
+
     @abstractmethod
     async def send_prompt(
         self,

@@ -44,8 +44,7 @@ class OpenAIProvider(Provider):
         """Send a prompt to the OpenAI API."""
         client = self._get_client()
 
-        # Strip provider prefix from model_id
-        model_name = model_id.split("/", 1)[-1] if "/" in model_id else model_id
+        model_name = self.strip_model_prefix(model_id)
 
         kwargs: dict[str, Any] = {
             "model": model_name,

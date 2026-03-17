@@ -9,55 +9,15 @@ from pydantic import BaseModel
 
 from eaml_runtime.errors import EamlValidationError
 from eaml_runtime.events import ValidationFailureEvent
-from eaml_runtime.providers import Provider
 from eaml_runtime.telemetry import configure
 from eaml_runtime.validation import validate_or_retry
+
+from tests.helpers import ErrorProvider, MockProvider
 
 
 class Greeting(BaseModel):
     message: str
     word_count: int
-
-
-class MockProvider(Provider):
-    """Test provider returning canned responses."""
-
-    def __init__(self, responses: list[str]) -> None:
-        self.responses = list(responses)
-        self.calls: list[list[dict[str, str]]] = []
-        self._idx = 0
-
-    async def send_prompt(
-        self,
-        messages: list[dict[str, str]],
-        model_id: str,
-        *,
-        temperature: float | None = None,
-        max_tokens: int | None = None,
-    ) -> str:
-        self.calls.append([dict(m) for m in messages])
-        if self._idx < len(self.responses):
-            resp = self.responses[self._idx]
-            self._idx += 1
-            return resp
-        return "{}"
-
-
-class ErrorProvider(Provider):
-    """Test provider that always raises."""
-
-    def __init__(self, exc: Exception) -> None:
-        self.exc = exc
-
-    async def send_prompt(
-        self,
-        messages: list[dict[str, str]],
-        model_id: str,
-        *,
-        temperature: float | None = None,
-        max_tokens: int | None = None,
-    ) -> str:
-        raise self.exc
 
 
 # --- BaseModel validation tests ---
@@ -149,7 +109,7 @@ async def test_retry_appends_error_message() -> None:
     assert len(messages) == 2
     assert "not valid" in messages[1]["content"].lower() or "error" in messages[1]["content"].lower()
     # Second call should have received the extended messages
-    assert len(provider.calls[1]) == 2
+    assert len(provider.calls[1]["messages"]) == 2
 
 
 # --- Primitive type tests ---

@@ -48,8 +48,7 @@ class AnthropicProvider(Provider):
         system_parts = [m["content"] for m in messages if m["role"] == "system"]
         non_system = [m for m in messages if m["role"] != "system"]
 
-        # Strip provider prefix from model_id
-        model_name = model_id.split("/", 1)[-1] if "/" in model_id else model_id
+        model_name = self.strip_model_prefix(model_id)
 
         kwargs: dict[str, Any] = {
             "model": model_name,
@@ -57,12 +56,9 @@ class AnthropicProvider(Provider):
             "max_tokens": max_tokens or 4096,
         }
 
-        # Add JSON instruction to system prompt
-        if system_parts:
-            system_text = "\n".join(system_parts)
-            kwargs["system"] = system_text + "\n\nRespond with valid JSON only."
-        else:
-            kwargs["system"] = "Respond with valid JSON only."
+        json_instruction = "Respond with valid JSON only."
+        system_parts.append(json_instruction)
+        kwargs["system"] = "\n\n".join(system_parts)
 
         if temperature is not None:
             kwargs["temperature"] = temperature

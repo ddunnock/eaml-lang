@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from typing import Any
 
-from eaml_runtime.errors import EamlProviderError
+from eaml_runtime.errors import EamlConfigError, EamlProviderError
 from eaml_runtime.providers import Provider
 
 
@@ -20,8 +20,6 @@ class OllamaProvider(Provider):
             try:
                 import httpx  # noqa: F811
             except ImportError:
-                from eaml_runtime.errors import EamlConfigError
-
                 raise EamlConfigError(
                     "Install httpx: pip install httpx"
                 ) from None
@@ -43,8 +41,7 @@ class OllamaProvider(Provider):
         """Send a prompt to the Ollama API."""
         client = self._get_client()
 
-        # Strip provider prefix from model_id
-        model_name = model_id.split("/", 1)[-1] if "/" in model_id else model_id
+        model_name = self.strip_model_prefix(model_id)
 
         payload: dict[str, Any] = {
             "model": model_name,

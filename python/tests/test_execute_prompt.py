@@ -11,9 +11,10 @@ from pydantic import BaseModel
 from eaml_runtime.agent import Agent, ToolMetadata
 from eaml_runtime.errors import EamlConfigError, EamlProviderError
 from eaml_runtime.events import CallEndEvent, CallStartEvent
-from eaml_runtime.providers import Provider
 from eaml_runtime.telemetry import configure
 from eaml_runtime.validation import execute_prompt
+
+from tests.helpers import ErrorProvider, MockProvider
 
 
 class Greeting(BaseModel):
@@ -21,56 +22,10 @@ class Greeting(BaseModel):
     word_count: int
 
 
-class MockProvider(Provider):
-    """Test provider returning canned responses."""
-
-    def __init__(self, responses: list[str]) -> None:
-        self.responses = list(responses)
-        self.calls: list[dict[str, Any]] = []
-        self._idx = 0
-
-    async def send_prompt(
-        self,
-        messages: list[dict[str, str]],
-        model_id: str,
-        *,
-        temperature: float | None = None,
-        max_tokens: int | None = None,
-    ) -> str:
-        self.calls.append({
-            "messages": messages,
-            "model_id": model_id,
-            "temperature": temperature,
-            "max_tokens": max_tokens,
-        })
-        if self._idx < len(self.responses):
-            resp = self.responses[self._idx]
-            self._idx += 1
-            return resp
-        return "{}"
-
-
-class ErrorProvider(Provider):
-    """Test provider that always raises."""
-
-    def __init__(self, exc: Exception) -> None:
-        self.exc = exc
-
-    async def send_prompt(
-        self,
-        messages: list[dict[str, str]],
-        model_id: str,
-        *,
-        temperature: float | None = None,
-        max_tokens: int | None = None,
-    ) -> str:
-        raise self.exc
-
-
 MODEL = {"provider": "anthropic", "model_id": "test-model", "capabilities": []}
 
 
-def _patch_provider(provider: Provider) -> Any:
+def _patch_provider(provider: Any) -> Any:
     return patch("eaml_runtime.validation.get_provider", return_value=provider)
 
 

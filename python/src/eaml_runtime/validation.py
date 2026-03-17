@@ -70,8 +70,7 @@ async def validate_or_retry(
         try:
             if _is_primitive(return_type):
                 return _validate_primitive(raw, return_type)
-            else:
-                return return_type.model_validate_json(raw)
+            return return_type.model_validate_json(raw)
         except (ValidationError, ValueError, json.JSONDecodeError) as exc:
             error_msg = str(exc)
             errors.append(error_msg)

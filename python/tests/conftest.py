@@ -6,37 +6,8 @@ from typing import Any
 
 import pytest
 
-from eaml_runtime.providers import Provider, clear_provider_cache
+from eaml_runtime.providers import clear_provider_cache
 from eaml_runtime.telemetry import _reset as reset_telemetry
-
-
-class MockProvider(Provider):
-    """A test provider that returns controlled responses in order."""
-
-    def __init__(self, responses: list[str] | None = None) -> None:
-        self.responses = list(responses) if responses else []
-        self.calls: list[dict[str, Any]] = []
-        self._call_index = 0
-
-    async def send_prompt(
-        self,
-        messages: list[dict[str, str]],
-        model_id: str,
-        *,
-        temperature: float | None = None,
-        max_tokens: int | None = None,
-    ) -> str:
-        self.calls.append({
-            "messages": messages,
-            "model_id": model_id,
-            "temperature": temperature,
-            "max_tokens": max_tokens,
-        })
-        if self._call_index < len(self.responses):
-            resp = self.responses[self._call_index]
-            self._call_index += 1
-            return resp
-        return "{}"
 
 
 @pytest.fixture()
