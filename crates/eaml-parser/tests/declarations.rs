@@ -11,11 +11,11 @@ fn format_decl(ast: &Ast, decl: &DeclId, interner: &eaml_lexer::Interner) -> Str
     match decl {
         DeclId::Model(id) => {
             let m = &ast[*id];
-            let name = interner.resolve(&m.name);
+            let name = interner.resolve(m.name);
             let caps: Vec<String> = m
                 .caps
                 .iter()
-                .map(|(s, _)| interner.resolve(s).to_string())
+                .map(|(s, _)| interner.resolve(*s).to_string())
                 .collect();
             format!(
                 "Model({}, id={}, provider={}, caps=[{}], span={:?})",
@@ -28,12 +28,12 @@ fn format_decl(ast: &Ast, decl: &DeclId, interner: &eaml_lexer::Interner) -> Str
         }
         DeclId::Schema(id) => {
             let s = &ast[*id];
-            let name = interner.resolve(&s.name);
+            let name = interner.resolve(s.name);
             let fields: Vec<String> = s
                 .fields
                 .iter()
                 .map(|f| {
-                    let fname = interner.resolve(&f.name);
+                    let fname = interner.resolve(f.name);
                     format!("  {}: {:?}", fname, &ast[f.type_expr])
                 })
                 .collect();
@@ -49,7 +49,7 @@ fn format_decl(ast: &Ast, decl: &DeclId, interner: &eaml_lexer::Interner) -> Str
             match imp {
                 ImportDecl::Eaml { path, alias, span } => {
                     let alias_str = alias
-                        .map(|s| interner.resolve(&s).to_string())
+                        .map(|s| interner.resolve(s).to_string())
                         .unwrap_or_default();
                     format!(
                         "Import::Eaml(path={}, alias={:?}, span={:?})",
@@ -64,7 +64,7 @@ fn format_decl(ast: &Ast, decl: &DeclId, interner: &eaml_lexer::Interner) -> Str
                     span,
                 } => {
                     let alias_str = alias
-                        .map(|s| interner.resolve(&s).to_string())
+                        .map(|s| interner.resolve(s).to_string())
                         .unwrap_or_default();
                     format!(
                         "Import::Python(module={}, alias={:?}, span={:?})",
@@ -77,7 +77,7 @@ fn format_decl(ast: &Ast, decl: &DeclId, interner: &eaml_lexer::Interner) -> Str
         }
         DeclId::Let(id) => {
             let l = &ast[*id];
-            let name = interner.resolve(&l.name);
+            let name = interner.resolve(l.name);
             format!(
                 "Let({}, type={:?}, value={:?}, span={:?})",
                 name, &ast[l.type_expr], &ast[l.value], l.span
@@ -85,12 +85,12 @@ fn format_decl(ast: &Ast, decl: &DeclId, interner: &eaml_lexer::Interner) -> Str
         }
         DeclId::Prompt(id) => {
             let p = &ast[*id];
-            let name = interner.resolve(&p.name);
+            let name = interner.resolve(p.name);
             let params: Vec<String> = p
                 .params
                 .iter()
                 .map(|param| {
-                    let pname = interner.resolve(&param.name);
+                    let pname = interner.resolve(param.name);
                     format!("{}:{:?}", pname, &ast[param.type_expr])
                 })
                 .collect();
@@ -99,7 +99,7 @@ fn format_decl(ast: &Ast, decl: &DeclId, interner: &eaml_lexer::Interner) -> Str
                     let caps: Vec<String> = req
                         .caps
                         .iter()
-                        .map(|(s, _)| interner.resolve(s).to_string())
+                        .map(|(s, _)| interner.resolve(*s).to_string())
                         .collect();
                     format!("requires [{}]", caps.join(", "))
                 }
@@ -118,12 +118,12 @@ fn format_decl(ast: &Ast, decl: &DeclId, interner: &eaml_lexer::Interner) -> Str
         }
         DeclId::Tool(id) => {
             let t = &ast[*id];
-            let name = interner.resolve(&t.name);
+            let name = interner.resolve(t.name);
             let params: Vec<String> = t
                 .params
                 .iter()
                 .map(|param| {
-                    let pname = interner.resolve(&param.name);
+                    let pname = interner.resolve(param.name);
                     format!("{}:{:?}", pname, &ast[param.type_expr])
                 })
                 .collect();
@@ -138,7 +138,7 @@ fn format_decl(ast: &Ast, decl: &DeclId, interner: &eaml_lexer::Interner) -> Str
         }
         DeclId::Agent(id) => {
             let a = &ast[*id];
-            let name = interner.resolve(&a.name);
+            let name = interner.resolve(a.name);
             format!("Agent({}, fields={:?}, span={:?})", name, a.fields, a.span)
         }
         DeclId::Error(span) => format!("Error({:?})", span),

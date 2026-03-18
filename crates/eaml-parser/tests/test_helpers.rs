@@ -66,7 +66,7 @@ pub fn format_expr(ast: &Ast, id: ExprId, interner: &eaml_lexer::Interner) -> St
         Expr::StringLit(ts) => format!("StringLit({})", format_template(ast, ts, interner)),
         Expr::BoolLit(val, span) => format!("BoolLit({}, {:?})", val, span),
         Expr::NullLit(span) => format!("NullLit({:?})", span),
-        Expr::Ident(spur, span) => format!("Ident({}, {:?})", interner.resolve(spur), span),
+        Expr::Ident(spur, span) => format!("Ident({}, {:?})", interner.resolve(*spur), span),
         Expr::BinaryOp {
             left,
             op,
@@ -104,7 +104,7 @@ pub fn format_expr(ast: &Ast, id: ExprId, interner: &eaml_lexer::Interner) -> St
             format!(
                 "FieldAccess({}, {}, {:?})",
                 format_expr(ast, *object, interner),
-                interner.resolve(field),
+                interner.resolve(*field),
                 span
             )
         }
@@ -113,7 +113,7 @@ pub fn format_expr(ast: &Ast, id: ExprId, interner: &eaml_lexer::Interner) -> St
                 .iter()
                 .map(|a| {
                     let name_str = match &a.name {
-                        Some(spur) => format!("{}:", interner.resolve(spur)),
+                        Some(spur) => format!("{}:", interner.resolve(*spur)),
                         None => String::new(),
                     };
                     format!("{}{}", name_str, format_expr(ast, a.value, interner))

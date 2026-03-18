@@ -191,7 +191,7 @@ fn register_symbol(
 ) {
     let span = info.span.clone();
     if let Err(existing) = symbols.insert(name, info) {
-        let name_str = interner.resolve(&name);
+        let name_str = interner.resolve(name);
         diags.emit(
             Diagnostic::new(
                 ErrorCode::Res010,
@@ -303,7 +303,7 @@ fn resolve_type_expr(
 ) {
     match &ast[id] {
         TypeExpr::Named(spur, span) => {
-            let name = interner.resolve(spur);
+            let name = interner.resolve(*spur);
             if !SymbolTable::is_primitive_name(name) && !symbols.is_known_type(*spur) {
                 emit_unresolved(name, span.clone(), interner, symbols, diags);
             }
@@ -311,7 +311,7 @@ fn resolve_type_expr(
         TypeExpr::Bounded { base, .. } => {
             // Base must be a primitive -- checked at type-checking time
             // For name resolution, just verify the base name is known
-            let name = interner.resolve(base);
+            let name = interner.resolve(*base);
             if !SymbolTable::is_primitive_name(name) {
                 // Bounded types should only have primitive bases
                 // but we don't emit an error here -- that's for the type checker
@@ -347,7 +347,7 @@ fn resolve_agent_ref(
     match symbols.get(spur) {
         Some(info) => {
             if !kind_matches(&info.kind) {
-                let name = interner.resolve(&spur);
+                let name = interner.resolve(spur);
                 diags.emit(
                     Diagnostic::new(
                         ErrorCode::Res001,
@@ -361,7 +361,7 @@ fn resolve_agent_ref(
             }
         }
         None => {
-            let name = interner.resolve(&spur);
+            let name = interner.resolve(spur);
             emit_unresolved(name, span.clone(), interner, symbols, diags);
         }
     }
@@ -394,7 +394,7 @@ fn suggest_similar(name: &str, symbols: &SymbolTable, interner: &Interner) -> Op
     symbols
         .iter()
         .map(|(spur, _)| {
-            let resolved = interner.resolve(spur);
+            let resolved = interner.resolve(*spur);
             (strsim::levenshtein(name, resolved), resolved.to_string())
         })
         .filter(|(dist, _)| *dist > 0 && *dist <= threshold)
@@ -497,11 +497,11 @@ fn dfs(
                     // Found a cycle -- emit SEM070 for the node that starts the cycle
                     if !reported.contains(&neighbor) {
                         reported.insert(neighbor);
-                        let name = interner.resolve(&neighbor);
+                        let name = interner.resolve(neighbor);
                         let cycle_start = path.iter().position(|s| *s == neighbor).unwrap();
                         let cycle_path: Vec<String> = path[cycle_start..]
                             .iter()
-                            .map(|s| interner.resolve(s).to_string())
+                            .map(|s| interner.resolve(*s).to_string())
                             .collect();
                         let cycle_str = format!("{} -> {}", cycle_path.join(" -> "), cycle_path[0]);
 

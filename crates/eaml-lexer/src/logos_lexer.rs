@@ -12,8 +12,11 @@ use logos::Logos;
 /// [`TokenKind`](crate::token::TokenKind) via the wrapper lexer.
 #[derive(Logos, Debug, Clone, PartialEq)]
 #[logos(skip r"[ \t\r\n]+")]
+// The `///` rule is kept separate for future doc-comment capture (post-MVP).
+// Currently redundant with `//[^\n]*` but makes the intent explicit.
 #[logos(skip r"///[^\n]*")]
 #[logos(skip r"//[^\n]*")]
+// Note: nested block comments (/* /* */ */) are intentionally unsupported.
 #[logos(skip r"/\*[^*]*\*+(?:[^/*][^*]*\*+)*/")]
 pub(crate) enum RawToken {
     // === Keywords (active v0.1) ===

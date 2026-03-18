@@ -145,7 +145,7 @@ fn check_type_expr(
 ) -> ResolvedType {
     let resolved = match &ast[id] {
         TypeExpr::Named(spur, _span) => {
-            let name = interner.resolve(spur);
+            let name = interner.resolve(*spur);
             if symbols.is_primitive(*spur) {
                 ResolvedType::Primitive(name.to_string())
             } else if let Some(info) = symbols.get(*spur) {
@@ -197,7 +197,7 @@ fn check_bounded_type(
     source: &str,
     diags: &mut DiagnosticCollector,
 ) -> ResolvedType {
-    let base_name = interner.resolve(&base);
+    let base_name = interner.resolve(base);
 
     // Only string, int, float accept bounded parameters
     match base_name {
@@ -240,7 +240,7 @@ fn check_bounded_type(
         // Named params
         for param in params {
             if let Some(name_spur) = param.name {
-                let param_name = interner.resolve(&name_spur);
+                let param_name = interner.resolve(name_spur);
                 if !valid_names.contains(&param_name) {
                     diags.emit(Diagnostic::new(
                         ErrorCode::Sem030,
@@ -339,7 +339,7 @@ fn check_schema(
     diags: &mut DiagnosticCollector,
     annotations: &mut TypeAnnotations,
 ) {
-    let schema_name = interner.resolve(&schema.name);
+    let schema_name = interner.resolve(schema.name);
 
     // TYP001: schema name shadows built-in type
     if SymbolTable::is_primitive_name(schema_name) {
@@ -356,7 +356,7 @@ fn check_schema(
     let mut field_names: HashMap<Spur, Span> = HashMap::new();
     for field in &schema.fields {
         if let Some(first_span) = field_names.get(&field.name) {
-            let field_name = interner.resolve(&field.name);
+            let field_name = interner.resolve(field.name);
             diags.emit(
                 Diagnostic::new(
                     ErrorCode::Sem020,
@@ -682,7 +682,7 @@ fn check_template_expr(
         Expr::Ident(spur, span) => {
             // Check if the variable is in scope (params + lets) or is a top-level declaration
             if !scope.contains(*spur) && symbols.get(*spur).is_none() {
-                let name = interner.resolve(spur);
+                let name = interner.resolve(*spur);
                 diags.emit(
                     Diagnostic::new(
                         ErrorCode::Res001,

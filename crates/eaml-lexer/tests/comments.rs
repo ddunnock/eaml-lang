@@ -72,6 +72,25 @@ fn lex_comment_does_not_appear_in_tokens() {
 }
 
 #[test]
+fn lex_nested_block_comments_not_supported() {
+    // Nested block comments are intentionally unsupported. The outer `*/` closes the
+    // comment, and the remaining `outer */` is tokenized (producing errors or tokens).
+    let output = lex("/* /* inner */ outer */model");
+    // "outer" becomes an Ident, "*/" produces tokens, then "model"
+    let has_model = output.tokens.iter().any(|t| t.kind == TokenKind::KwModel);
+    assert!(
+        has_model,
+        "model should still be tokenized after nested comment residue"
+    );
+    // The key assertion: there should be more than just KwModel + Eof,
+    // proving the inner `*/` closed the comment and `outer */` leaked out.
+    assert!(
+        output.tokens.len() > 2,
+        "nested block comments should NOT be consumed as one comment"
+    );
+}
+
+#[test]
 fn lex_unexpected_char_produces_error_and_continues() {
     let output = lex("model\x01schema");
     let ks: Vec<_> = output.tokens.iter().map(|t| t.kind).collect();

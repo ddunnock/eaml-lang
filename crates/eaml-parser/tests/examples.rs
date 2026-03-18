@@ -32,7 +32,7 @@ fn example_minimal_model_structure() {
 
     if let DeclId::Model(id) = &output.program.declarations[0] {
         let m = &output.ast[*id];
-        assert_eq!(output.interner.resolve(&m.name), "Haiku");
+        assert_eq!(output.interner.resolve(m.name), "Haiku");
         assert!(
             m.caps.is_empty(),
             "minimal model should have empty caps (got {:?})",
@@ -50,10 +50,10 @@ fn example_minimal_schema_structure() {
 
     if let DeclId::Schema(id) = &output.program.declarations[1] {
         let s = &output.ast[*id];
-        assert_eq!(output.interner.resolve(&s.name), "Greeting");
+        assert_eq!(output.interner.resolve(s.name), "Greeting");
         assert_eq!(s.fields.len(), 2);
-        assert_eq!(output.interner.resolve(&s.fields[0].name), "message");
-        assert_eq!(output.interner.resolve(&s.fields[1].name), "word_count");
+        assert_eq!(output.interner.resolve(s.fields[0].name), "message");
+        assert_eq!(output.interner.resolve(s.fields[1].name), "word_count");
     } else {
         panic!("expected Schema declaration");
     }
@@ -66,9 +66,9 @@ fn example_minimal_prompt_structure() {
 
     if let DeclId::Prompt(id) = &output.program.declarations[2] {
         let p = &output.ast[*id];
-        assert_eq!(output.interner.resolve(&p.name), "Greet");
+        assert_eq!(output.interner.resolve(p.name), "Greet");
         assert_eq!(p.params.len(), 1);
-        assert_eq!(output.interner.resolve(&p.params[0].name), "name");
+        assert_eq!(output.interner.resolve(p.params[0].name), "name");
         assert!(p.requires.is_none(), "minimal prompt has no requires");
         // Body should have a user field
         assert!(
@@ -105,12 +105,12 @@ fn example_sentiment_model_with_caps() {
 
     if let DeclId::Model(id) = &output.program.declarations[0] {
         let m = &output.ast[*id];
-        assert_eq!(output.interner.resolve(&m.name), "Sonnet");
+        assert_eq!(output.interner.resolve(m.name), "Sonnet");
         assert_eq!(m.caps.len(), 2);
         let cap_names: Vec<&str> = m
             .caps
             .iter()
-            .map(|(s, _)| output.interner.resolve(s))
+            .map(|(s, _)| output.interner.resolve(*s))
             .collect();
         assert!(cap_names.contains(&"json_mode"));
         assert!(cap_names.contains(&"streaming"));
@@ -126,7 +126,7 @@ fn example_sentiment_schema_with_literal_union() {
 
     if let DeclId::Schema(id) = &output.program.declarations[1] {
         let s = &output.ast[*id];
-        assert_eq!(output.interner.resolve(&s.name), "SentimentResult");
+        assert_eq!(output.interner.resolve(s.name), "SentimentResult");
         assert_eq!(s.fields.len(), 3);
         // First field has a literal union type
         let te = &output.ast[s.fields[0].type_expr];
@@ -147,11 +147,11 @@ fn example_sentiment_prompt_with_requires() {
 
     if let DeclId::Prompt(id) = &output.program.declarations[2] {
         let p = &output.ast[*id];
-        assert_eq!(output.interner.resolve(&p.name), "AnalyzeSentiment");
+        assert_eq!(output.interner.resolve(p.name), "AnalyzeSentiment");
         assert!(p.requires.is_some());
         let req = p.requires.as_ref().unwrap();
         assert_eq!(req.caps.len(), 1);
-        assert_eq!(output.interner.resolve(&req.caps[0].0), "json_mode");
+        assert_eq!(output.interner.resolve(req.caps[0].0), "json_mode");
 
         // Should have system, user, temperature, max_tokens fields
         let has_system = p
@@ -233,7 +233,7 @@ fn example_types_primitives_schema() {
     // Second declaration should be Primitives schema
     if let DeclId::Schema(id) = &output.program.declarations[1] {
         let s = &output.ast[*id];
-        assert_eq!(output.interner.resolve(&s.name), "Primitives");
+        assert_eq!(output.interner.resolve(s.name), "Primitives");
         assert_eq!(s.fields.len(), 5);
 
         // All fields should be Named type expressions
@@ -242,7 +242,7 @@ fn example_types_primitives_schema() {
             assert!(
                 matches!(te, TypeExpr::Named(..)),
                 "field {} expected Named type, got {:?}",
-                output.interner.resolve(&field.name),
+                output.interner.resolve(field.name),
                 te
             );
         }
@@ -259,7 +259,7 @@ fn example_types_bounded_schema() {
     // Third declaration should be BoundedTypes schema
     if let DeclId::Schema(id) = &output.program.declarations[2] {
         let s = &output.ast[*id];
-        assert_eq!(output.interner.resolve(&s.name), "BoundedTypes");
+        assert_eq!(output.interner.resolve(s.name), "BoundedTypes");
         assert_eq!(s.fields.len(), 6);
 
         // All fields should have Bounded type expressions
@@ -268,7 +268,7 @@ fn example_types_bounded_schema() {
             assert!(
                 matches!(te, TypeExpr::Bounded { .. }),
                 "field {} expected Bounded type, got {:?}",
-                output.interner.resolve(&field.name),
+                output.interner.resolve(field.name),
                 te
             );
         }
@@ -285,7 +285,7 @@ fn example_types_composite_schema() {
     // Fourth declaration should be CompositeTypes schema
     if let DeclId::Schema(id) = &output.program.declarations[3] {
         let s = &output.ast[*id];
-        assert_eq!(output.interner.resolve(&s.name), "CompositeTypes");
+        assert_eq!(output.interner.resolve(s.name), "CompositeTypes");
         assert_eq!(s.fields.len(), 6);
 
         // required_name: string (Named)
@@ -331,7 +331,7 @@ fn example_types_union_schema() {
     // Fifth declaration should be UnionTypes schema
     if let DeclId::Schema(id) = &output.program.declarations[4] {
         let s = &output.ast[*id];
-        assert_eq!(output.interner.resolve(&s.name), "UnionTypes");
+        assert_eq!(output.interner.resolve(s.name), "UnionTypes");
         assert_eq!(s.fields.len(), 3);
 
         // All fields should have LiteralUnion type expressions
@@ -340,7 +340,7 @@ fn example_types_union_schema() {
             assert!(
                 matches!(te, TypeExpr::LiteralUnion { .. }),
                 "field {} expected LiteralUnion type, got {:?}",
-                output.interner.resolve(&field.name),
+                output.interner.resolve(field.name),
                 te
             );
         }
@@ -372,7 +372,7 @@ fn example_capability_error_model_empty_caps() {
 
     if let DeclId::Model(id) = &output.program.declarations[0] {
         let m = &output.ast[*id];
-        assert_eq!(output.interner.resolve(&m.name), "WeakModel");
+        assert_eq!(output.interner.resolve(m.name), "WeakModel");
         assert!(
             m.caps.is_empty(),
             "WeakModel should have empty caps (got {:?})",
@@ -390,11 +390,11 @@ fn example_capability_error_prompt_requires() {
 
     if let DeclId::Prompt(id) = &output.program.declarations[2] {
         let p = &output.ast[*id];
-        assert_eq!(output.interner.resolve(&p.name), "AnalyzeText");
+        assert_eq!(output.interner.resolve(p.name), "AnalyzeText");
         assert!(p.requires.is_some());
         let req = p.requires.as_ref().unwrap();
         assert_eq!(req.caps.len(), 1);
-        assert_eq!(output.interner.resolve(&req.caps[0].0), "json_mode");
+        assert_eq!(output.interner.resolve(req.caps[0].0), "json_mode");
     } else {
         panic!("expected Prompt declaration");
     }

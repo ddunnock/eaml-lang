@@ -362,7 +362,7 @@ fn expect_ident_returns_spur_on_ident() {
     let (spur, span) = result.unwrap();
     assert_eq!(span, 0..3);
     // Spur should resolve to "foo"
-    assert_eq!(parser.resolve_spur(&spur), "foo");
+    assert_eq!(parser.resolve_spur(spur), "foo");
 }
 
 #[test]

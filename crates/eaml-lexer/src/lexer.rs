@@ -23,6 +23,7 @@ enum LexerMode {
 }
 
 /// Output of the [`lex`] function.
+#[derive(Debug)]
 pub struct LexOutput {
     /// The token stream.
     pub tokens: Vec<Token>,
@@ -103,6 +104,10 @@ impl<'src> Lexer<'src> {
 
     /// Scans tokens in Normal mode using logos.
     /// Returns false when input is exhausted.
+    ///
+    /// Note: A new logos DFA instance is created each time we enter/re-enter this mode.
+    /// This is a simplicity-over-performance trade-off — logos DFA construction is cheap
+    /// for typical EAML file sizes (<10K lines). Profile before optimizing.
     fn scan_normal(&mut self) -> bool {
         let base = self.pos;
         let remaining = &self.source[base..];
@@ -490,37 +495,28 @@ impl<'src> Lexer<'src> {
         false
     }
 
-    /// Scans a python bridge block (stub for Plan 03).
+    /// Scans a python bridge block: captures everything between `%{` and `}%`.
+    ///
+    /// Per spec (PYTHON_BRIDGE.md §PYB-SYN-01): `}%` is the ONLY closing delimiter.
+    /// The two-character sequence `}%` closes the block regardless of position —
+    /// no line-start requirement. Byte-at-a-time advance is safe here because
+    /// both `}` and `%` are ASCII and cannot appear as continuation bytes in UTF-8.
     fn scan_python_bridge(&mut self) {
-        // Stub: scan to `}%` at start of line or EOF
         let start = self.pos;
         let bytes = self.source.as_bytes();
 
         while self.pos < bytes.len() {
-            // Check for `}%` at start of line (with optional leading whitespace)
-            if bytes[self.pos] == b'\n' {
-                self.pos += 1;
-                // Skip leading whitespace
-                while self.pos < bytes.len()
-                    && (bytes[self.pos] == b' ' || bytes[self.pos] == b'\t')
-                {
-                    self.pos += 1;
-                }
-                // Check for `}%`
-                if self.pos + 1 < bytes.len()
-                    && bytes[self.pos] == b'}'
-                    && bytes[self.pos + 1] == b'%'
-                {
-                    let content_span = start..self.pos;
-                    self.tokens
-                        .push(Token::new(TokenKind::PythonBlock, content_span));
-                    self.pos += 2; // skip `}%`
-                    self.mode = LexerMode::Normal;
-                    return;
-                }
-            } else {
-                self.pos += 1;
+            // Scan for the two-character closing delimiter `}%`
+            if bytes[self.pos] == b'}' && self.pos + 1 < bytes.len() && bytes[self.pos + 1] == b'%'
+            {
+                let content_span = start..self.pos;
+                self.tokens
+                    .push(Token::new(TokenKind::PythonBlock, content_span));
+                self.pos += 2; // skip `}%`
+                self.mode = LexerMode::Normal;
+                return;
             }
+            self.pos += 1;
         }
 
         // EOF without closing `}%`
@@ -578,7 +574,8 @@ impl<'src> Lexer<'src> {
 ///
 /// Returns the tokens, any diagnostics, and the string interner.
 pub fn lex(source: &str) -> LexOutput {
-    // Normalize CRLF to LF
+    // Normalize CRLF to LF. Two-pass replacement: first \r\n → \n, then lone \r → \n.
+    // The `contains` check avoids allocation for the common case (no \r in source).
     let normalized;
     let source = if source.contains('\r') {
         normalized = source.replace("\r\n", "\n").replace('\r', "\n");

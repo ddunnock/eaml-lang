@@ -32,7 +32,7 @@ pub fn emit_schema(
 ) {
     imports.need_base_model();
 
-    let name = interner.resolve(&schema.name);
+    let name = interner.resolve(schema.name);
     writer.writeln(&format!("class {name}(BaseModel):"));
     writer.indent();
 
@@ -48,7 +48,7 @@ pub fn emit_schema(
                 imports.need_field();
             }
 
-            let field_name = interner.resolve(&field.name);
+            let field_name = interner.resolve(field.name);
             let type_expr = &ast[field.type_expr];
             let line = emit_field_line(field_name, resolved, type_expr, ast, interner, source);
             writer.writeln(&line);
@@ -75,7 +75,7 @@ fn emit_expr_value(expr_id: ExprId, ast: &Ast, interner: &Interner, source: &str
         Expr::BoolLit(true, _) => "True".to_string(),
         Expr::BoolLit(false, _) => "False".to_string(),
         Expr::NullLit(_) => "None".to_string(),
-        Expr::Ident(spur, _) => interner.resolve(spur).to_string(),
+        Expr::Ident(spur, _) => interner.resolve(*spur).to_string(),
         Expr::TemplateStr(ts) => emit_template_as_python_string(ts, ast, interner, source),
         _ => "None".to_string(),
     }
@@ -91,7 +91,7 @@ pub fn emit_let(
     writer: &mut CodeWriter,
     imports: &mut ImportTracker,
 ) {
-    let name = interner.resolve(&decl.name);
+    let name = interner.resolve(decl.name);
     let resolved = &type_annotations.type_exprs[&decl.type_expr];
     imports.track_type(resolved);
 
@@ -110,14 +110,14 @@ pub fn emit_let(
 /// Model name converts to UPPER_SNAKE_CASE + "_CONFIG" suffix
 /// per CONTEXT.md locked decision.
 pub fn emit_model(model: &ModelDecl, interner: &Interner, source: &str, writer: &mut CodeWriter) {
-    let config_name = to_config_name(interner.resolve(&model.name));
+    let config_name = to_config_name(interner.resolve(model.name));
     let provider = extract_template_text(&model.provider, source);
     let model_id = extract_template_text(&model.model_id, source);
 
     let caps: Vec<String> = model
         .caps
         .iter()
-        .map(|(spur, _)| format!("\"{}\"", interner.resolve(spur)))
+        .map(|(spur, _)| format!("\"{}\"", interner.resolve(*spur)))
         .collect();
 
     writer.writeln(&format!("{config_name} = {{"));
@@ -197,12 +197,12 @@ pub fn emit_prompt(
 ) {
     imports.need_execute_prompt();
 
-    let fn_name = to_snake_case(interner.resolve(&prompt.name));
+    let fn_name = to_snake_case(interner.resolve(prompt.name));
 
     // Build parameter list
     let mut params = Vec::new();
     for param in &prompt.params {
-        let param_name = interner.resolve(&param.name);
+        let param_name = interner.resolve(param.name);
         let resolved = &type_annotations.type_exprs[&param.type_expr];
         imports.track_type(resolved);
         let annotation = emit_type_annotation(resolved, ast, interner);
@@ -323,7 +323,7 @@ fn dedent_bridge_code(code: &str) -> String {
 fn eaml_type_name(resolved: &ResolvedType, ast: &Ast, interner: &Interner) -> String {
     match resolved {
         ResolvedType::Primitive(name) => name.clone(),
-        ResolvedType::Schema(id) => interner.resolve(&ast[*id].name).to_string(),
+        ResolvedType::Schema(id) => interner.resolve(ast[*id].name).to_string(),
         ResolvedType::Array(inner) => format!("{}[]", eaml_type_name(inner, ast, interner)),
         ResolvedType::Optional(inner) => format!("{}?", eaml_type_name(inner, ast, interner)),
         ResolvedType::LiteralUnion(members) => {
@@ -351,7 +351,7 @@ pub fn emit_tool(
 ) {
     imports.need_tool_metadata();
 
-    let original_name = interner.resolve(&tool.name);
+    let original_name = interner.resolve(tool.name);
     let snake_name = to_snake_case(original_name);
 
     // Build parameter list
@@ -360,7 +360,7 @@ pub fn emit_tool(
     let mut param_metadata = Vec::new();
 
     for param in &tool.params {
-        let param_name = interner.resolve(&param.name);
+        let param_name = interner.resolve(param.name);
         let resolved = &type_annotations.type_exprs[&param.type_expr];
         imports.track_type(resolved);
         let annotation = emit_type_annotation(resolved, ast, interner);
@@ -484,7 +484,7 @@ pub fn emit_agent(
 ) {
     imports.need_agent();
 
-    let name = interner.resolve(&agent.name);
+    let name = interner.resolve(agent.name);
     writer.writeln(&format!("class {name}(Agent):"));
     writer.indent();
 
@@ -494,13 +494,13 @@ pub fn emit_agent(
         for field in &agent.fields {
             match field {
                 AgentField::Model(spur, _) => {
-                    let config_name = to_config_name(interner.resolve(spur));
+                    let config_name = to_config_name(interner.resolve(*spur));
                     writer.writeln(&format!("model = {config_name}"));
                 }
                 AgentField::Tools(tools, _) => {
                     let tool_names: Vec<String> = tools
                         .iter()
-                        .map(|(s, _)| to_snake_case(interner.resolve(s)))
+                        .map(|(s, _)| to_snake_case(interner.resolve(*s)))
                         .collect();
                     writer.writeln(&format!("tools = [{}]", tool_names.join(", ")));
                 }

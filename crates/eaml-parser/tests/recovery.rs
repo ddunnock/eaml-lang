@@ -111,7 +111,7 @@ prompt { }
     let has_valid_schema = output.program.declarations.iter().any(|d| {
         if let DeclId::Schema(id) = d {
             let s = &output.ast[*id];
-            output.interner.resolve(&s.name) == "Valid"
+            output.interner.resolve(s.name) == "Valid"
         } else {
             false
         }
@@ -148,7 +148,7 @@ fn recovery_error_limit() {
     let last_valid = output.program.declarations.iter().any(|d| {
         if let DeclId::Schema(id) = d {
             let s = &output.ast[*id];
-            output.interner.resolve(&s.name) == "LastValid"
+            output.interner.resolve(s.name) == "LastValid"
         } else {
             false
         }
@@ -176,7 +176,7 @@ schema Good { a: bool }"#;
     let has_good = output.program.declarations.iter().any(|d| {
         if let DeclId::Schema(id) = d {
             let s = &output.ast[*id];
-            output.interner.resolve(&s.name) == "Good"
+            output.interner.resolve(s.name) == "Good"
         } else {
             false
         }
@@ -205,7 +205,7 @@ schema After { a: string }"#;
     let has_after = output.program.declarations.iter().any(|d| {
         if let DeclId::Schema(id) = d {
             let s = &output.ast[*id];
-            output.interner.resolve(&s.name) == "After"
+            output.interner.resolve(s.name) == "After"
         } else {
             false
         }
@@ -242,7 +242,7 @@ enum E { }
     let has_schema = output.program.declarations.iter().any(|d| {
         if let DeclId::Schema(id) = d {
             let s = &output.ast[*id];
-            output.interner.resolve(&s.name) == "S"
+            output.interner.resolve(s.name) == "S"
         } else {
             false
         }
@@ -277,7 +277,7 @@ schema OK { a: int }"#;
     let has_ok = output.program.declarations.iter().any(|d| {
         if let DeclId::Schema(id) = d {
             let s = &output.ast[*id];
-            output.interner.resolve(&s.name) == "OK"
+            output.interner.resolve(s.name) == "OK"
         } else {
             false
         }

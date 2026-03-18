@@ -33,7 +33,7 @@ pub fn emit_type_annotation(resolved: &ResolvedType, ast: &Ast, interner: &Inter
         },
         ResolvedType::Schema(id) => {
             let schema = &ast[*id];
-            interner.resolve(&schema.name).to_string()
+            interner.resolve(schema.name).to_string()
         }
         ResolvedType::Array(inner) => {
             format!("List[{}]", emit_type_annotation(inner, ast, interner))
@@ -73,7 +73,7 @@ pub fn emit_field_line(
 
     // Check for bounded type constraints
     if let TypeExpr::Bounded { base, params, .. } = type_expr {
-        let base_name = interner.resolve(base);
+        let base_name = interner.resolve(*base);
         let is_string = base_name == "string";
 
         let mut kwargs = Vec::new();
@@ -95,7 +95,7 @@ pub fn emit_field_line(
             // Named params
             for param in params {
                 if let Some(name_spur) = param.name {
-                    let param_name = interner.resolve(&name_spur);
+                    let param_name = interner.resolve(name_spur);
                     let value = &source[param.value_span.clone()];
                     let kwarg_name = if is_string {
                         match param_name {

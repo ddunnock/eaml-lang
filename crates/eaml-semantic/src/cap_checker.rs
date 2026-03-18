@@ -80,7 +80,7 @@ fn validate_cap_list(caps: &[(Spur, Span)], interner: &Interner, diags: &mut Dia
     let mut seen: HashSet<Spur> = HashSet::new();
 
     for (spur, span) in caps {
-        let name = interner.resolve(spur);
+        let name = interner.resolve(*spur);
 
         // CAP001: unknown capability
         if !KNOWN_CAPABILITIES.contains(&name) {
@@ -173,19 +173,19 @@ fn check_capability_subsets(
                         .collect();
 
                     if !missing.is_empty() {
-                        let model_name = interner.resolve(&model.name);
+                        let model_name = interner.resolve(model.name);
                         let required_str: Vec<&str> = requires
                             .caps
                             .iter()
-                            .map(|(s, _)| interner.resolve(s))
+                            .map(|(s, _)| interner.resolve(*s))
                             .collect();
                         let provided_str: Vec<&str> = model
                             .caps
                             .iter()
-                            .map(|(s, _)| interner.resolve(s))
+                            .map(|(s, _)| interner.resolve(*s))
                             .collect();
                         let missing_str: Vec<&str> =
-                            missing.iter().map(|s| interner.resolve(s)).collect();
+                            missing.iter().map(|s| interner.resolve(*s)).collect();
 
                         diags.emit(
                             Diagnostic::new(
@@ -227,7 +227,7 @@ fn check_json_mode_string_return(
             if let Some(ref requires) = prompt.requires {
                 // Check if json_mode is in the requires list
                 let has_json_mode = requires.caps.iter().any(|(spur, _)| {
-                    let name = interner.resolve(spur);
+                    let name = interner.resolve(*spur);
                     name == "json_mode"
                 });
 

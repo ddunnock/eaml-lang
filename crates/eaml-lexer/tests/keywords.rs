@@ -90,7 +90,7 @@ fn lex_schema_foo_braces() {
     // Foo is an identifier
     match &kinds[1] {
         TokenKind::Ident(spur) => {
-            assert_eq!(output.interner.resolve(spur), "Foo");
+            assert_eq!(output.interner.resolve(*spur), "Foo");
         }
         other => panic!("expected Ident, got {:?}", other),
     }

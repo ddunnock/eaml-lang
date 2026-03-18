@@ -9,6 +9,7 @@ use lasso::{Rodeo, Spur};
 ///
 /// Identifiers are interned during lexing so that repeated occurrences
 /// of the same name share a single [`Spur`] key.
+#[derive(Debug)]
 pub struct Interner {
     rodeo: Rodeo,
 }
@@ -34,8 +35,8 @@ impl Interner {
     }
 
     /// Resolves a [`Spur`] key back to the original string.
-    pub fn resolve(&self, key: &Spur) -> &str {
-        self.rodeo.resolve(key)
+    pub fn resolve(&self, key: Spur) -> &str {
+        self.rodeo.resolve(&key)
     }
 }
 

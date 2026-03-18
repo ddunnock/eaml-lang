@@ -168,7 +168,7 @@ impl Parser {
     /// string matches `name` (contextual keyword check).
     pub fn at_contextual(&self, name: &str) -> bool {
         if let TokenKind::Ident(spur) = self.peek() {
-            self.interner.resolve(&spur) == name
+            self.interner.resolve(spur) == name
         } else {
             false
         }
@@ -278,7 +278,7 @@ impl Parser {
     }
 
     /// Resolves a `Spur` to the original interned string.
-    pub fn resolve_spur(&self, spur: &Spur) -> &str {
+    pub fn resolve_spur(&self, spur: Spur) -> &str {
         self.interner.resolve(spur)
     }
 

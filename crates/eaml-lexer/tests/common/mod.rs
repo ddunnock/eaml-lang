@@ -16,7 +16,7 @@ pub fn format_tokens(output: &LexOutput) -> String {
         .map(|t| {
             let kind_str = match &t.kind {
                 TokenKind::Ident(spur) => {
-                    format!("Ident({})", output.interner.resolve(spur))
+                    format!("Ident({})", output.interner.resolve(*spur))
                 }
                 other => format!("{:?}", other),
             };

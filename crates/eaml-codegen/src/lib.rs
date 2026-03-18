@@ -228,7 +228,7 @@ fn toposort_schemas(
     // Build a map from schema name -> index in the input vec
     let mut name_to_idx: HashMap<&str, usize> = HashMap::new();
     for (idx, id) in schemas.iter().enumerate() {
-        let name = interner.resolve(&ast[*id].name);
+        let name = interner.resolve(ast[*id].name);
         name_to_idx.insert(name, idx);
     }
 
@@ -298,7 +298,7 @@ fn collect_schema_deps(
 ) {
     match resolved {
         ResolvedType::Schema(id) => {
-            let dep_name = interner.resolve(&ast[*id].name);
+            let dep_name = interner.resolve(ast[*id].name);
             if let Some(&dep_idx) = name_to_idx.get(dep_name) {
                 if dep_idx != current_idx && seen_deps.insert(dep_idx) {
                     // dep_idx must come before current_idx (only add edge once)

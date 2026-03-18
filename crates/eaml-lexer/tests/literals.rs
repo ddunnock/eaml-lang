@@ -149,7 +149,7 @@ fn lex_identifier() {
     let output = lex("myVar");
     match &output.tokens[0].kind {
         TokenKind::Ident(spur) => {
-            assert_eq!(output.interner.resolve(spur), "myVar");
+            assert_eq!(output.interner.resolve(*spur), "myVar");
         }
         other => panic!("expected Ident, got {:?}", other),
     }

@@ -28,14 +28,14 @@ fn parse_type_expr(
 fn format_type_expr(ast: &Ast, id: TypeExprId, interner: &eaml_lexer::Interner) -> String {
     match &ast[id] {
         TypeExpr::Named(spur, span) => {
-            format!("Named({}, {:?})", interner.resolve(spur), span)
+            format!("Named({}, {:?})", interner.resolve(*spur), span)
         }
         TypeExpr::Bounded { base, params, span } => {
             let params_str: Vec<String> = params
                 .iter()
                 .map(|p| {
                     let name_str = match &p.name {
-                        Some(spur) => format!("Some({})", interner.resolve(spur)),
+                        Some(spur) => format!("Some({})", interner.resolve(*spur)),
                         None => "None".to_string(),
                     };
                     format!(
@@ -46,7 +46,7 @@ fn format_type_expr(ast: &Ast, id: TypeExprId, interner: &eaml_lexer::Interner) 
                 .collect();
             format!(
                 "Bounded(base: {}, params: [{}], span: {:?})",
-                interner.resolve(base),
+                interner.resolve(*base),
                 params_str.join(", "),
                 span
             )

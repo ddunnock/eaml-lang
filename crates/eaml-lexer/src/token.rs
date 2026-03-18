@@ -9,7 +9,7 @@ use lasso::Spur;
 pub type Span = eaml_errors::Span;
 
 /// A single token produced by the lexer.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Token {
     /// The kind of token.
     pub kind: TokenKind,
@@ -25,7 +25,7 @@ impl Token {
 }
 
 /// All token kinds produced by the EAML lexer.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum TokenKind {
     // === Keywords (active v0.1, 15) ===
     /// `model`
