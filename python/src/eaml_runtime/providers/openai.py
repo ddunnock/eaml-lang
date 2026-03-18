@@ -20,9 +20,7 @@ class OpenAIProvider(Provider):
             try:
                 import openai  # noqa: F811
             except ImportError:
-                raise EamlConfigError(
-                    "Install openai SDK: pip install openai"
-                ) from None
+                raise EamlConfigError("Install openai SDK: pip install openai") from None
 
             api_key = os.environ.get("OPENAI_API_KEY")
             if not api_key:

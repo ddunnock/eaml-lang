@@ -91,13 +91,15 @@ async def validate_or_retry(
             )
 
             # Append error feedback for retry
-            messages.append({
-                "role": "user",
-                "content": (
-                    f"Your response was not valid. Error: {error_msg}\n"
-                    "Please try again with a valid JSON response."
-                ),
-            })
+            messages.append(
+                {
+                    "role": "user",
+                    "content": (
+                        f"Your response was not valid. Error: {error_msg}\n"
+                        "Please try again with a valid JSON response."
+                    ),
+                }
+            )
 
     raise EamlValidationError(
         model_id=model_id,

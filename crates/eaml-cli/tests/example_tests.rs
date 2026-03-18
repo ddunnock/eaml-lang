@@ -22,42 +22,39 @@ fn workspace_root() -> PathBuf {
         .to_path_buf()
 }
 
-/// Helper: build a Command for the `eamlc` binary, with cwd set to workspace root.
+/// Build a Command for the `eamlc` binary, with cwd set to workspace root.
 fn eamlc() -> Command {
     let mut cmd = Command::cargo_bin("eamlc").unwrap();
     cmd.current_dir(workspace_root());
     cmd
 }
 
-/// Check if mypy is available on PATH.
-fn mypy_available() -> bool {
-    process::Command::new("mypy")
+/// Check if a command is available on PATH.
+fn command_available(name: &str) -> bool {
+    process::Command::new(name)
         .arg("--version")
         .output()
         .map(|o| o.status.success())
         .unwrap_or(false)
 }
 
-/// Run mypy on a generated Python file. Returns true if mypy exits 0.
-fn run_mypy(py_file: &Path) -> bool {
+/// Run mypy on a generated Python file, printing diagnostics on failure.
+fn assert_mypy_passes(py_file: &Path) {
     let output = process::Command::new("mypy")
         .arg("--ignore-missing-imports")
         .arg(py_file)
         .output()
         .expect("failed to run mypy");
 
-    if !output.status.success() {
-        eprintln!(
-            "mypy failed for {}:\n{}",
-            py_file.display(),
-            String::from_utf8_lossy(&output.stdout)
-        );
-    }
-
-    output.status.success()
+    assert!(
+        output.status.success(),
+        "mypy failed for {}:\n{}",
+        py_file.display(),
+        String::from_utf8_lossy(&output.stdout),
+    );
 }
 
-/// Helper: compile an example to a temp dir and return (tmpdir, py_path).
+/// Compile an example to a temp dir and return (tmpdir, py_path).
 fn compile_example(example_path: &str, stem: &str) -> (TempDir, PathBuf) {
     let tmpdir = TempDir::new().unwrap();
     eamlc()
@@ -73,6 +70,29 @@ fn compile_example(example_path: &str, stem: &str) -> (TempDir, PathBuf) {
     );
 
     (tmpdir, py_path)
+}
+
+/// Compile an example, then run mypy on the generated Python file.
+/// Skips the test if mypy is not installed.
+/// `mypy_stem` overrides the filename passed to mypy (for stdlib name conflicts).
+fn compile_and_check_mypy(example_path: &str, stem: &str, mypy_stem: Option<&str>) {
+    if !command_available("mypy") {
+        eprintln!("mypy not found, skipping");
+        return;
+    }
+
+    let (tmpdir, py_path) = compile_example(example_path, stem);
+
+    let check_path = match mypy_stem {
+        Some(renamed) => {
+            let dest = tmpdir.path().join(format!("{renamed}.py"));
+            std::fs::rename(&py_path, &dest).unwrap();
+            dest
+        }
+        None => py_path,
+    };
+
+    assert_mypy_passes(&check_path);
 }
 
 // ===================================================================
@@ -125,37 +145,22 @@ fn example_06_bad_model_fails_with_cap010() {
 
 #[test]
 fn generated_minimal_passes_mypy() {
-    if !mypy_available() {
-        eprintln!("mypy not found, skipping");
-        return;
-    }
-    let (_tmpdir, py_path) = compile_example("examples/01-minimal/minimal.eaml", "minimal");
-    assert!(run_mypy(&py_path), "minimal.py should pass mypy");
+    compile_and_check_mypy("examples/01-minimal/minimal.eaml", "minimal", None);
 }
 
 #[test]
 fn generated_sentiment_passes_mypy() {
-    if !mypy_available() {
-        eprintln!("mypy not found, skipping");
-        return;
-    }
-    let (_tmpdir, py_path) = compile_example("examples/02-sentiment/sentiment.eaml", "sentiment");
-    assert!(run_mypy(&py_path), "sentiment.py should pass mypy");
+    compile_and_check_mypy("examples/02-sentiment/sentiment.eaml", "sentiment", None);
 }
 
 #[test]
 fn generated_types_passes_mypy() {
-    if !mypy_available() {
-        eprintln!("mypy not found, skipping");
-        return;
-    }
-    let (_tmpdir, py_path) = compile_example("examples/07-all-type-variants/types.eaml", "types");
-
-    // Rename types.py to eaml_types.py to avoid shadowing Python's stdlib
-    // `types` module, which mypy rejects.
-    let renamed = _tmpdir.path().join("eaml_types.py");
-    std::fs::rename(&py_path, &renamed).unwrap();
-    assert!(run_mypy(&renamed), "types.py should pass mypy");
+    // Rename to avoid shadowing Python's stdlib `types` module.
+    compile_and_check_mypy(
+        "examples/07-all-type-variants/types.eaml",
+        "types",
+        Some("eaml_types"),
+    );
 }
 
 // ===================================================================
@@ -178,33 +183,21 @@ fn run_sentiment_with_llm() {
 
     let (_tmpdir, py_path) = compile_example("examples/02-sentiment/sentiment.eaml", "sentiment");
 
-    // Try python3 first, then python.
-    let python_cmd = if process::Command::new("python3")
-        .arg("--version")
-        .output()
-        .map(|o| o.status.success())
-        .unwrap_or(false)
-    {
+    let python = if command_available("python3") {
         "python3"
     } else {
         "python"
     };
 
-    let output = process::Command::new(python_cmd)
+    let output = process::Command::new(python)
         .arg(&py_path)
         .output()
         .expect("failed to run python");
 
-    if !output.status.success() {
-        eprintln!(
-            "Python execution failed:\nstdout: {}\nstderr: {}",
-            String::from_utf8_lossy(&output.stdout),
-            String::from_utf8_lossy(&output.stderr),
-        );
-    }
-
     assert!(
         output.status.success(),
-        "Generated sentiment.py should execute successfully with LLM API"
+        "Generated sentiment.py should execute successfully with LLM API\nstdout: {}\nstderr: {}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr),
     );
 }

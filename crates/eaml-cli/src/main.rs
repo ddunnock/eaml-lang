@@ -59,6 +59,29 @@ fn main() {
     process::exit(code);
 }
 
+/// Returns true if the diagnostic represents a compilation error.
+fn is_error(d: &Diagnostic) -> bool {
+    matches!(d.severity, Severity::Error | Severity::Fatal)
+}
+
+/// Extracts the filename component from a path, falling back to "unknown.eaml".
+fn filename_of(path: &Path) -> &str {
+    path.file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("unknown.eaml")
+}
+
+/// Computes the Python output path for a given EAML source file.
+fn output_path_for(file: &Path, output_dir: Option<&Path>) -> PathBuf {
+    match output_dir {
+        Some(dir) => {
+            let stem = file.file_stem().and_then(|s| s.to_str()).unwrap_or("out");
+            dir.join(format!("{stem}.py"))
+        }
+        None => file.with_extension("py"),
+    }
+}
+
 /// Reads source text from a file path.
 ///
 /// Returns `Err(EXIT_IO_ERROR)` if the file cannot be read.
@@ -88,22 +111,14 @@ fn run_pipeline(source: &str, filename: &str) -> (Option<String>, Vec<Diagnostic
 
     let mut all_diagnostics: Vec<Diagnostic> = parse_output.diagnostics.clone();
 
-    let has_parse_errors = all_diagnostics
-        .iter()
-        .any(|d| d.severity == Severity::Error || d.severity == Severity::Fatal);
-
-    if has_parse_errors {
+    if all_diagnostics.iter().any(is_error) {
         return (None, all_diagnostics, true);
     }
 
     let analysis = eaml_semantic::analyze(&parse_output, source);
     all_diagnostics.extend(analysis.diagnostics.clone());
 
-    let has_errors = all_diagnostics
-        .iter()
-        .any(|d| d.severity == Severity::Error || d.severity == Severity::Fatal);
-
-    if has_errors {
+    if all_diagnostics.iter().any(is_error) {
         return (None, all_diagnostics, true);
     }
 
@@ -125,10 +140,7 @@ fn render_and_summarize(filename: &str, source: &str, diagnostics: &[Diagnostic]
 
 /// Prints an error/warning summary line to stderr.
 fn print_summary(diagnostics: &[Diagnostic]) {
-    let error_count = diagnostics
-        .iter()
-        .filter(|d| d.severity == Severity::Error || d.severity == Severity::Fatal)
-        .count();
+    let error_count = diagnostics.iter().filter(|d| is_error(d)).count();
     let warning_count = diagnostics
         .iter()
         .filter(|d| d.severity == Severity::Warning)
@@ -146,42 +158,40 @@ fn print_summary(diagnostics: &[Diagnostic]) {
     }
 }
 
-/// Compiles an EAML file to Python.
-fn cmd_compile(file: &Path, output_dir: Option<&Path>) -> i32 {
+/// Compiles an EAML file and writes the generated Python to disk.
+///
+/// Returns `(output_path, exit_code)`. On success the exit code is `EXIT_SUCCESS`
+/// and the output path points to the written `.py` file.
+fn compile_and_write(file: &Path, output_dir: Option<&Path>) -> (PathBuf, i32) {
     let source = match read_source(file) {
         Ok(s) => s,
-        Err(code) => return code,
+        Err(code) => return (PathBuf::new(), code),
     };
 
-    let filename = file
-        .file_name()
-        .and_then(|n| n.to_str())
-        .unwrap_or("unknown.eaml");
-
+    let filename = filename_of(file);
     let (python_code, diagnostics, has_errors) = run_pipeline(&source, filename);
     render_and_summarize(filename, &source, &diagnostics);
 
     if has_errors {
-        return EXIT_COMPILE_ERROR;
+        return (PathBuf::new(), EXIT_COMPILE_ERROR);
     }
 
     let python_code = python_code.expect("no errors means code was generated");
-
-    let output_path = match output_dir {
-        Some(dir) => {
-            let stem = file.file_stem().and_then(|s| s.to_str()).unwrap_or("out");
-            dir.join(format!("{stem}.py"))
-        }
-        None => file.with_extension("py"),
-    };
+    let output_path = output_path_for(file, output_dir);
 
     if let Err(err) = fs::write(&output_path, &python_code) {
         eprintln!("error: could not write '{}': {err}", output_path.display());
-        return EXIT_IO_ERROR;
+        return (PathBuf::new(), EXIT_IO_ERROR);
     }
 
     eprintln!("Compiled {filename} -> {}", output_path.display());
-    EXIT_SUCCESS
+    (output_path, EXIT_SUCCESS)
+}
+
+/// Compiles an EAML file to Python.
+fn cmd_compile(file: &Path, output_dir: Option<&Path>) -> i32 {
+    let (_path, code) = compile_and_write(file, output_dir);
+    code
 }
 
 /// Checks an EAML file for errors without generating output.
@@ -191,11 +201,7 @@ fn cmd_check(file: &Path) -> i32 {
         Err(code) => return code,
     };
 
-    let filename = file
-        .file_name()
-        .and_then(|n| n.to_str())
-        .unwrap_or("unknown.eaml");
-
+    let filename = filename_of(file);
     let (_, diagnostics, has_errors) = run_pipeline(&source, filename);
     render_and_summarize(filename, &source, &diagnostics);
 
@@ -207,59 +213,27 @@ fn cmd_check(file: &Path) -> i32 {
     EXIT_SUCCESS
 }
 
+/// Finds a working Python interpreter on PATH.
+fn find_python() -> Result<&'static str, i32> {
+    for cmd in ["python3", "python"] {
+        if process::Command::new(cmd).arg("--version").output().is_ok() {
+            return Ok(cmd);
+        }
+    }
+    eprintln!("error: Python interpreter not found. Ensure python3 or python is on PATH.");
+    Err(EXIT_RUNTIME_ERROR)
+}
+
 /// Compiles an EAML file to Python, then runs it with the Python interpreter.
 fn cmd_run(file: &Path, output_dir: Option<&Path>) -> i32 {
-    // First, compile.
-    let source = match read_source(file) {
-        Ok(s) => s,
+    let (output_path, code) = compile_and_write(file, output_dir);
+    if code != EXIT_SUCCESS {
+        return code;
+    }
+
+    let python_cmd = match find_python() {
+        Ok(cmd) => cmd,
         Err(code) => return code,
-    };
-
-    let filename = file
-        .file_name()
-        .and_then(|n| n.to_str())
-        .unwrap_or("unknown.eaml");
-
-    let (python_code, diagnostics, has_errors) = run_pipeline(&source, filename);
-    render_and_summarize(filename, &source, &diagnostics);
-
-    if has_errors {
-        return EXIT_COMPILE_ERROR;
-    }
-
-    let python_code = python_code.expect("no errors means code was generated");
-
-    let output_path = match output_dir {
-        Some(dir) => {
-            let stem = file.file_stem().and_then(|s| s.to_str()).unwrap_or("out");
-            dir.join(format!("{stem}.py"))
-        }
-        None => file.with_extension("py"),
-    };
-
-    if let Err(err) = fs::write(&output_path, &python_code) {
-        eprintln!("error: could not write '{}': {err}", output_path.display());
-        return EXIT_IO_ERROR;
-    }
-
-    eprintln!("Compiled {filename} -> {}", output_path.display());
-
-    // Discover Python interpreter.
-    let python_cmd = if process::Command::new("python3")
-        .arg("--version")
-        .output()
-        .is_ok()
-    {
-        "python3"
-    } else if process::Command::new("python")
-        .arg("--version")
-        .output()
-        .is_ok()
-    {
-        "python"
-    } else {
-        eprintln!("error: Python interpreter not found. Ensure python3 or python is on PATH.");
-        return EXIT_RUNTIME_ERROR;
     };
 
     match process::Command::new(python_cmd).arg(&output_path).status() {

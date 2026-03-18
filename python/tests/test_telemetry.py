@@ -72,6 +72,7 @@ def test_fire_unknown_event_is_noop() -> None:
 
 def test_hook_exception_does_not_propagate() -> None:
     """Even if the hook raises, the caller should not see the exception."""
+
     def bad_hook(event: object) -> None:
         raise RuntimeError("fatal")
 

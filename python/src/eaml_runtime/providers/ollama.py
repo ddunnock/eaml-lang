@@ -20,9 +20,7 @@ class OllamaProvider(Provider):
             try:
                 import httpx  # noqa: F811
             except ImportError:
-                raise EamlConfigError(
-                    "Install httpx: pip install httpx"
-                ) from None
+                raise EamlConfigError("Install httpx: pip install httpx") from None
             self._client = httpx.AsyncClient(timeout=120.0)
         return self._client
 

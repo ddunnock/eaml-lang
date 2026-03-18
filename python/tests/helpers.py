@@ -32,12 +32,14 @@ class MockProvider(Provider):
         temperature: float | None = None,
         max_tokens: int | None = None,
     ) -> str:
-        self.calls.append({
-            "messages": [dict(m) for m in messages],
-            "model_id": model_id,
-            "temperature": temperature,
-            "max_tokens": max_tokens,
-        })
+        self.calls.append(
+            {
+                "messages": [dict(m) for m in messages],
+                "model_id": model_id,
+                "temperature": temperature,
+                "max_tokens": max_tokens,
+            }
+        )
         if self._idx < len(self.responses):
             resp = self.responses[self._idx]
             self._idx += 1

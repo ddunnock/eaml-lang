@@ -58,9 +58,7 @@ async def test_validate_or_retry_exhausts_retries() -> None:
     messages: list[dict[str, str]] = [{"role": "user", "content": "hello"}]
 
     with pytest.raises(EamlValidationError) as exc_info:
-        await validate_or_retry(
-            provider, messages, "test-model", Greeting, max_retries=3
-        )
+        await validate_or_retry(provider, messages, "test-model", Greeting, max_retries=3)
 
     assert exc_info.value.attempts == 3
     assert exc_info.value.model_id == "test-model"
@@ -72,9 +70,7 @@ async def test_validation_error_contains_all_errors() -> None:
     messages: list[dict[str, str]] = [{"role": "user", "content": "hello"}]
 
     with pytest.raises(EamlValidationError) as exc_info:
-        await validate_or_retry(
-            provider, messages, "test-model", Greeting, max_retries=3
-        )
+        await validate_or_retry(provider, messages, "test-model", Greeting, max_retries=3)
 
     assert len(exc_info.value.errors) == 3
 
@@ -85,9 +81,7 @@ async def test_validation_error_contains_last_response() -> None:
     messages: list[dict[str, str]] = [{"role": "user", "content": "hello"}]
 
     with pytest.raises(EamlValidationError) as exc_info:
-        await validate_or_retry(
-            provider, messages, "test-model", Greeting, max_retries=3
-        )
+        await validate_or_retry(provider, messages, "test-model", Greeting, max_retries=3)
 
     assert exc_info.value.last_response == "last_bad"
 
@@ -178,9 +172,7 @@ async def test_validate_literal() -> None:
     provider = MockProvider(['"high"'])
     messages: list[dict[str, str]] = [{"role": "user", "content": "test"}]
 
-    result = await validate_or_retry(
-        provider, messages, "m", Literal["low", "medium", "high"]
-    )
+    result = await validate_or_retry(provider, messages, "m", Literal["low", "medium", "high"])
 
     assert result == "high"
 
@@ -219,9 +211,7 @@ async def test_validation_failure_event_fired() -> None:
     provider = MockProvider(["bad", '{"message": "ok", "word_count": 1}'])
     messages: list[dict[str, str]] = [{"role": "user", "content": "test"}]
 
-    await validate_or_retry(
-        provider, messages, "test-model", Greeting, provider_name="anthropic"
-    )
+    await validate_or_retry(provider, messages, "test-model", Greeting, provider_name="anthropic")
 
     assert len(events) == 1
     assert isinstance(events[0], ValidationFailureEvent)

@@ -8,6 +8,9 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use tempfile::TempDir;
 
+const MINIMAL_EXAMPLE: &str = "examples/01-minimal/minimal.eaml";
+const BAD_MODEL_EXAMPLE: &str = "examples/06-capability-error/bad_model.eaml";
+
 /// Returns the workspace root directory (two levels above the crate manifest).
 fn workspace_root() -> PathBuf {
     let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
@@ -18,27 +21,34 @@ fn workspace_root() -> PathBuf {
         .to_path_buf()
 }
 
-/// Helper: build a Command for the `eamlc` binary, with cwd set to workspace root.
+/// Build a Command for the `eamlc` binary, with cwd set to workspace root.
 fn eamlc() -> Command {
     let mut cmd = Command::cargo_bin("eamlc").unwrap();
     cmd.current_dir(workspace_root());
     cmd
 }
 
+/// Copy an example file into a temp directory and return (tmpdir, copied_path).
+fn copy_example_to_tmpdir(example: &str) -> (TempDir, PathBuf) {
+    let tmpdir = TempDir::new().unwrap();
+    let src = workspace_root().join(example);
+    let filename = src.file_name().expect("example should have a filename");
+    let dest = tmpdir.path().join(filename);
+    fs::copy(&src, &dest).unwrap();
+    (tmpdir, dest)
+}
+
 #[test]
 fn compile_minimal_produces_py_file() {
     let tmpdir = TempDir::new().unwrap();
     eamlc()
-        .args(["compile", "examples/01-minimal/minimal.eaml", "-o"])
+        .args(["compile", MINIMAL_EXAMPLE, "-o"])
         .arg(tmpdir.path())
         .assert()
         .success()
         .stderr(predicate::str::contains("Compiled"));
 
-    let py_path = tmpdir.path().join("minimal.py");
-    assert!(py_path.exists(), "minimal.py should be created");
-
-    let content = fs::read_to_string(&py_path).unwrap();
+    let content = fs::read_to_string(tmpdir.path().join("minimal.py")).unwrap();
     assert!(
         content.contains("class Greeting(BaseModel):"),
         "Generated code should contain Greeting class"
@@ -51,16 +61,12 @@ fn compile_minimal_produces_py_file() {
 
 #[test]
 fn compile_without_output_flag_uses_input_dir() {
-    let tmpdir = TempDir::new().unwrap();
-    let eaml_path = tmpdir.path().join("minimal.eaml");
-    let src = workspace_root().join("examples/01-minimal/minimal.eaml");
-    fs::copy(&src, &eaml_path).unwrap();
+    let (tmpdir, eaml_path) = copy_example_to_tmpdir(MINIMAL_EXAMPLE);
 
     eamlc().arg("compile").arg(&eaml_path).assert().success();
 
-    let py_path = tmpdir.path().join("minimal.py");
     assert!(
-        py_path.exists(),
+        tmpdir.path().join("minimal.py").exists(),
         "minimal.py should be created next to the source file"
     );
 }
@@ -68,7 +74,7 @@ fn compile_without_output_flag_uses_input_dir() {
 #[test]
 fn check_valid_file_exits_zero() {
     eamlc()
-        .args(["check", "examples/01-minimal/minimal.eaml"])
+        .args(["check", MINIMAL_EXAMPLE])
         .assert()
         .success()
         .stderr(predicate::str::contains("no errors found"));
@@ -76,16 +82,12 @@ fn check_valid_file_exits_zero() {
 
 #[test]
 fn check_does_not_produce_output_file() {
-    let tmpdir = TempDir::new().unwrap();
-    let eaml_path = tmpdir.path().join("minimal.eaml");
-    let src = workspace_root().join("examples/01-minimal/minimal.eaml");
-    fs::copy(&src, &eaml_path).unwrap();
+    let (tmpdir, eaml_path) = copy_example_to_tmpdir(MINIMAL_EXAMPLE);
 
     eamlc().arg("check").arg(&eaml_path).assert().success();
 
-    let py_path = tmpdir.path().join("minimal.py");
     assert!(
-        !py_path.exists(),
+        !tmpdir.path().join("minimal.py").exists(),
         "check command should not produce a .py file"
     );
 }
@@ -93,7 +95,7 @@ fn check_does_not_produce_output_file() {
 #[test]
 fn check_bad_model_exits_one_with_cap010() {
     eamlc()
-        .args(["check", "examples/06-capability-error/bad_model.eaml"])
+        .args(["check", BAD_MODEL_EXAMPLE])
         .assert()
         .code(1)
         .stderr(predicate::str::contains("CAP010"));
@@ -103,18 +105,13 @@ fn check_bad_model_exits_one_with_cap010() {
 fn compile_bad_model_exits_one() {
     let tmpdir = TempDir::new().unwrap();
     eamlc()
-        .args([
-            "compile",
-            "examples/06-capability-error/bad_model.eaml",
-            "-o",
-        ])
+        .args(["compile", BAD_MODEL_EXAMPLE, "-o"])
         .arg(tmpdir.path())
         .assert()
         .code(1);
 
-    let py_path = tmpdir.path().join("bad_model.py");
     assert!(
-        !py_path.exists(),
+        !tmpdir.path().join("bad_model.py").exists(),
         "no output file should be created on compile error"
     );
 }
@@ -122,7 +119,7 @@ fn compile_bad_model_exits_one() {
 #[test]
 fn compile_error_shows_summary() {
     eamlc()
-        .args(["check", "examples/06-capability-error/bad_model.eaml"])
+        .args(["check", BAD_MODEL_EXAMPLE])
         .assert()
         .code(1)
         .stderr(predicate::str::contains("aborting due to"));
@@ -150,20 +147,15 @@ fn version_flag_prints_version() {
 fn run_command_compiles_and_keeps_file() {
     let tmpdir = TempDir::new().unwrap();
 
-    // The `run` command will compile successfully but Python execution may fail
-    // (exit code 3) because the generated code requires eaml_runtime. We only
-    // verify that the compiled .py file exists.
-    let _assert = eamlc()
-        .args(["run", "examples/01-minimal/minimal.eaml", "-o"])
+    // The run command may exit 0 or 3 (runtime error) depending on whether
+    // eaml_runtime is installed. We only verify the compiled .py file exists.
+    let _ = eamlc()
+        .args(["run", MINIMAL_EXAMPLE, "-o"])
         .arg(tmpdir.path())
         .assert();
 
-    // The command may exit 0 or 3 (runtime error) depending on Python env.
-    // We do NOT assert success -- we only check the file was produced.
-
-    let py_path = tmpdir.path().join("minimal.py");
     assert!(
-        py_path.exists(),
+        tmpdir.path().join("minimal.py").exists(),
         "run command should produce the .py file even if Python execution fails"
     );
 }

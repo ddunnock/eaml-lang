@@ -20,9 +20,7 @@ class AnthropicProvider(Provider):
             try:
                 import anthropic  # noqa: F811
             except ImportError:
-                raise EamlConfigError(
-                    "Install anthropic SDK: pip install anthropic"
-                ) from None
+                raise EamlConfigError("Install anthropic SDK: pip install anthropic") from None
 
             api_key = os.environ.get("ANTHROPIC_API_KEY")
             if not api_key:

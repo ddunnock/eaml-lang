@@ -9,7 +9,6 @@ path = "src/main.rs"
 
 [dependencies]
 eaml-errors   = { path = "../eaml-errors" }
-eaml-lexer    = { path = "../eaml-lexer" }
 eaml-parser   = { path = "../eaml-parser" }
 eaml-semantic = { path = "../eaml-semantic" }
 eaml-codegen  = { path = "../eaml-codegen" }

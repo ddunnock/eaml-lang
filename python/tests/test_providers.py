@@ -86,14 +86,14 @@ async def test_anthropic_send_prompt(monkeypatch: pytest.MonkeyPatch) -> None:
         {"role": "system", "content": "Be helpful"},
         {"role": "user", "content": "Analyze this"},
     ]
-    result = await provider.send_prompt(
-        messages, "anthropic/claude-3-haiku-20240307"
-    )
+    result = await provider.send_prompt(messages, "anthropic/claude-3-haiku-20240307")
 
     assert result == '{"sentiment": "positive"}'
     call_kwargs = mock_client.messages.create.call_args
     # System messages extracted to system param
-    assert "system" in call_kwargs.kwargs or "system" in (call_kwargs[1] if len(call_kwargs) > 1 else {})
+    assert "system" in call_kwargs.kwargs or "system" in (
+        call_kwargs[1] if len(call_kwargs) > 1 else {}
+    )
     create_kwargs: dict[str, Any] = call_kwargs.kwargs if call_kwargs.kwargs else call_kwargs[1]
     assert create_kwargs["model"] == "claude-3-haiku-20240307"  # Prefix stripped
     assert create_kwargs["max_tokens"] == 4096
@@ -163,9 +163,7 @@ async def test_anthropic_error_wrapped(monkeypatch: pytest.MonkeyPatch) -> None:
     provider._client = mock_client
 
     with pytest.raises(EamlProviderError, match="anthropic") as exc_info:
-        await provider.send_prompt(
-            [{"role": "user", "content": "Hello"}], "claude-3"
-        )
+        await provider.send_prompt([{"role": "user", "content": "Hello"}], "claude-3")
     assert exc_info.value.provider == "anthropic"
 
 
@@ -207,17 +205,13 @@ async def test_openai_error_wrapped(monkeypatch: pytest.MonkeyPatch) -> None:
     mock_client = MagicMock()
     mock_client.chat = MagicMock()
     mock_client.chat.completions = MagicMock()
-    mock_client.chat.completions.create = AsyncMock(
-        side_effect=RuntimeError("rate limited")
-    )
+    mock_client.chat.completions.create = AsyncMock(side_effect=RuntimeError("rate limited"))
 
     provider = OpenAIProvider()
     provider._client = mock_client
 
     with pytest.raises(EamlProviderError, match="openai") as exc_info:
-        await provider.send_prompt(
-            [{"role": "user", "content": "Hello"}], "gpt-4o"
-        )
+        await provider.send_prompt([{"role": "user", "content": "Hello"}], "gpt-4o")
     assert exc_info.value.provider == "openai"
 
 
@@ -227,9 +221,7 @@ async def test_openai_error_wrapped(monkeypatch: pytest.MonkeyPatch) -> None:
 @pytest.mark.asyncio
 async def test_ollama_send_prompt() -> None:
     mock_response = MagicMock()
-    mock_response.json.return_value = {
-        "choices": [{"message": {"content": '{"answer": 42}'}}]
-    }
+    mock_response.json.return_value = {"choices": [{"message": {"content": '{"answer": 42}'}}]}
     mock_response.raise_for_status = MagicMock()
 
     mock_client = MagicMock()
@@ -255,9 +247,7 @@ async def test_ollama_custom_base_url(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("OLLAMA_BASE_URL", "http://gpu-server:11434")
 
     mock_response = MagicMock()
-    mock_response.json.return_value = {
-        "choices": [{"message": {"content": "{}"}}]
-    }
+    mock_response.json.return_value = {"choices": [{"message": {"content": "{}"}}]}
     mock_response.raise_for_status = MagicMock()
 
     mock_client = MagicMock()
@@ -266,9 +256,7 @@ async def test_ollama_custom_base_url(monkeypatch: pytest.MonkeyPatch) -> None:
     provider = OllamaProvider()
     provider._client = mock_client
 
-    await provider.send_prompt(
-        [{"role": "user", "content": "Hi"}], "llama3"
-    )
+    await provider.send_prompt([{"role": "user", "content": "Hi"}], "llama3")
 
     call_args = mock_client.post.call_args
     assert call_args[0][0] == "http://gpu-server:11434/v1/chat/completions"
@@ -283,9 +271,7 @@ async def test_ollama_error_wrapped() -> None:
     provider._client = mock_client
 
     with pytest.raises(EamlProviderError, match="ollama") as exc_info:
-        await provider.send_prompt(
-            [{"role": "user", "content": "Hello"}], "llama3"
-        )
+        await provider.send_prompt([{"role": "user", "content": "Hello"}], "llama3")
     assert exc_info.value.provider == "ollama"
 
 
@@ -323,9 +309,7 @@ async def test_model_id_prefix_stripped_anthropic(
 async def test_model_id_no_prefix() -> None:
     """Model IDs without a prefix should pass through unchanged."""
     mock_response = MagicMock()
-    mock_response.json.return_value = {
-        "choices": [{"message": {"content": "{}"}}]
-    }
+    mock_response.json.return_value = {"choices": [{"message": {"content": "{}"}}]}
     mock_response.raise_for_status = MagicMock()
 
     mock_client = MagicMock()
@@ -334,9 +318,7 @@ async def test_model_id_no_prefix() -> None:
     provider = OllamaProvider()
     provider._client = mock_client
 
-    await provider.send_prompt(
-        [{"role": "user", "content": "Hi"}], "llama3"
-    )
+    await provider.send_prompt([{"role": "user", "content": "Hi"}], "llama3")
 
     payload = mock_client.post.call_args.kwargs["json"]
     assert payload["model"] == "llama3"
