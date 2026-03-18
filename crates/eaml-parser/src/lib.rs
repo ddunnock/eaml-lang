@@ -12,7 +12,12 @@ pub mod type_expr;
 use eaml_errors::Diagnostic;
 use eaml_lexer::Interner;
 
-pub use ast::*;
+pub use ast::{
+    AgentDecl, AgentDeclId, AgentField, Arg, Ast, BinOp, BoundParam, DeclId, Expr, ExprId,
+    FieldDef, ImportDecl, ImportDeclId, LetDecl, LetDeclId, ModelDecl, ModelDeclId, Param, Program,
+    PromptBody, PromptDecl, PromptDeclId, PromptField, RequiresClause, SchemaDecl, SchemaDeclId,
+    TemplatePart, TemplateString, ToolBody, ToolDecl, ToolDeclId, TypeExpr, TypeExprId, UnaryOp,
+};
 
 /// The output of parsing an EAML source string.
 pub struct ParseOutput {

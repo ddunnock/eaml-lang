@@ -14,39 +14,39 @@ use std::ops::Index;
 
 /// Index into [`Ast::exprs`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct ExprId(pub u32);
+pub struct ExprId(pub(crate) u32);
 
 /// Index into [`Ast::type_exprs`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct TypeExprId(pub u32);
+pub struct TypeExprId(pub(crate) u32);
 
 /// Index into [`Ast::models`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct ModelDeclId(pub u32);
+pub struct ModelDeclId(pub(crate) u32);
 
 /// Index into [`Ast::schemas`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct SchemaDeclId(pub u32);
+pub struct SchemaDeclId(pub(crate) u32);
 
 /// Index into [`Ast::prompts`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct PromptDeclId(pub u32);
+pub struct PromptDeclId(pub(crate) u32);
 
 /// Index into [`Ast::tools`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct ToolDeclId(pub u32);
+pub struct ToolDeclId(pub(crate) u32);
 
 /// Index into [`Ast::agents`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct AgentDeclId(pub u32);
+pub struct AgentDeclId(pub(crate) u32);
 
 /// Index into [`Ast::imports`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct ImportDeclId(pub u32);
+pub struct ImportDeclId(pub(crate) u32);
 
 /// Index into [`Ast::lets`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct LetDeclId(pub u32);
+pub struct LetDeclId(pub(crate) u32);
 
 // ============================================================================
 // Top-level declaration wrapper
@@ -99,15 +99,15 @@ impl Ast {
     /// Creates a new empty AST with no allocated nodes.
     pub fn new() -> Self {
         Self {
-            models: Vec::new(),
-            schemas: Vec::new(),
-            prompts: Vec::new(),
-            tools: Vec::new(),
-            agents: Vec::new(),
-            imports: Vec::new(),
-            lets: Vec::new(),
-            exprs: Vec::new(),
-            type_exprs: Vec::new(),
+            models: Vec::with_capacity(4),
+            schemas: Vec::with_capacity(8),
+            prompts: Vec::with_capacity(4),
+            tools: Vec::with_capacity(4),
+            agents: Vec::with_capacity(2),
+            imports: Vec::with_capacity(4),
+            lets: Vec::with_capacity(4),
+            exprs: Vec::with_capacity(32),
+            type_exprs: Vec::with_capacity(16),
         }
     }
 
@@ -369,6 +369,15 @@ pub enum ImportDecl {
     },
 }
 
+impl ImportDecl {
+    /// Returns the span of this import declaration.
+    pub fn span(&self) -> &Span {
+        match self {
+            ImportDecl::Eaml { span, .. } | ImportDecl::Python { span, .. } => span,
+        }
+    }
+}
+
 /// A `let` declaration.
 #[derive(Debug, Clone)]
 pub struct LetDecl {
@@ -480,6 +489,31 @@ pub enum Expr {
     },
     // Error recovery
     Error(Span),
+}
+
+impl Expr {
+    /// Returns the span of this expression.
+    pub fn span(&self) -> &Span {
+        match self {
+            Expr::IntLit(span)
+            | Expr::FloatLit(span)
+            | Expr::BoolLit(_, span)
+            | Expr::NullLit(span)
+            | Expr::Ident(_, span)
+            | Expr::BinaryOp { span, .. }
+            | Expr::UnaryOp { span, .. }
+            | Expr::Await { span, .. }
+            | Expr::FieldAccess { span, .. }
+            | Expr::FnCall { span, .. }
+            | Expr::Index { span, .. }
+            | Expr::Paren { span, .. }
+            | Expr::If { span, .. }
+            | Expr::Return { span, .. }
+            | Expr::Let { span, .. }
+            | Expr::Error(span) => span,
+            Expr::StringLit(ts) | Expr::TemplateStr(ts) => &ts.span,
+        }
+    }
 }
 
 /// Binary operators.

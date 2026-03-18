@@ -7,42 +7,7 @@
 use eaml_errors::Span;
 use eaml_parser::ast::*;
 
-/// Extract span from an Expr variant.
-fn expr_span(expr: &Expr) -> &Span {
-    match expr {
-        Expr::IntLit(span) => span,
-        Expr::FloatLit(span) => span,
-        Expr::StringLit(ts) => &ts.span,
-        Expr::BoolLit(_, span) => span,
-        Expr::NullLit(span) => span,
-        Expr::Ident(_, span) => span,
-        Expr::BinaryOp { span, .. } => span,
-        Expr::UnaryOp { span, .. } => span,
-        Expr::Await { span, .. } => span,
-        Expr::FieldAccess { span, .. } => span,
-        Expr::FnCall { span, .. } => span,
-        Expr::Index { span, .. } => span,
-        Expr::Paren { span, .. } => span,
-        Expr::TemplateStr(ts) => &ts.span,
-        Expr::If { span, .. } => span,
-        Expr::Return { span, .. } => span,
-        Expr::Let { span, .. } => span,
-        Expr::Error(span) => span,
-    }
-}
-
-/// Extract span from a TypeExpr variant.
-fn type_expr_span(te: &TypeExpr) -> &Span {
-    match te {
-        TypeExpr::Named(_, span) => span,
-        TypeExpr::Bounded { span, .. } => span,
-        TypeExpr::Array(_, span) => span,
-        TypeExpr::Optional(_, span) => span,
-        TypeExpr::LiteralUnion { span, .. } => span,
-        TypeExpr::Grouped(_, span) => span,
-        TypeExpr::Error(span) => span,
-    }
-}
+// Expr::span() and TypeExpr::span() are now methods on the AST types.
 
 /// Extract span from a DeclId (using the AST arenas).
 fn decl_span(ast: &Ast, decl: &DeclId) -> Span {
@@ -67,7 +32,7 @@ fn verify_all_spans(output: &eaml_parser::ParseOutput, source: &str) {
 
     // Check all expression spans
     for (i, expr) in output.ast.exprs.iter().enumerate() {
-        let span = expr_span(expr);
+        let span = expr.span();
         assert!(
             span.end <= source_len,
             "Expr[{}] span end {} > source len {} (expr: {:?})",
@@ -89,7 +54,7 @@ fn verify_all_spans(output: &eaml_parser::ParseOutput, source: &str) {
 
     // Check all type expression spans
     for (i, te) in output.ast.type_exprs.iter().enumerate() {
-        let span = type_expr_span(te);
+        let span = te.span();
         assert!(
             span.end <= source_len,
             "TypeExpr[{}] span end {} > source len {} (te: {:?})",
@@ -323,8 +288,8 @@ fn spans_expression_within_parent() {
             left, right, span, ..
         } = expr
         {
-            let left_span = expr_span(&output.ast[*left]);
-            let right_span = expr_span(&output.ast[*right]);
+            let left_span = output.ast[*left].span();
+            let right_span = output.ast[*right].span();
             assert!(
                 span.start <= left_span.start,
                 "parent start {} should be <= left child start {}",

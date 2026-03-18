@@ -30,6 +30,10 @@ impl Parser {
         interner: Interner,
         lex_diagnostics: Vec<Diagnostic>,
     ) -> Self {
+        debug_assert!(
+            !tokens.is_empty(),
+            "token stream must contain at least an EOF token"
+        );
         let error_count = lex_diagnostics
             .iter()
             .filter(|d| d.severity == Severity::Error || d.severity == Severity::Fatal)

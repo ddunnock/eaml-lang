@@ -60,6 +60,7 @@ fn all_42_error_codes_exist() {
         ErrorCode::Syn081,
         ErrorCode::Syn082,
         ErrorCode::Syn083,
+        ErrorCode::Syn084,
         ErrorCode::Syn090,
         // 10 SEM codes
         ErrorCode::Sem010,
@@ -92,7 +93,7 @@ fn all_42_error_codes_exist() {
         // 1 RES code
         ErrorCode::Res001,
     ];
-    assert_eq!(_codes.len(), 42);
+    assert_eq!(_codes.len(), 43);
 }
 
 #[test]

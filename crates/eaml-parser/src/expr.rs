@@ -261,7 +261,7 @@ impl Parser {
             _ => {
                 let span = self.peek_span();
                 self.emit_error(
-                    ErrorCode::Syn080,
+                    ErrorCode::Syn084,
                     "expected expression".to_string(),
                     span.clone(),
                     "expected expression".to_string(),

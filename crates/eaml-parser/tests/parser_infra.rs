@@ -7,8 +7,15 @@ use eaml_parser::ast::*;
 
 #[test]
 fn expr_id_equality() {
-    assert_ne!(ExprId(0), ExprId(1));
-    assert_eq!(ExprId(0), ExprId(0));
+    let mut ast = Ast::new();
+    let id0 = ast.alloc_expr(Expr::IntLit(0..1));
+    let id1 = ast.alloc_expr(Expr::IntLit(1..2));
+    assert_ne!(id0, id1);
+
+    // Same allocation gives deterministic IDs
+    let mut ast2 = Ast::new();
+    let id0_again = ast2.alloc_expr(Expr::IntLit(0..1));
+    assert_eq!(id0, id0_again);
 }
 
 #[test]
@@ -26,22 +33,23 @@ fn ast_new_creates_empty_arenas() {
 }
 
 #[test]
-fn alloc_expr_returns_correct_id() {
+fn alloc_expr_returns_sequential_ids() {
     let mut ast = Ast::new();
-    let id = ast.alloc_expr(Expr::IntLit(0..1));
-    assert_eq!(id, ExprId(0));
-
-    let id2 = ast.alloc_expr(Expr::NullLit(1..2));
-    assert_eq!(id2, ExprId(1));
+    let id0 = ast.alloc_expr(Expr::IntLit(0..1));
+    let id1 = ast.alloc_expr(Expr::NullLit(1..2));
+    assert_ne!(id0, id1);
+    assert_eq!(ast.exprs.len(), 2);
 }
 
 #[test]
-fn alloc_type_expr_returns_type_expr_id() {
+fn alloc_type_expr_returns_sequential_ids() {
     let mut interner = eaml_lexer::Interner::new();
     let name = interner.intern("string");
     let mut ast = Ast::new();
-    let id = ast.alloc_type_expr(TypeExpr::Named(name, 0..6));
-    assert_eq!(id, TypeExprId(0));
+    let id0 = ast.alloc_type_expr(TypeExpr::Named(name, 0..6));
+    let id1 = ast.alloc_type_expr(TypeExpr::Named(name, 7..13));
+    assert_ne!(id0, id1);
+    assert_eq!(ast.type_exprs.len(), 2);
 }
 
 #[test]
@@ -62,7 +70,7 @@ fn alloc_model_returns_model_decl_id() {
         caps: vec![],
         span: 0..10,
     });
-    assert_eq!(id, ModelDeclId(0));
+    assert_eq!(ast[id].name, name);
 }
 
 #[test]
@@ -75,7 +83,7 @@ fn alloc_schema_returns_schema_decl_id() {
         fields: vec![],
         span: 0..10,
     });
-    assert_eq!(id, SchemaDeclId(0));
+    assert_eq!(ast[id].name, name);
 }
 
 #[test]
@@ -95,7 +103,7 @@ fn alloc_prompt_returns_prompt_decl_id() {
         },
         span: 0..10,
     });
-    assert_eq!(id, PromptDeclId(0));
+    assert_eq!(ast[id].name, name);
 }
 
 #[test]
@@ -111,7 +119,7 @@ fn alloc_tool_returns_tool_decl_id() {
         body: ToolBody::Empty(0..0),
         span: 0..10,
     });
-    assert_eq!(id, ToolDeclId(0));
+    assert_eq!(ast[id].name, name);
 }
 
 #[test]
@@ -124,7 +132,7 @@ fn alloc_agent_returns_agent_decl_id() {
         fields: vec![],
         span: 0..10,
     });
-    assert_eq!(id, AgentDeclId(0));
+    assert_eq!(ast[id].name, name);
 }
 
 #[test]
@@ -138,7 +146,7 @@ fn alloc_import_returns_import_decl_id() {
         alias: None,
         span: 0..10,
     });
-    assert_eq!(id, ImportDeclId(0));
+    assert_eq!(ast[id].span(), &(0..10));
 }
 
 #[test]
@@ -154,22 +162,36 @@ fn alloc_let_returns_let_decl_id() {
         value: expr_id,
         span: 0..10,
     });
-    assert_eq!(id, LetDeclId(0));
+    assert_eq!(ast[id].name, name);
 }
 
 #[test]
 fn decl_id_preserves_typed_id() {
-    let decl = DeclId::Model(ModelDeclId(0));
+    let mut ast = Ast::new();
+    let mut interner = eaml_lexer::Interner::new();
+    let name = interner.intern("Foo");
+    let model_id = ast.alloc_model(ModelDecl {
+        name,
+        model_id: TemplateString {
+            parts: vec![],
+            span: 0..0,
+        },
+        provider: TemplateString {
+            parts: vec![],
+            span: 0..0,
+        },
+        caps: vec![],
+        span: 0..10,
+    });
+    let decl = DeclId::Model(model_id);
     match decl {
-        DeclId::Model(id) => assert_eq!(id, ModelDeclId(0)),
+        DeclId::Model(id) => assert_eq!(id, model_id),
         _ => panic!("Expected Model variant"),
     }
 }
 
 #[test]
 fn every_ast_node_has_span() {
-    // Verify at compile time that span fields exist by constructing each type.
-    // The key assertion is that this compiles and the span values are accessible.
     let mut interner = eaml_lexer::Interner::new();
     let name = interner.intern("test");
 
@@ -296,7 +318,6 @@ fn make_parser(source: &str) -> eaml_parser::parser::Parser {
 #[test]
 fn parser_new_initializes_at_position_zero() {
     let parser = make_parser("model Foo {}");
-    // peek should return the first token (KwModel)
     assert_eq!(parser.peek(), TokenKind::KwModel);
 }
 
@@ -314,7 +335,6 @@ fn advance_returns_current_and_moves_forward() {
     let mut parser = make_parser("model Foo {}");
     let tok = parser.advance().clone();
     assert_eq!(tok.kind, TokenKind::KwModel);
-    // After advance, peek should be at next token
     assert!(parser.at_ident()); // "Foo" is Ident
 }
 
@@ -336,7 +356,6 @@ fn at_ident_returns_true_for_any_ident() {
 fn eat_advances_on_match_returns_false_otherwise() {
     let mut parser = make_parser("; x");
     assert!(parser.eat(TokenKind::Semicolon));
-    // Now at Ident("x")
     assert!(!parser.eat(TokenKind::Semicolon));
     assert!(parser.at_ident());
 }
@@ -344,12 +363,10 @@ fn eat_advances_on_match_returns_false_otherwise() {
 #[test]
 fn expect_advances_on_match_emits_syn050_on_mismatch() {
     let mut parser = make_parser("{ x");
-    // Expect LBrace -- should succeed
     let result = parser.expect(TokenKind::LBrace);
     assert!(result.is_ok());
     assert_eq!(result.unwrap(), 0..1);
 
-    // Now expect LBrace again -- should fail (at Ident)
     let result2 = parser.expect(TokenKind::LBrace);
     assert!(result2.is_err());
 }
@@ -361,7 +378,6 @@ fn expect_ident_returns_spur_on_ident() {
     assert!(result.is_ok());
     let (spur, span) = result.unwrap();
     assert_eq!(span, 0..3);
-    // Spur should resolve to "foo"
     assert_eq!(parser.resolve_spur(spur), "foo");
 }
 
@@ -391,11 +407,8 @@ fn synchronize_skips_to_next_declaration_keyword() {
 
 #[test]
 fn synchronize_respects_brace_depth() {
-    // The KwSchema inside braces should be skipped; synchronize should
-    // stop at the KwModel after the closing brace.
     let mut parser = make_parser("{ schema Inner } model Outer {}");
     parser.synchronize();
-    // Should stop at KwModel (depth 0), not KwSchema (depth 1)
     assert_eq!(parser.peek(), TokenKind::KwModel);
 }
 
@@ -409,6 +422,5 @@ fn parse_function_returns_parse_output() {
 #[test]
 fn parse_function_with_source() {
     let output = eaml_parser::parse("model Foo {}");
-    // Stub parser doesn't parse declarations yet, but should not crash
-    assert!(output.diagnostics.is_empty() || !output.diagnostics.is_empty());
+    assert!(!output.program.declarations.is_empty());
 }

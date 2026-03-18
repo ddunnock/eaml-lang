@@ -46,6 +46,8 @@ pub enum ErrorCode {
     Syn082,
     /// SYN083: Missing semicolon (warning)
     Syn083,
+    /// SYN084: Expected expression
+    Syn084,
     /// SYN090: Reserved syntax used
     Syn090,
 
@@ -132,6 +134,7 @@ impl ErrorCode {
             | Self::Syn081
             | Self::Syn082
             | Self::Syn083
+            | Self::Syn084
             | Self::Syn090 => "SYN",
 
             Self::Sem010
@@ -181,6 +184,7 @@ impl ErrorCode {
             Self::Syn081 => 81,
             Self::Syn082 => 82,
             Self::Syn083 => 83,
+            Self::Syn084 => 84,
             Self::Syn090 => 90,
 
             Self::Sem010 => 10,
